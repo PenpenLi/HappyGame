@@ -1,0 +1,14 @@
+﻿生成启动时间为 2015/9/14 0:22:15。
+     1>项目“H:\work\HappyGame\Lesion0\Lesion0.vcxproj”在节点 2 上(Build 个目标)。
+     1>ClCompile:
+         D:\Cocos\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Main.cpp
+         Main.cpp
+       Link:
+         D:\Cocos\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"H:\work\HappyGame\Debug\Lesion0.exe" /INCREMENTAL /NOLOGO winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"H:\work\HappyGame\Debug\Lesion0.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"H:\work\HappyGame\Debug\Lesion0.lib" /MACHINE:X86 Debug\Lesion0.res
+         Debug\Main.obj
+         Lesion0.vcxproj -> H:\work\HappyGame\Debug\Lesion0.exe
+     1>已完成生成项目“H:\work\HappyGame\Lesion0\Lesion0.vcxproj”(Build 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:01.14
