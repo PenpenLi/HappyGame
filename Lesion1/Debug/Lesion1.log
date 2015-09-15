@@ -1,19 +1,9 @@
-﻿生成启动时间为 2015/9/13 22:22:55。
-     1>项目“E:\work\HappyGame\Lesion1\Lesion1.vcxproj”在节点 2 上(Rebuild 个目标)。
-     1>ClCompile:
-         D:\Cocos\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yc"stdafx.h" /Fp"Debug\Lesion1.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt stdafx.cpp
-         stdafx.cpp
-         D:\Cocos\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\Lesion1.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Lesion1.cpp
-         Lesion1.cpp
-       ResourceCompile:
-         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\rc.exe /D _UNICODE /D UNICODE /l"0x0409" /nologo /fo"Debug\Lesion1.res" Lesion1.rc 
-       Link:
-         D:\Cocos\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\work\HappyGame\Debug\Lesion1.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:\work\HappyGame\Debug\Lesion1.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\work\HappyGame\Debug\Lesion1.lib" /MACHINE:X86 Debug\Lesion1.res
-         Debug\Lesion1.obj
-         Debug\stdafx.obj
-         Lesion1.vcxproj -> E:\work\HappyGame\Debug\Lesion1.exe
-     1>已完成生成项目“E:\work\HappyGame\Lesion1\Lesion1.vcxproj”(Rebuild 个目标)的操作。
+﻿生成启动时间为 2015/9/15 14:56:39。
+     1>项目“E:\gitHub\HappyGame\Lesion1\Lesion1.vcxproj”在节点 2 上(Rebuild 个目标)。
+       项目文件包含 ToolsVersion="12.0" 设置，但此工具集未知或缺失。您可以通过为此工具集安装相应的 .NET Framework 来解决此问题。将项目视为具有 ToolsVersion="4.0" 设置。
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V110\Microsoft.Cpp.Platform.targets(44,5): error MSB8020: The builds tools for v120 (Platform Toolset = 'v120') cannot be found. To build using the v120 build tools, either click the Project menu or right-click the solution, and then select "Update VC++ Projects...". Install v120 to build using the v120 build tools.
+     1>已完成生成项目“E:\gitHub\HappyGame\Lesion1\Lesion1.vcxproj”(Rebuild 个目标)的操作 - 失败。
 
-生成成功。
+生成失败。
 
-已用时间 00:00:05.50
+已用时间 00:00:00.08

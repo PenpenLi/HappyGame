@@ -45,10 +45,8 @@ bool InitializeWin(HINSTANCE hInstance, int nCmdShow)
 	RegisterClassEx(&wndObj);
 }
 
-
-
 // 窗口的过程函数
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-
+	return 0; //正常退出
 }

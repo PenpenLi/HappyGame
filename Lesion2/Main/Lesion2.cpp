@@ -1,11 +1,7 @@
 //*****************************************************************************************
-//
-//【Visual C++】游戏开发笔记系列配套源码 三十三 浅墨DirectX提高班之二 化腐朽为神奇：Direct3D初始化四部曲
-//		 VS2010版
-// 2012年 11月18日  Create by 浅墨 
-//图标素材： 古剑奇谭 百里屠苏
-//此刻心情：多年以后，当你回忆往昔，唯一让你觉得真实，和骄傲的，是你现在昂首挺胸、用力走过的人生。
-//
+//程序名称： Lesion2
+//2015年9月 simon
+//描述： 简单Win32 窗口程序创建的流程例子
 //***************************************************************************************** 
 
 
@@ -22,7 +18,6 @@
 // Desc: 库文件定义部分  
 //***************************************************************************************** 
 #pragma comment(lib,"d3d9.lib")
-//#pragma comment(lib,"d3dx9.lib")
 
 
 
@@ -31,7 +26,7 @@
 //*****************************************************************************************
 #define SCREEN_WIDTH	800							//为窗口宽度定义的宏，以方便在此处修改窗口宽度
 #define SCREEN_LEIGHT	600							//为窗口高度定义的宏，以方便在此处修改窗口高度
-#define WINDOW_TITLE	L"【Visual C++游戏开发笔记】博文配套demo之三十三 浅墨DirectX提高班之二 化腐朽为神奇：Direct3D初始化四部曲" //为窗口标题定义的宏
+#define WINDOW_TITLE	L"窗口创建四部曲"				//为窗口标题定义的宏
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }      //自定义一个SAFE_RELEASE()宏,便于资源的释放
 
 
@@ -45,7 +40,7 @@ LPDIRECT3DDEVICE9       g_pd3dDevice = NULL; //Direct3D设备对象
 
 
 //*****************************************************************************************
-// Desc: 全局函数声明部分 
+// Desc: 全局函数声明部分 ,防止"未声明的标识"系列错误 
 //
 //***************************************************************************************** 
 LRESULT CALLBACK	WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -62,7 +57,7 @@ void				Direct3D_CleanUp();
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 
-	//开始设计一个完整的窗口类
+	//1.开始设计一个完整的窗口类
 	WNDCLASSEX wndClass = { 0 };				//用WINDCLASSEX定义了一个窗口类，即用wndClass实例化了WINDCLASSEX，用于之后窗口的各项初始化    
 	wndClass.cbSize = sizeof(WNDCLASSEX);	//设置结构体的字节数大小
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;	//设置窗口的样式
@@ -76,15 +71,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wndClass.lpszMenuName = NULL;						//用一个以空终止的字符串，指定菜单资源的名字。
 	wndClass.lpszClassName = L"ForTheDreamOfGameDevelop";		//用一个以空终止的字符串，指定窗口类的名字。
 
-	if (!RegisterClassEx(&wndClass))				//设计完窗口后，需要对窗口类进行注册，这样才能创建该类型的窗口
+	//2.设计完窗口后，需要对窗口类进行注册，这样才能创建该类型的窗口
+	if (!RegisterClassEx(&wndClass))				
 		return -1;
 
-	HWND hwnd = CreateWindow(L"ForTheDreamOfGameDevelop", WINDOW_TITLE,			//喜闻乐见的创建窗口函数CreateWindow
+	//3.喜闻乐见的创建窗口函数CreateWindow
+	HWND hwnd = CreateWindow(L"ForTheDreamOfGameDevelop", WINDOW_TITLE,			
 		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH,
 		SCREEN_LEIGHT, NULL, NULL, hInstance, NULL);
 
-
-	MoveWindow(hwnd, 200, 50, SCREEN_WIDTH, SCREEN_LEIGHT, true);   //调整窗口显示时的位置，窗口左上角位于屏幕坐标（200，50）处
+	//4.调整窗口显示时的位置，窗口左上角位于屏幕坐标（200，50）处
+	MoveWindow(hwnd, 200, 50, SCREEN_WIDTH, SCREEN_LEIGHT, true);   
 	ShowWindow(hwnd, nShowCmd);    //调用Win32函数ShowWindow来显示窗口
 	UpdateWindow(hwnd);  //对窗口进行更新，就像我们买了新房子要装修一样
 
@@ -100,7 +97,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 
-	//消息循环过程
+	//5.消息循环过程
 	MSG msg = { 0 };  //初始化msg
 	while (msg.message != WM_QUIT)			//使用while循环
 	{
@@ -115,6 +112,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 	}
 
+	//6.窗口类的注销
 	UnregisterClass(L"ForTheDreamOfGameDevelop", wndClass.hInstance);
 	return 0;
 }

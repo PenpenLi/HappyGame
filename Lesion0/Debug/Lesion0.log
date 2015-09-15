@@ -1,14 +1,9 @@
-﻿生成启动时间为 2015/9/14 0:22:15。
-     1>项目“H:\work\HappyGame\Lesion0\Lesion0.vcxproj”在节点 2 上(Build 个目标)。
-     1>ClCompile:
-         D:\Cocos\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Main.cpp
-         Main.cpp
-       Link:
-         D:\Cocos\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"H:\work\HappyGame\Debug\Lesion0.exe" /INCREMENTAL /NOLOGO winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"H:\work\HappyGame\Debug\Lesion0.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"H:\work\HappyGame\Debug\Lesion0.lib" /MACHINE:X86 Debug\Lesion0.res
-         Debug\Main.obj
-         Lesion0.vcxproj -> H:\work\HappyGame\Debug\Lesion0.exe
-     1>已完成生成项目“H:\work\HappyGame\Lesion0\Lesion0.vcxproj”(Build 个目标)的操作。
+﻿生成启动时间为 2015/9/15 14:56:39。
+     1>项目“E:\gitHub\HappyGame\Lesion0\Lesion0.vcxproj”在节点 4 上(Rebuild 个目标)。
+       项目文件包含 ToolsVersion="12.0" 设置，但此工具集未知或缺失。您可以通过为此工具集安装相应的 .NET Framework 来解决此问题。将项目视为具有 ToolsVersion="4.0" 设置。
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V110\Microsoft.Cpp.Platform.targets(44,5): error MSB8020: The builds tools for v120 (Platform Toolset = 'v120') cannot be found. To build using the v120 build tools, either click the Project menu or right-click the solution, and then select "Update VC++ Projects...". Install v120 to build using the v120 build tools.
+     1>已完成生成项目“E:\gitHub\HappyGame\Lesion0\Lesion0.vcxproj”(Rebuild 个目标)的操作 - 失败。
 
-生成成功。
+生成失败。
 
-已用时间 00:00:01.14
+已用时间 00:00:00.00
