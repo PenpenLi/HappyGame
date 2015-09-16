@@ -10,16 +10,10 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Main\Lesion2.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Main\Lesion2.cpp" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D591BEC2-53F3-49D2-8B23-F372767C1EEF}</ProjectGuid>
+    <ProjectGuid>{22016328-B502-44D2-A336-6240EE725688}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Lesion2</RootNamespace>
+    <RootNamespace>Lesion4</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -83,6 +77,9 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="GDIdemoCore.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
