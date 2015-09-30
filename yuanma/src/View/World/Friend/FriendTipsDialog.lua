@@ -93,8 +93,10 @@ function FriendTipsDialog:initUI()
     
     self.params._pButton2:addTouchEventListener(function(sender, eventType)
         if eventType == ccui.TouchEventType.ended then
-            FriendCGMessage:sendMessageRemoveFriend(self._pData.roleId)
-            self:close()
+            showConfirmDialog("是否删除好友" ..self._pData.roleName .."?",function()
+               FriendCGMessage:sendMessageRemoveFriend(self._pData.roleId)
+               self:close()
+            end) 
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
         end

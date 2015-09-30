@@ -20,7 +20,6 @@ function WorldOtherPetRoleRunState:ctor()
     self._nCurStepIndexInMoveDirections = 0          -- 指定的移动方向集合中当前的步数
     self._fCurStepMoveDistanceBuf = 0                -- 当前指定移动方向集合的行进步中累计的移动间距缓存
     self._fCurAngleInMoveDirections = 0              -- 当前指定移动方向集合的行进步中的角度
-    self._funcCallBackFunc = nil                     -- 指定移动方向集合结束后的回调函数
     
 end
 
@@ -44,12 +43,6 @@ function WorldOtherPetRoleRunState:onEnter(args)
                 self._fCurAngleInMoveDirections = self:getMaster():getAngle3D()
                 -- 位置矫正
                 self:getMaster():adjustPos()
-                -- 回调函数赋值
-                self._funcCallBackFunc = args.func
-            elseif args.func ~= nil then -- 虽移动方向集合为0，但是回调函数不为空，则直接执行，返回即可
-                args.func()
-                self._pOwnerMachine:setCurStateByTypeID(kType.kState.kWorldOtherPetRole.kStand)
-                return
             end
         end
         
@@ -68,7 +61,6 @@ function WorldOtherPetRoleRunState:onExit()
     self._nCurStepIndexInMoveDirections = 0
     self._fCurStepMoveDistanceBuf = 0
     self._fCurAngleInMoveDirections = 0
-    self._funcCallBackFunc = nil
     
     return
 end
@@ -341,10 +333,21 @@ function WorldOtherPetRoleRunState:procRun(dt)
 
         -- 距离全部走完还差4个格子时可以回到站立状态
         if self._nCurStepIndexInMoveDirections > table.getn(self._tMoveDirections) - 3 then
-            if self._funcCallBackFunc then
-                self._funcCallBackFunc()
+            local target = self:getMaster()._pMaster
+            local posIndex = self:getMaster():getPositionIndex()
+            local targetPosIndex = self:getMapManager():convertPiexlToIndex(cc.p(target:getPositionX(), target:getPositionY()))
+            local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)
+            if table.getn(path) - 3 > 0 then       -- 继续寻路
+                self._tMoveDirections = path
+                self._nCurStepIndexInMoveDirections = 1
+                self._fCurStepMoveDistanceBuf = 0
+                self._fCurAngleInMoveDirections = self:getMaster():getAngle3D()
+                -- 位置矫正
+                self:getMaster():adjustPos()
+            else  -- 在制定距离内，恢复到站立即可
+                self._pOwnerMachine:setCurStateByTypeID(kType.kState.kWorldOtherPetRole.kStand)
             end
-            self._pOwnerMachine:setCurStateByTypeID(kType.kState.kWorldOtherPetRole.kStand)
+
         end
     end
 

@@ -29,6 +29,19 @@ end
 -- 进入函数
 function BattleMonsterDeadState:onEnter(args)     
     if self:getMaster() then
+        ---------------------------------- 死亡后的附加buff ----------------------------------------------------------------------
+        if self:getMaster()._pRoleInfo.DeadAttachBuffID ~= -1 then
+            local group = self:getAIManager():getGroup(nil, "foe-side", kType.kTargetGroupType.kOpposite)
+            for kOur, vOur in pairs(group) do
+                if vOur._nCurHp > 0 then
+                    vOur:addBuffByID(self:getMaster()._pRoleInfo.DeadAttachBuffID)
+                end
+            end
+            if self:getMaster()._pMonsterDeadAttachBuffWarningEffectAni then
+                self:getMaster()._pMonsterDeadAttachBuffWarningEffectAni:setVisible(false)
+            end
+        end
+
         ---------------------------------- 判断是否会发生变身（即在原地创建新的野怪）---------------------------------------------
         if self:getMaster()._pRoleInfo.ShapeChangeID ~= -1 then
             -----------------------------------------------变身-----------------------------------------------------------------------

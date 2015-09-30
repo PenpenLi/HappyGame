@@ -42,6 +42,12 @@ function BattleDizzyBuffController:onEnter()
     -- 引用计数+1
     self._pOwnerMachine._tBuffRefs[self._kTypeID]:add()
     
+    -- 如果有当前有debuff，则退出
+    if self._pMaster:isUnusualState() == true then
+        self._bEnable = false
+        return
+    end
+
     -- 创建特效对象
     self._pAni = cc.CSLoader:createNode(self._strAniName)
     self._pAniPos = function() return cc.p(0,self._pMaster:getHeight()) end
@@ -75,11 +81,16 @@ function BattleDizzyBuffController:onExit()
     -- 引用计数-1
     self._pOwnerMachine._tBuffRefs[self._kTypeID]:sub()
 
-    self._pAni:stopAllActions()
+    if self._pAni then
+        self._pAni:stopAllActions()
+    end
+
     if self._pAniParent then
         self._pMaster:removeChild(self._pAniParent,true)
     else
-        self._pMaster:removeChild(self._pAni,true)
+        if self._pAni then
+            self._pMaster:removeChild(self._pAni,true)
+        end
     end
 
     -- 除了指定buff以外的剩余所有buff中，根据是否存在影响角色正常恢复到站立状态的buff而自动刷新人物状态

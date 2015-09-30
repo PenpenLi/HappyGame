@@ -539,9 +539,11 @@ function RolesInfoDialog:createRoleModel()
     self:updateRoleBodyModel(pRoleModelAni,pRoleTexTure,nScale,bBool) --更换人物模型
     self:updateRoleWepanModel(pWeaPonAni1,pWeaPonAni2,pWeaPonTexTure,not bBool) --更换武器模型
     self:updateRoleFashionBackModel(pFashionBackAni,pFashionBackTure,not bBool) --更换翅膀模型
-    --self:updateRoleFashionHaloModel(pFashionHaloAni,pFashionHaloTure,nScale) --更换光环
+    self:updateRoleFashionHaloModel(pFashionHaloAni,pFashionHaloTure,nScale) --更换光环
     self._pRolePlayer:setRotation3D(cc.vec3(0,0,0))
     self:setModelScaleByInfo(pModelScale)
+    --设置材质信息
+    self:setMaterialInfo(self._tRoleInfo.equipemts)
 
     -- 穿戴物品成功就播放欢呼动画
     --local playRoleDefaultAction = function()
@@ -845,6 +847,29 @@ function RolesInfoDialog:setModelScaleByInfo(pScale)
 	
 end
 
+
+--设置材质信息
+function RolesInfoDialog:setMaterialInfo(tEquipemts)
+    for k, v in pairs(tEquipemts) do
+        local pEquInfo = v
+        local nPart = pEquInfo.dataInfo.Part -- 部位
+        local ptempleteInfo  = pEquInfo.templeteInfo
+        if nPart == kEqpLocation.kBody then -- 身
+               setSprite3dMaterial(self._pRolePlayer,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kWeapon then  -- 武器
+               setSprite3dMaterial(self._pWeapon1,ptempleteInfo.Material)
+               setSprite3dMaterial(self._pWeapon2,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBody then --时装身可能会影响人物模型
+               setSprite3dMaterial(self._pRolePlayer,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBack then  --时装背（翅膀）
+               setSprite3dMaterial(self._pFashionBack,ptempleteInfo.Material)
+
+        elseif nPart == kEqpLocation.kFashionHalo then  --时装光环
+        
+        end
+    end
+
+end
 
 --界面做了缓存再次打开的需要进行的操作
 function RolesInfoDialog:updateCacheWithData(args)

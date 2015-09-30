@@ -126,7 +126,6 @@ end
 -- 初始化信息
 function PlayerRole:initInfo(pRoleInfo, charTag)
     self._pRoleInfo = pRoleInfo
-    
     -- 数据表中的参数项与从服务器获得的数据进行合并
     local dataFromTable = TablePlayerRoles[self._pRoleInfo.roleCareer]
     self._pRoleInfo.FireMax = dataFromTable.FireMax
@@ -187,13 +186,18 @@ function PlayerRole:initAni()
     local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kWeapon].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
     local tWeaponTempleteInfo = TableTempleteEquips[templeteID]
 
+
+    --先初始化人物信息
+    for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
+        GetCompleteItemInfo(self._pRoleInfo.equipemts[i],self._pRoleInfo.roleCareer)
+    end
+
     -- 判断是否加载时装身
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[2] == true then -- 时装身        
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tBodyTempleteInfo = TableTempleteEquips[templeteID] 
+                tBodyTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -245,10 +249,9 @@ function PlayerRole:initAni()
     local tFashionBackTempleteInfo = nil
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[1] == true then
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tFashionBackTempleteInfo = TableTempleteEquips[templeteID]
+                tFashionBackTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -270,10 +273,9 @@ function PlayerRole:initAni()
     local tFashionHaloTempleteInfo = nil
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[3] == true then        
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tFashionHaloTempleteInfo = TableTempleteEquips[templeteID] 
+                tFashionHaloTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -300,6 +302,10 @@ function PlayerRole:initAni()
     else
         self._pName:setVisible(false)
     end
+
+
+    --设置材质特效信息
+    self:setMaterialInfo()
 
     -- 叠色
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
@@ -457,7 +463,7 @@ function PlayerRole:playDeadEffect()
     -- 刷新zorder
     self._pDeadEffectAni:setPosition(self:getPositionX(), self:getPositionY() + self:getHeight()/2)
     self._pDeadEffectAni:setLocalZOrder(self:getLocalZOrder()+1)
-    self._pDeadEffectAni:setScale(self:getHeight() / 250)
+    self._pDeadEffectAni:setScale(self:getHeight() / 80)
     self._pDeadEffectAni:setVisible(true)
     self._pDeadEffectAni:stopAllActions()
     local action = cc.CSLoader:createTimeline("DeadEffect.csb")
@@ -521,13 +527,20 @@ function PlayerRole:refreshEquipsWithRoleInfo(roleInfo)
     local templeteID = TableEquips[roleInfo.equipemts[kEqpLocation.kWeapon].id - 100000].TempleteID[roleInfo.roleCareer]
     local tWeaponTempleteInfo = TableTempleteEquips[templeteID]
 
+    
+
+  --先初始化人物信息
+     for i=1,table.getn(roleInfo.equipemts) do --遍历装备集合
+        GetCompleteItemInfo(roleInfo.equipemts[i],roleInfo.roleCareer)
+     end
+
+
     -- 判断是否加载时装身
     if roleInfo.fashionOptions and roleInfo.fashionOptions[2] == true then -- 时装身        
         for i=1,table.getn(roleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(roleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = roleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                local templeteID = TableEquips[roleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[roleInfo.roleCareer]
-                tBodyTempleteInfo = TableTempleteEquips[templeteID] 
+                 tBodyTempleteInfo = roleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -586,10 +599,9 @@ function PlayerRole:refreshEquipsWithRoleInfo(roleInfo)
     local tFashionBackTempleteInfo = nil    
     if roleInfo.fashionOptions and roleInfo.fashionOptions[1] == true then
         for i=1,table.getn(roleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(roleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart =roleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                local templeteID = TableEquips[roleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[roleInfo.roleCareer]
-                tFashionBackTempleteInfo = TableTempleteEquips[templeteID] 
+                tFashionBackTempleteInfo = roleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -617,10 +629,9 @@ function PlayerRole:refreshEquipsWithRoleInfo(roleInfo)
     local tFashionHaloTempleteInfo = nil    
     if roleInfo.fashionOptions and roleInfo.fashionOptions[3] == true then        
         for i=1,table.getn(roleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(roleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = roleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                local templeteID = TableEquips[roleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[roleInfo.roleCareer]
-                tFashionHaloTempleteInfo = TableTempleteEquips[templeteID] 
+                 tFashionHaloTempleteInfo = roleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -1113,6 +1124,7 @@ function PlayerRole:playBeatenAction()
         beaten:setTag(nRoleActAction)
         self._pAni:runAction(beaten)
     end
+
 end
 
 -- 获取受击动作的时间间隔（单位：秒）
@@ -1138,6 +1150,7 @@ function PlayerRole:playFallGroundAction()
         fallGround:setTag(nRoleActAction)
         self._pAni:runAction(fallGround)
     end
+
 end
 
 -- 获取倒地动作的时间间隔（单位：秒）
@@ -1163,6 +1176,7 @@ function PlayerRole:playUpGroundAction()
         upGround:setTag(nRoleActAction)
         self._pAni:runAction(upGround)
     end
+
 end
 
 -- 获取起身动作的时间间隔（单位：秒）
@@ -1189,6 +1203,7 @@ function PlayerRole:playDizzyAction()
         dizzy:setTag(nRoleActAction)
         self._pAni:runAction(dizzy)
     end
+
 end
 
 -- 获取眩晕动作的时间间隔（单位：秒）
@@ -1214,6 +1229,7 @@ function PlayerRole:playDeadAction()
         dead:setTag(nRoleActAction)
         self._pAni:runAction(dead)
     end 
+
 end
 
 -- 获取死亡动作的时间间隔（单位：秒）
@@ -1246,7 +1262,8 @@ function PlayerRole:playAttackAction(index)
         self._pAni:stopActionByTag(nRoleActAction)
         attack:setTag(nRoleActAction)
         self._pAni:runAction(attack)
-    end  
+    end
+
 end
 
 -- 获取攻击动作的时间间隔（单位：秒）
@@ -1369,7 +1386,6 @@ end
 
 -- 激发passive时根据passiveTypeID添加相应passive
 function PlayerRole:addPassiveByTypeID(typeID)
---[[
     if typeID > kType.kController.kPassive.kNone then
         -- 产生相应passive
         if self._tPassiveSkillInfos[typeID] ~= nil then   -- 需要使用的被动技能在人物自身的被动技能信息集合中恰好存在，则可以激活
@@ -1394,7 +1410,6 @@ function PlayerRole:addPassiveByTypeID(typeID)
             return passive
         end
     end
-    ]]
     return nil
 end
 
@@ -1434,6 +1449,10 @@ function PlayerRole:beHurtedBySkill(skill, intersection)
             local blockRate = 1000*(self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockChanceMax.Value)/(self:getAttriValueByType(kAttribute.kBlock)+TableLevel[skill:getMaster()._nLevel].Flv*TableConstants.BlockChanceReduce.Value)
             local randNum = getRandomNumBetween(1,1000)
             if randNum <= blockRate then -- 格挡成功
+                isBlock = true
+                blockValue = self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockByBlock.Value + self:getAttriValueByType(kAttribute.kDefend)*TableConstants.BlockByDefence.Value + TableConstants.BlockValueMin.Value
+            end
+            if self._bMustBlock == true then  -- 必须格挡
                 isBlock = true
                 blockValue = self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockByBlock.Value + self:getAttriValueByType(kAttribute.kDefend)*TableConstants.BlockByDefence.Value + TableConstants.BlockValueMin.Value
             end
@@ -1646,6 +1665,10 @@ function PlayerRole:beHurtedBySkill(skill, intersection)
                     if self:isUnusualState() == false then  -- 非异常状态时，可以切入应值
                         self:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kBeaten, false, {skill, 5})
                     end
+                    -- 屏幕添加卡顿，并添加破甲buff
+                    self:getMapManager():screenKartun(TableConstants.KartunTimeWhenPowerValueIsZero.Value)
+                    -- 添加破甲buff
+                    self:addBuffByID(4)
                     return
                 end
             end
@@ -1710,9 +1733,11 @@ function PlayerRole:beHurtedByBuff(buff)
     if buff._kTypeID == kType.kController.kBuff.kBattleFireBuff then
         loseHpValue = self._nHpMax * buff._fHurtRate
     elseif buff._kTypeID == kType.kController.kBuff.kBattlePoisonBuff then
-        loseHpValue = buff._fHurtValue
+        loseHpValue = buff._fLoseHpOnMaxHpRate * self._nHpMax
+        loseHpValue = loseHpValue + buff._fHurtValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleAddHpBuff then
-        addHpValue = buff._fAddHpValue
+        addHpValue = buff._fAddHpOnLostHpRate * (self._nHpMax - self._nCurHp)
+        addHpValue = addHpValue + buff._fAddHpValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleFightBackFireBuff then
         self._nCurFireSaving = self._nCurFireSaving + buff._fFireSavingValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleFightBackIceBuff then
@@ -1741,6 +1766,28 @@ function PlayerRole:beHurtedByBuff(buff)
         self:addHp(addHpValue)
     end
 
+end
+
+--设置材质特效信息
+function PlayerRole:setMaterialInfo()
+    for k, v in pairs(self._pRoleInfo.equipemts) do
+        local pEquInfo = GetCompleteItemInfo(v)
+        local nPart = pEquInfo.dataInfo.Part -- 部位
+        local ptempleteInfo  = pEquInfo.templeteInfo
+        if nPart == kEqpLocation.kBody then -- 身
+            setSprite3dMaterial(self._pAni,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kWeapon then  -- 武器
+            setSprite3dMaterial(self._pWeaponR,ptempleteInfo.Material)
+            setSprite3dMaterial(self._pWeaponL,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBody then --时装身可能会影响人物模型
+            setSprite3dMaterial(self._pAni,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation._pBack then  --时装背（翅膀）
+            setSprite3dMaterial(self._pFashionBack,ptempleteInfo.Material)
+
+        elseif nPart == kEqpLocation.kFashionHalo then  --时装光环
+
+        end
+    end
 end
 
 return PlayerRole

@@ -78,6 +78,15 @@ function FriendManager:setFriendSkillInfo(FriendRoleFightInfo)
     self._nMountFriendSkillId = temp2 > 0 and temp1 + 1 or temp1
 end
 
+-- 更新好友助战的时间戳
+function FriendManager:setFriendHelpCheerTime(cheerTime,friendId)
+    for i=1,table.getn(self._pFriendList) do
+        if self._pFriendList[i].roleId == friendId then
+            self._pFriendList[i].cheerTime = cheerTime
+        end
+    end
+end
+
 -- 获取好友技能id
 function FriendManager:getFriendSkillId()
     return self._nMountFriendSkillId

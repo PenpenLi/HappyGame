@@ -206,6 +206,7 @@ function RoleSelectLayer:initRoles()
             pRole:setPosition(mmo.VisibleRect:width()/2,121)
             self:addChild(pRole)
             table.insert(self._tSRRoleList, pRole)
+            setSprite3dMaterial(pRole,tRoleTempleteInfo.Material)
         end
 
         -- 武器模型
@@ -236,6 +237,7 @@ function RoleSelectLayer:initRoles()
                 pWeaponR:runAction(act)
                 pRole:getAttachNode("boneRightHandAttach"):addChild(pWeaponR)
                 table.insert(weapons,pWeaponR)
+                setSprite3dMaterial(pWeaponR,tWeaponTempleteInfo.Material)
             end
             if fullAniNameWeaponL then
                 local pWeaponL = cc.Sprite3D:create(fullAniNameWeaponL)
@@ -246,6 +248,7 @@ function RoleSelectLayer:initRoles()
                 pWeaponL:runAction(act)
                 pRole:getAttachNode("boneLeftHandAttach"):addChild(pWeaponL)
                 table.insert(weapons,pWeaponL)
+                setSprite3dMaterial(pWeaponL,tWeaponTempleteInfo.Material)
             end
             
             table.insert(self._tSRWeaponList, weapons)
@@ -279,6 +282,7 @@ function RoleSelectLayer:initRoles()
             back:runAction(act)
             pRole:getAttachNode("boneBackAttach"):addChild(back)
             table.insert(self._tSRBackList, back)
+            setSprite3dMaterial(back,tFashionBackTempleteInfo.Material)
         end
         
         -- 动作初始化

@@ -162,7 +162,16 @@ function AIManager:roleRefreshDirectionWhenAttackEnemys(attacker, skill)
     -- 先判定attacker是 “我方” 或者 “敌方” 
     local sideType = self:getsideType(attacker)
     -- 确定受击群里类型
-    local enemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local tmpEnemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local enemys = {}
+    for k,v in pairs(tmpEnemys) do    -- 排除出场状态还没有结束的野怪
+        if (v._kGameObjType == kType.kGameObj.kRole and v._kRoleType == kType.kRole.kMonster and v:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID == kType.kState.kBattleMonster.kAppear) then
+        else
+            table.insert(enemys,v)
+        end
+    end
+    tmpEnemys = {}
+
     -- 确定搜索方向
     local searchDirection = self:getSearchDirection(attacker)    
 
@@ -235,7 +244,15 @@ function AIManager:objSearchNearestEnemysInViewAndSkillWarningRange(attacker, sk
     -- 先判定attacker是 “我方” 或者 “敌方” 
     local sideType = self:getsideType(attacker)
     -- 确定受击群里类型
-    local enemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local tmpEnemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local enemys = {}
+    for k,v in pairs(tmpEnemys) do    -- 排除出场状态还没有结束的野怪
+        if (v._kGameObjType == kType.kGameObj.kRole and v._kRoleType == kType.kRole.kMonster and v:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID == kType.kState.kBattleMonster.kAppear) then
+        else
+            table.insert(enemys,v)
+        end
+    end
+    tmpEnemys = {}
 
     -- 查找视野范围和技能警戒范围内的野怪集合
     local targetsInView = {}
@@ -340,7 +357,17 @@ function AIManager:objSearchNearestEnemysInRangeForDamage(attacker, range, needN
     else
         targetGroupType = groupType
     end
-    local enemys = self:getGroup(attacker, sideType, targetGroupType)
+
+    local tmpEnemys = self:getGroup(attacker, sideType, targetGroupType)
+    local enemys = {}
+    for k,v in pairs(tmpEnemys) do    -- 排除出场状态还没有结束的野怪
+        if (v._kGameObjType == kType.kGameObj.kRole and v._kRoleType == kType.kRole.kMonster and v:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID == kType.kState.kBattleMonster.kAppear) then
+        else
+            table.insert(enemys,v)
+        end
+    end
+    tmpEnemys = {}
+
     -- 查找范围内的集合
     local targetsInRange = {}
     local posAttackerX, posAttackerY = 0, 0
@@ -427,7 +454,17 @@ function AIManager:isPetCanEnterBattleModeForDamage(pet, groupType)
     if groupType == nil then
         targetGroupType = kType.kTargetGroupType.kOpposite
     end
-    local enemys = self:getGroup(pet, sideType, targetGroupType)
+
+    local tmpEnemys = self:getGroup(pet, sideType, targetGroupType)
+    local enemys = {}
+    for k,v in pairs(tmpEnemys) do    -- 排除出场状态还没有结束的野怪
+        if (v._kGameObjType == kType.kGameObj.kRole and v._kRoleType == kType.kRole.kMonster and v:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID == kType.kState.kBattleMonster.kAppear) then
+        else
+            table.insert(enemys,v)
+        end
+    end
+    tmpEnemys = {}
+
     -- 确定视野范围内是否存在敌人，如果存在，返回true，表示可以进入战斗状态，否则false，表示不可进入战斗状态
     local posPetRoleX, posPetRoleY = pet:getPosition()
     for kEnemy, vEnemy in pairs(enemys) do 
@@ -454,7 +491,15 @@ function AIManager:isPointCollidingOnEnemys(attacker, skill, pos)
     -- 先判定attacker是 “我方” 或者 “敌方” 
     local sideType = self:getsideType(attacker)
     -- 确定受击群里类型
-    local enemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local tmpEnemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local enemys = {}
+    for k,v in pairs(tmpEnemys) do    -- 排除出场状态还没有结束的野怪
+        if (v._kGameObjType == kType.kGameObj.kRole and v._kRoleType == kType.kRole.kMonster and v:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID == kType.kState.kBattleMonster.kAppear) then
+        else
+            table.insert(enemys,v)
+        end
+    end
+    tmpEnemys = {}
 
     -- 先判定受击的enemys集合
     local isColliding = false
@@ -480,8 +525,17 @@ function AIManager:isRectCollidingOnEnemys(attacker, skill, rec)
     end
     -- 先判定attacker是 “我方” 或者 “敌方” 
     local sideType = self:getsideType(attacker)
+
     -- 确定受击群里类型
-    local enemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local tmpEnemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local enemys = {}
+    for k,v in pairs(tmpEnemys) do    -- 排除出场状态还没有结束的野怪
+        if (v._kGameObjType == kType.kGameObj.kRole and v._kRoleType == kType.kRole.kMonster and v:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID == kType.kState.kBattleMonster.kAppear) then
+        else
+            table.insert(enemys,v)
+        end
+    end
+    tmpEnemys = {}
 
     -- 先判定受击的enemys集合
     local directions = 0
@@ -546,12 +600,22 @@ end
 -- 参数2：攻击者的技能
 function AIManager:skillCollidingOnEnemysAndHurt(attacker, skill)
     if attacker == nil or skill == nil then
-        return
+        return false        -- 没有击中
     end
     -- 先判定attacker是 “我方” 或者 “敌方” 
     local sideType = self:getsideType(attacker)
+
     -- 确定受击群里类型
-    local enemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local tmpEnemys = self:getGroup(attacker, sideType, skill._pSkillInfo.TargetGroupType)
+    local enemys = {}
+    for k,v in pairs(tmpEnemys) do    -- 排除出场状态还没有结束的野怪
+        if (v._kGameObjType == kType.kGameObj.kRole and v._kRoleType == kType.kRole.kMonster and v:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID == kType.kState.kBattleMonster.kAppear) then
+        else
+            table.insert(enemys,v)
+        end
+    end
+    tmpEnemys = {}
+
     -- 确定最大的目标数量上限,0表示无上限
     local nTargetMaxNum = skill._pSkillInfo.TargetMaxNum
     local rects = skill._tCurAttackRects
@@ -617,6 +681,9 @@ function AIManager:skillCollidingOnEnemysAndHurt(attacker, skill)
         skill:getMaster():roleKartun(skill._tTempleteInfo.MissRoleKartun["RoleKartun"..skill._nCurFrameRegionIndex.."_"..skill._nCurFrameEventIndex])
         -- 空放的震屏
         skill:getMapManager():shakeMap(skill._tTempleteInfo.MissShock["Shock"..skill._nCurFrameRegionIndex.."_"..skill._nCurFrameEventIndex],cc.p(skill:getPositionX(), skill:getPositionY()))
+        -- 闪屏
+        skill:getMapManager():splashMap(skill._tTempleteInfo.SplashShock["Splash"..skill._nCurFrameRegionIndex.."_"..skill._nCurFrameEventIndex])
+        return false        -- false表示没有击中
     else -- 【命中】
         -- 击中的屏幕卡顿
         skill:getMapManager():screenKartun(skill._tTempleteInfo.HitScreenKartun["ScreenKartun"..skill._nCurFrameRegionIndex.."_"..skill._nCurFrameEventIndex])
@@ -630,9 +697,36 @@ function AIManager:skillCollidingOnEnemysAndHurt(attacker, skill)
             v:beHurtedBySkill(skill,tInterSections[k])
             mmo.HelpFunc:playVibrator(20)
         end
+        -- 闪屏
+        skill:getMapManager():splashMap(skill._tTempleteInfo.SplashShock["Splash"..skill._nCurFrameRegionIndex.."_"..skill._nCurFrameEventIndex])
+        return true     -- true表示击中
+    end    
+
+end
+
+-- 瞬移到以某个对象为中心一定格子范围内的随机位置
+function AIManager:objBlinkToRandomPosAccordingToTargetObj(obj, targetObj, rangeBlockNum)
+    local targetPosIndex = targetObj:getPositionIndex()
+    local stepOffsetX = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
+    local stepOffsetY = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
+    local factorX = getRandomNumBetween(1,2)        -- 随机正负
+    local factorY = getRandomNumBetween(1,2)        -- 随机正负
+    if factorX == 2 then factorX = -1 end
+    if factorY == 2 then factorY = -1 end
+    local tiledType = MapManager:getInstance():getTiledAttriAt(cc.p(targetPosIndex.x + stepOffsetX*factorX, targetPosIndex.y + stepOffsetY*factorY))        
+    while tiledType == kType.kTiledAttri.kBarrier or 
+        targetPosIndex.x + stepOffsetX*factorX >= MapManager:getInstance()._sMapIndexSize.width or
+        targetPosIndex.x + stepOffsetX*factorX <= 0 or
+        targetPosIndex.y + stepOffsetY*factorY >= MapManager:getInstance()._sMapIndexSize.height or
+        targetPosIndex.y + stepOffsetY*factorY <= 0 do
+        stepOffsetX = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
+        stepOffsetY = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
+        factorX = getRandomNumBetween(1,2)        -- 随机正负
+        factorY = getRandomNumBetween(1,2)        -- 随机正负
+        if factorX == 2 then factorX = -1 end
+        if factorY == 2 then factorY = -1 end
+        tiledType = MapManager:getInstance():getTiledAttriAt(cc.p(targetPosIndex.x + stepOffsetX*factorX, targetPosIndex.y + stepOffsetY*factorY))
     end
-    -- 闪屏
-    skill:getMapManager():splashMap(skill._tTempleteInfo.SplashShock["Splash"..skill._nCurFrameRegionIndex.."_"..skill._nCurFrameEventIndex])
-    
-    return    
+    obj:setPositionByIndex(cc.p(targetPosIndex.x + stepOffsetX*factorX, targetPosIndex.y + stepOffsetY*factorY))
+
 end

@@ -23,12 +23,14 @@ function MonsterRole:ctor()
     self._fAngle3D = 0                           -- 野怪模型的角度
     self._nTypeID = 0                            -- 野怪类型id，取自副本表中的monsterId
     ----------- 人物特效相关 -----------------------------------------
-    self._pHurtedEffectAnis = {}                 -- 野怪受击特效动画
-    self._pCriticalHitEffectAni = nil            -- 野怪暴击特效动画
-    self._pBlockHitEffectAni = nil               -- 野怪格挡特效动画
-    self._pMissHitEffectAni = nil                -- 野怪闪避特效动画       
-    self._pAppearEffectAni = nil                 -- 野怪出场特效动画         
-    self._pDeadEffectAni = nil                   -- 野怪死亡特效动画
+    self._pHurtedEffectAnis = {}                        -- 野怪受击特效动画
+    self._pCriticalHitEffectAni = nil                   -- 野怪暴击特效动画
+    self._pBlockHitEffectAni = nil                      -- 野怪格挡特效动画
+    self._pMissHitEffectAni = nil                       -- 野怪闪避特效动画       
+    self._pAppearEffectAni = nil                        -- 野怪出场特效动画         
+    self._pDeadEffectAni = nil                          -- 野怪死亡特效动画
+    self._pEarlyWarningEffectAnis = {}                  -- 野怪技能的提前预警特效动画
+    self._pMonsterDeadAttachBuffWarningEffectAni = nil  -- 野怪身上挂着的[死亡附加buff提示特效]动画
     ----------- 人物属性相关 ----------------------------------------
     self._pBattleUIDelegate = nil                -- battleUILayer 代理对象
     self._nLevel = 0                             -- 野怪等级
@@ -112,6 +114,7 @@ end
 -- 循环更新
 function MonsterRole:updateMonsterRole(dt)
     self:updateRole(dt)
+    self:refreshEffect()
     self:refreshZorder()
 
 end
@@ -217,6 +220,30 @@ function MonsterRole:initEffects()
         self:getMapManager()._pTmxMap:addChild(self._pDeadEffectAni)
         self._pDeadEffectAni:setVisible(false)
 
+        -- 身上挂着的[死亡附加buff提示特效]
+        if self._pRoleInfo.DeadAttachBuffID ~= -1 then
+            self._pMonsterDeadAttachBuffWarningEffectAni = cc.CSLoader:createNode("MonsterDeadAttachBuffWarningEffect"..TableBuff[self._pRoleInfo.DeadAttachBuffID].TypeID..".csb")
+            self:getMapManager()._pTmxMap:addChild(self._pMonsterDeadAttachBuffWarningEffectAni)
+            self._pMonsterDeadAttachBuffWarningEffectAni:setVisible(false)
+        end
+
+        -- 技能提前预警特效
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType1] = cc.CSLoader:createNode("EarlyWarningEffect1.csb")
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType2] = cc.CSLoader:createNode("EarlyWarningEffect2.csb")
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType3] = cc.CSLoader:createNode("EarlyWarningEffect3.csb")
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType4] = cc.CSLoader:createNode("EarlyWarningEffect4.csb")
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType5] = cc.CSLoader:createNode("EarlyWarningEffect4.csb")
+        self:getMapManager()._pTmxMap:addChild(self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType1])
+        self:getMapManager()._pTmxMap:addChild(self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType2])
+        self:getMapManager()._pTmxMap:addChild(self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType3])
+        self:getMapManager()._pTmxMap:addChild(self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType4])
+        self:getMapManager()._pTmxMap:addChild(self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType5])
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType1]:setVisible(false)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType2]:setVisible(false)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType3]:setVisible(false)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType4]:setVisible(false)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType5]:setVisible(false)
+
     end
 
 end
@@ -232,7 +259,16 @@ function MonsterRole:removeAllEffects()
         self._pBlockHitEffectAni:removeFromParent(true)
         self._pMissHitEffectAni:removeFromParent(true)
         self._pAppearEffectAni:removeFromParent(true)
-        self._pDeadEffectAni:removeFromParent(true)        
+        self._pDeadEffectAni:removeFromParent(true)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType1]:removeFromParent(true)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType2]:removeFromParent(true)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType3]:removeFromParent(true)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType4]:removeFromParent(true)
+        self._pEarlyWarningEffectAnis[kType.kSkillEarlyWarning.kType5]:removeFromParent(true)
+        if self._pMonsterDeadAttachBuffWarningEffectAni then
+            self._pMonsterDeadAttachBuffWarningEffectAni:removeFromParent(true)
+        end
+
     end
 end
 
@@ -247,6 +283,18 @@ function MonsterRole:initRefs()
         self._pRefGhostOpacity = require("RoleGhostRef"):create(self)                    
     end
     
+end
+
+-- 显示野怪死亡附加buff
+function MonsterRole:playMonsterDeadAttachBuffWarningEffect()
+    if self._pMonsterDeadAttachBuffWarningEffectAni then
+        self._pMonsterDeadAttachBuffWarningEffectAni:setVisible(true)
+        self._pMonsterDeadAttachBuffWarningEffectAni:stopAllActions()
+        local action = cc.CSLoader:createTimeline("MonsterDeadAttachBuffWarningEffect"..TableBuff[self._pRoleInfo.DeadAttachBuffID].TypeID..".csb")
+        action:gotoFrameAndPlay(0, action:getDuration(), true)
+        self._pMonsterDeadAttachBuffWarningEffectAni:runAction(action)
+    end
+
 end
 
 -- 设置当前移动速度比例（有叠加效果）
@@ -317,6 +365,78 @@ function MonsterRole:playHurtedEffect(type, intersection, isCritical, isBlock)
 
 end
 
+-- 播放技能预警特效
+function MonsterRole:playSkillEarlyWarningEffect(skill, type)
+
+    self._pEarlyWarningEffectAnis[type]:setVisible(true)
+    
+    local csbName = ""
+    local pos = nil
+    local zorder = nil
+    local target = nil
+    if type == kType.kSkillEarlyWarning.kType1 then
+        csbName = "EarlyWarningEffect1.csb"
+        pos = cc.p(self:getPositionX(), self:getPositionY() + self:getHeight()/2)
+        zorder = kZorder.kMax
+    elseif type == kType.kSkillEarlyWarning.kType2 then
+        csbName = "EarlyWarningEffect2.csb"
+        local tTargets = self:getAIManager():objSearchNearestEnemysInRangeForDamage(self, skill._pSkillInfo.WarnRange, nil, skill._pSkillInfo.TargetGroupType)
+        if table.getn(tTargets) ~= 0 then
+            target = tTargets[1].enemy
+            pos = cc.p(target:getPositionX(), target:getPositionY()+target:getHeight()/2)
+        else
+            pos = cc.p(self:getPositionX(), self:getPositionY()+self:getHeight()/2)
+            self._pEarlyWarningEffectAnis[type]:setVisible(false)
+        end
+        zorder = kZorder.kMax
+    elseif type == kType.kSkillEarlyWarning.kType3 then
+        csbName = "EarlyWarningEffect3.csb"
+        pos = cc.p(self:getPositionX(), self:getPositionY())
+        zorder = kZorder.kMinRole
+        local tTargets = self:getAIManager():objSearchNearestEnemysInRangeForDamage(self, skill._pSkillInfo.WarnRange, nil, skill._pSkillInfo.TargetGroupType)
+        local endPos = nil
+        if table.getn(tTargets) ~= 0 then
+            target = tTargets[1].enemy
+            endPos = cc.p(target:getPositionX(), target:getPositionY())
+        else
+            endPos = cc.p(self:getPositionX(), self:getPositionY())
+            self._pEarlyWarningEffectAnis[type]:setVisible(false)
+        end
+        local rotation = mmo.HelpFunc:gAngleAnalyseForRotation(endPos.x, endPos.y, pos.x, pos.y)
+        rotation = (math.modf(-rotation+90))%360  -- 补一个起始差值
+        self._pEarlyWarningEffectAnis[type]:setRotation(rotation)
+    elseif type == kType.kSkillEarlyWarning.kType4 then
+        csbName = "EarlyWarningEffect4.csb"
+        pos = cc.p(self:getPositionX(), self:getPositionY())
+        zorder = kZorder.kMinRole
+    elseif type == kType.kSkillEarlyWarning.kType5 then
+        csbName = "EarlyWarningEffect4.csb"
+        local tTargets = self:getAIManager():objSearchNearestEnemysInRangeForDamage(self, skill._pSkillInfo.WarnRange, nil, skill._pSkillInfo.TargetGroupType)
+        if table.getn(tTargets) ~= 0 then
+            target = tTargets[1].enemy
+            pos = cc.p(target:getPositionX(), target:getPositionY())
+        else
+            pos = cc.p(self:getPositionX(), self:getPositionY())
+            self._pEarlyWarningEffectAnis[type]:setVisible(false)
+        end
+        zorder = kZorder.kMinRole
+    end
+    
+    local action = cc.CSLoader:createTimeline(csbName)
+
+    -- 刷新zorder
+    self._pEarlyWarningEffectAnis[type]:setPosition(pos)
+    self._pEarlyWarningEffectAnis[type]:setLocalZOrder(zorder)  
+    self._pEarlyWarningEffectAnis[type]:stopAllActions()    
+    action:gotoFrameAndPlay(0, action:getDuration(), false)
+    self._pEarlyWarningEffectAnis[type]:runAction(action)
+    self._pEarlyWarningEffectAnis[type]:runAction(cc.Sequence:create(cc.DelayTime:create(action:getDuration()*cc.Director:getInstance():getAnimationInterval()),cc.Hide:create()))
+
+    local time = action:getDuration()*cc.Director:getInstance():getAnimationInterval()
+
+    return time, target
+end
+
 -- 显示出场特效
 function MonsterRole:playAppearEffect()
     -- 刷新zorder
@@ -337,7 +457,7 @@ function MonsterRole:playDeadEffect()
     -- 刷新zorder
     self._pDeadEffectAni:setPosition(self:getPositionX(), self:getPositionY() + self:getHeight()/2)
     self._pDeadEffectAni:setLocalZOrder(self:getLocalZOrder()+1)
-    self._pDeadEffectAni:setScale(self:getHeight() / 250)
+    self._pDeadEffectAni:setScale(self:getHeight() / 80)
     self._pDeadEffectAni:setVisible(true)
     self._pDeadEffectAni:stopAllActions()
     local action = cc.CSLoader:createTimeline("DeadEffect.csb")
@@ -411,6 +531,15 @@ function MonsterRole:refreshZorder()
             end
             self:setLocalZOrder(kZorder.kMinRole + self:getMapManager()._sMapRectPixelSize.height - self:getPositionY())
         end
+    end
+end
+
+-- 刷新特效
+function MonsterRole:refreshEffect()
+    -- 刷新野怪附加buff的位置
+    if self._pMonsterDeadAttachBuffWarningEffectAni then
+        self._pMonsterDeadAttachBuffWarningEffectAni:setPosition(self:getPositionX(), self:getPositionY())
+        self._pMonsterDeadAttachBuffWarningEffectAni:setLocalZOrder(self:getLocalZOrder()+1)
     end
 end
 
@@ -683,6 +812,7 @@ function MonsterRole:playAppearAction()
         appear:setTag(nRoleActAction)
         self._pAni:runAction(appear)
     end
+
 end
 
 -- 获取出场动作的时间间隔（单位：秒）
@@ -735,6 +865,7 @@ function MonsterRole:playRunAction()
         run:setTag(nRoleActAction)
         self._pAni:runAction(run)
     end
+
 end
 
 -- 获取奔跑动作的时间间隔（单位：秒）
@@ -760,6 +891,7 @@ function MonsterRole:playBeatenAction()
         beaten:setTag(nRoleActAction)
         self._pAni:runAction(beaten)
     end
+
 end
 
 -- 获取受击动作的时间间隔（单位：秒）
@@ -785,6 +917,7 @@ function MonsterRole:playFallGroundAction()
         fallGround:setTag(nRoleActAction)
         self._pAni:runAction(fallGround)
     end
+
 end
 
 -- 获取倒地动作的时间间隔（单位：秒）
@@ -810,6 +943,7 @@ function MonsterRole:playUpGroundAction()
         upGround:setTag(nRoleActAction)
         self._pAni:runAction(upGround)
     end
+
 end
 
 -- 获取起身动作的时间间隔（单位：秒）
@@ -836,6 +970,7 @@ function MonsterRole:playDizzyAction()
         dizzy:setTag(nRoleActAction)
         self._pAni:runAction(dizzy)
     end
+    
 end
 
 -- 获取眩晕动作的时间间隔（单位：秒）
@@ -861,6 +996,7 @@ function MonsterRole:playDeadAction()
         dead:setTag(nRoleActAction)
         self._pAni:runAction(dead)
     end 
+
 end
 
 -- 获取死亡动作的时间间隔（单位：秒）
@@ -893,7 +1029,8 @@ function MonsterRole:playAttackAction(index)
         self._pAni:stopActionByTag(nRoleActAction)
         attack:setTag(nRoleActAction)
         self._pAni:runAction(attack)
-    end  
+    end
+
 end
 
 -- 获取攻击动作的时间间隔（单位：秒）
@@ -1016,6 +1153,10 @@ function MonsterRole:beHurtedBySkill(skill, intersection)
             local blockRate = 1000*(self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockChanceMax.Value)/(self:getAttriValueByType(kAttribute.kBlock)+TableLevel[skill:getMaster()._nLevel].Flv*TableConstants.BlockChanceReduce.Value)
             local randNum = getRandomNumBetween(1,1000)
             if randNum <= blockRate then -- 格挡成功
+                isBlock = true
+                blockValue = self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockByBlock.Value + self:getAttriValueByType(kAttribute.kDefend)*TableConstants.BlockByDefence.Value + TableConstants.BlockValueMin.Value
+            end
+            if self._bMustBlock == true then  -- 必须格挡
                 isBlock = true
                 blockValue = self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockByBlock.Value + self:getAttriValueByType(kAttribute.kDefend)*TableConstants.BlockByDefence.Value + TableConstants.BlockValueMin.Value
             end
@@ -1206,6 +1347,10 @@ function MonsterRole:beHurtedBySkill(skill, intersection)
                     if self:isUnusualState() == false then  -- 非异常状态时，可以切入应值
                         self:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kBeaten, false, {skill, 5})
                     end
+                    -- 屏幕添加卡顿，并添加破甲buff
+                    self:getMapManager():screenKartun(TableConstants.KartunTimeWhenPowerValueIsZero.Value)
+                    -- 添加破甲buff
+                    self:addBuffByID(4)
                     return
                 end
             end
@@ -1268,9 +1413,11 @@ function MonsterRole:beHurtedByBuff(buff)
     if buff._kTypeID == kType.kController.kBuff.kBattleFireBuff then
         loseHpValue = self._nHpMax * buff._fHurtRate
     elseif buff._kTypeID == kType.kController.kBuff.kBattlePoisonBuff then
-        loseHpValue = buff._fHurtValue
+        loseHpValue = buff._fLoseHpOnMaxHpRate * self._nHpMax
+        loseHpValue = loseHpValue + buff._fHurtValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleAddHpBuff then
-        addHpValue = buff._fAddHpValue
+        addHpValue = buff._fAddHpOnLostHpRate * (self._nHpMax - self._nCurHp)
+        addHpValue = addHpValue + buff._fAddHpValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleFightBackFireBuff then
         self._nCurFireSaving = self._nCurFireSaving + buff._fFireSavingValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleFightBackIceBuff then

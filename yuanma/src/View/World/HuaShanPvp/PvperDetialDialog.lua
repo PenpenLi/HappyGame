@@ -102,8 +102,8 @@ function PvperDetialDialog:initUI()
 	self._pCloseButton = params._pCloseButton
 	self._pPlayer = params._pPlayer
 	self._pPvperNameText = params._pName
-	self._pVipLevelBtn = params._pvip_button
-	self._pVipLevelText = params._pvip_number
+    self._pVipLevelBtn = params._pVip_button
+    self._pVipLevelText = params._pVip_number
 	self._pPvperLeveText = params._pLevel_number
     self._pFightPowerBg = params._pZhandouliBg
     --self._pFightPowerBg:setPositionZ(6000)
@@ -269,6 +269,7 @@ end
 
 function PvperDetialDialog:initPvperInfo()
 	self._pPvperNameText:setString(self._tPvperFightInfo.roleName)
+    self._pVipLevelText:setString(self._tPvperFightInfo.vipLevel)
 	self._pPvperLeveText:setString("Lv"..self._tPvperFightInfo.level)
 	self._pFightPowerFnt:setString(self._tPvperFightInfo.roleAttrInfo.fightingPower)
 	-- 人物动画帧时间
@@ -283,6 +284,10 @@ function PvperDetialDialog:initPvperInfo()
     self:initRoleEquInfo()
     -- 设置角色的详细属性  
     self._pDetialSubPanel:setDataSource(self._tPvperFightInfo.roleAttrInfo)
+
+    -- 如果已经是好友则隐藏添加好友按钮
+     local roleId = self._tPvperFightInfo.roleId
+     self._pAddBuddyBtn:setVisible( FriendManager:getInstance():checkIsFriendWithRoleId(roleId) == -1)
 end
 
 --初始化角色的装备信息
@@ -367,7 +372,7 @@ function PvperDetialDialog:createRoleModel(equipemts,fashionOptions,roleCareer)
     self:updateRoleWepanModel(pWeaPonAni1,pWeaPonAni2,pWeaPonTexTure) --更换武器模型
     self:updateRoleFashionBackModel(pFashionBackAni,pFashionBackTure) --更换翅膀模型
     self:updateRoleFashionHaloModel(pFashionHaloAni,pFashionHaloTure,nScale) --更换光环
-
+    self:setMaterialInfo(equipemts) --设置材质信息
     self._pRolePlayer:stopAllActions()
     self._pRoleAnimation = cc.Animation3D:create(pRoleModelAni..".c3b")
     local actionOverCallBack = function ()
@@ -587,6 +592,28 @@ function PvperDetialDialog:setModelScaleByInfo(pScale)
         self._pWeapon2:setScale(pScale[kEqpLocation.kWeapon][2])
     end
     
+end
+--设置材质信息
+function PvperDetialDialog:setMaterialInfo(tEquipments)
+    for k, v in pairs(tEquipments) do
+        local pEquInfo = v
+        local nPart = pEquInfo.dataInfo.Part -- 部位
+        local ptempleteInfo  = pEquInfo.templeteInfo
+        if nPart == kEqpLocation.kBody then -- 身
+            setSprite3dMaterial(self._pRolePlayer,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kWeapon then  -- 武器
+            setSprite3dMaterial(self._pWeapon1,ptempleteInfo.Material)
+            setSprite3dMaterial(self._pWeapon2,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBody then --时装身可能会影响人物模型
+            setSprite3dMaterial(self._pRolePlayer,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBack then  --时装背（翅膀）
+            setSprite3dMaterial(self._pFashionBack,ptempleteInfo.Material)
+
+        elseif nPart == kEqpLocation.kFashionHalo then  --时装光环
+
+        end
+    end
+
 end
 
 

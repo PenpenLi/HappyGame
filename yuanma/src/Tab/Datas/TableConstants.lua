@@ -951,6 +951,11 @@ TableConstants = {
 		Desc = "破甲卡屏时间（秒）",
 	},
 
+	FriendsAssistCD = {
+		Value = 300,
+		Desc = "好友助战CD（秒）",
+	},
+
 }
 
 

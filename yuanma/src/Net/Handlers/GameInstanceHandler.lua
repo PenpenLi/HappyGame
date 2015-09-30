@@ -71,6 +71,9 @@ function GameInstanceHandler:handleMsgEntryBattle(msg)
        NetRespManager:getInstance():dispatchEvent(kNetCmd.kUpdateRoleInfo, event)
           -- 测试代码
           --MessageGameInstance:sendMessageUploadBattleResult21004(1, {monsters = {{id = 1,count = 1000},{id = 2,count = 1000},{id = 3,count = 1000}}}) 
+        if msg["body"].cheerTime ~= 0 then
+            FriendManager:setFriendHelpCheerTime(msg["body"].cheerTime,msg["body"].argsBody.friendId) 	
+        end
       if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
             BattleManager:getInstance():entryTowerBattleCopy()
       end

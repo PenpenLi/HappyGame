@@ -62,6 +62,8 @@ end
 -- 处理函数
 function TowerCopyDialog:dispose(args)
     NetRespManager:getInstance():addEventListener(kNetCmd.kEntryBattle ,handler(self, self.entryBattleCopy))
+    -- 购买战斗次数的网络回复
+    NetRespManager:getInstance():addEventListener(kNetCmd.kBuyBattleResp ,handler(self, self.buyBattleNumResp21317))
     self._tTowerCopyInfo = args[1]
     self._nIdentity = args[2]
     self:initUI()
@@ -184,6 +186,13 @@ function TowerCopyDialog:initUI()
     local onTouchBattleButton = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then
             if self._pSelectedCopysDataInfo == nil or self._pSelectedCopysFirstMapInfo == nil then
+                return
+            end
+            local nCurrentNum = self._pResidueNum:getString() + 0
+            if nCurrentNum < 1 then 
+                -- getCurPageIndex() 从零开始
+                local ncurIndex = self._pPageView:getCurPageIndex() + 1
+                DialogManager:getInstance():showDialog("BuyStrengthDialog",{2,kCopy.kTower, self._tTowerCopyInfo[ncurIndex].towerId})
                 return
             end
             MessageGameInstance:sendMessageEntryBattle21002(self._pSelectedCopysDataInfo.ID,self._nIdentity)
@@ -540,6 +549,17 @@ end
 -- 循环更新
 function TowerCopyDialog:update(dt)
     return
+end
+
+-- 购买战斗次数的网络回调
+function TowerCopyDialog:buyBattleNumResp21317(event)
+    local ncurIndex = self._pPageView:getCurPageIndex() + 1
+    local pTowerInfo = self._tTowerCopyInfo[ncurIndex]
+    if pTowerInfo.towerId == event.copyId and event.copyType == kCopy.kTower then 
+        pTowerInfo.currCount =  pTowerInfo.currCount - 1
+        local nCurrentNum = self._pResidueNum:getString() + 0
+        self._pResidueNum:setString(nCurrentNum + 1)
+    end
 end
 
 -- 显示结束时的回调

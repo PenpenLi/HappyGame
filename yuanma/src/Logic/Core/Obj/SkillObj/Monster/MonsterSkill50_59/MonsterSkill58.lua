@@ -6,7 +6,7 @@
 -- author:    taoye
 -- e-mail:    553681974@qq.com
 -- created:   2015/7/23
--- descrip:   怪物技能攻击57    饕餮
+-- descrip:   怪物技能攻击58    饕餮
 --===================================================
 local MonsterSkill58 = class("MonsterSkill58",function(master, skillInfo)
     return require("SkillObj"):create(master, skillInfo)
@@ -130,9 +130,11 @@ function MonsterSkill58:onEnterChantDo(state)
     self._pCurState = state
     
     -- 刷新方向（考虑野怪是否有指定转向）
+    --[[
     if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
         self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self)
     end
+    ]]
     
     -- 播放攻击时的人物动作
     self:getMaster():playAttackAction(self._nRoleAttackActionIndex)

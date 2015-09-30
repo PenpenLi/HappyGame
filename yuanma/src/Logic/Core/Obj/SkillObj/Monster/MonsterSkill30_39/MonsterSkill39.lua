@@ -137,9 +137,11 @@ function MonsterSkill39:onEnterChantDo(state)
     self._pCurState = state
     
     -- 刷新方向（考虑野怪是否有指定转向）
+    --[[
     if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
         self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self)
     end
+    ]]
     
     -- 播放攻击时的人物动作
     self:getMaster():playAttackAction(self._nRoleAttackActionIndex)
@@ -213,10 +215,6 @@ function MonsterSkill39:onEnterReleaseDo(state)
     self._pCurState = state
 
     self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kIdle)
-
-    if self:getMaster():isUnusualState() == false then     -- 正常状态
-        self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kStand)  -- 切换到站立
-    end
     
 end
 

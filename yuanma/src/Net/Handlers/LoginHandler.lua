@@ -134,7 +134,7 @@ function LoginHandler:handleMsgReconnect20013(msg)
     if msg.header.result == 0 then 
         local event = msg["body"]
          
-        RolesManager:getInstance()._pMainRoleInfo = msg["body"].roleInfo
+        RolesManager:getInstance()._pMainRoleInfo = msg["body"].roleInfo[1]
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kUpdateRoleInfo, {})
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kNetReconnected, {})
         

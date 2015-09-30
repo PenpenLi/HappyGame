@@ -29,7 +29,7 @@ function NewbieManager:clearCache()
     self._bIsForceGuideForBattle = false    -- 是否为强制性战斗引导
     self._nCurOpenLevel = 1                 -- 目前 已经开启到的等级
     
-    self._bSkipGuide = false                -- 是否跳过剧情动画和所有引导   false为不跳过
+    self._bSkipGuide = true                 -- 是否跳过剧情动画和所有引导   false为不跳过
 
 end
 

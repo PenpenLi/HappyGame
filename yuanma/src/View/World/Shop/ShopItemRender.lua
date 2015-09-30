@@ -172,6 +172,8 @@ function ShopItemRender:setDataSource(pGoodsInfo)
 	end
 end
 
+-- 获取奖励物品的详细信息
+
 function ShopItemRender:onExitShopItemRender()
 	-- cleanup 
 

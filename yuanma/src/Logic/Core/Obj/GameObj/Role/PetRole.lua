@@ -341,7 +341,7 @@ function PetRole:playDeadEffect()
     -- 刷新zorder
     self._pDeadEffectAni:setPosition(self:getPositionX(), self:getPositionY() + self:getHeight()/2)
     self._pDeadEffectAni:setLocalZOrder(self:getLocalZOrder()+1)
-    self._pDeadEffectAni:setScale(self:getHeight() / 250)
+    self._pDeadEffectAni:setScale(self:getHeight() / 80)
     self._pDeadEffectAni:setVisible(true)
     self._pDeadEffectAni:stopAllActions()
     local action = cc.CSLoader:createTimeline("DeadEffect.csb")
@@ -661,6 +661,7 @@ function PetRole:playAppearAction()
         appear:setTag(nRoleActAction)
         self._pAni:runAction(appear)
     end
+
 end
 
 -- 获取出场动作的时间间隔（单位：秒）
@@ -713,6 +714,7 @@ function PetRole:playRunAction()
         run:setTag(nRoleActAction)
         self._pAni:runAction(run)
     end
+    
 end
 
 -- 获取奔跑动作的时间间隔（单位：秒）
@@ -738,6 +740,7 @@ function PetRole:playBeatenAction()
         beaten:setTag(nRoleActAction)
         self._pAni:runAction(beaten)
     end
+
 end
 
 -- 获取受击动作的时间间隔（单位：秒）
@@ -763,6 +766,7 @@ function PetRole:playFallGroundAction()
         fallGround:setTag(nRoleActAction)
         self._pAni:runAction(fallGround)
     end
+
 end
 
 -- 获取倒地动作的时间间隔（单位：秒）
@@ -788,6 +792,7 @@ function PetRole:playUpGroundAction()
         upGround:setTag(nRoleActAction)
         self._pAni:runAction(upGround)
     end
+
 end
 
 -- 获取起身动作的时间间隔（单位：秒）
@@ -814,6 +819,7 @@ function PetRole:playDizzyAction()
         dizzy:setTag(nRoleActAction)
         self._pAni:runAction(dizzy)
     end
+
 end
 
 -- 获取眩晕动作的时间间隔（单位：秒）
@@ -838,7 +844,8 @@ function PetRole:playDeadAction()
         self._pAni:stopActionByTag(nRoleActAction)
         dead:setTag(nRoleActAction)
         self._pAni:runAction(dead)
-    end 
+    end
+
 end
 
 -- 获取死亡动作的时间间隔（单位：秒）
@@ -872,6 +879,7 @@ function PetRole:playAttackAction(index)
         attack:setTag(nRoleActAction)
         self._pAni:runAction(attack)
     end
+
 end
 
 -- 获取攻击动作的时间间隔（单位：秒）
@@ -1030,6 +1038,10 @@ function PetRole:beHurtedBySkill(skill, intersection)
             local blockRate = 1000*(self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockChanceMax.Value)/(self:getAttriValueByType(kAttribute.kBlock)+TableLevel[skill:getMaster()._nLevel].Flv*TableConstants.BlockChanceReduce.Value)
             local randNum = getRandomNumBetween(1,1000)
             if randNum <= blockRate then -- 格挡成功
+                isBlock = true
+                blockValue = self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockByBlock.Value + self:getAttriValueByType(kAttribute.kDefend)*TableConstants.BlockByDefence.Value + TableConstants.BlockValueMin.Value
+            end
+            if self._bMustBlock == true then  -- 必须格挡
                 isBlock = true
                 blockValue = self:getAttriValueByType(kAttribute.kBlock)*TableConstants.BlockByBlock.Value + self:getAttriValueByType(kAttribute.kDefend)*TableConstants.BlockByDefence.Value + TableConstants.BlockValueMin.Value
             end
@@ -1219,6 +1231,10 @@ function PetRole:beHurtedBySkill(skill, intersection)
                     if self:isUnusualState() == false then  -- 非异常状态时，可以切入应值
                         self:getStateMachineByTypeID(kType.kStateMachine.kBattlePetRole):setCurStateByTypeID(kType.kState.kBattlePetRole.kBeaten, false, {skill, 5})
                     end
+                    -- 屏幕添加卡顿，并添加破甲buff
+                    self:getMapManager():screenKartun(TableConstants.KartunTimeWhenPowerValueIsZero.Value)
+                    -- 添加破甲buff
+                    self:addBuffByID(4)
                     return
                 end
             end
@@ -1282,9 +1298,11 @@ function PetRole:beHurtedByBuff(buff)
     if buff._kTypeID == kType.kController.kBuff.kBattleFireBuff then
         loseHpValue = self._nHpMax * buff._fHurtRate
     elseif buff._kTypeID == kType.kController.kBuff.kBattlePoisonBuff then
-        loseHpValue = buff._fHurtValue
+        loseHpValue = buff._fLoseHpOnMaxHpRate * self._nHpMax
+        loseHpValue = loseHpValue + buff._fHurtValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleAddHpBuff then
-        addHpValue = buff._fAddHpValue
+        addHpValue = buff._fAddHpOnLostHpRate * (self._nHpMax - self._nCurHp)
+        addHpValue = addHpValue + buff._fAddHpValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleFightBackFireBuff then
         self._nCurFireSaving = self._nCurFireSaving + buff._fFireSavingValue
     elseif buff._kTypeID == kType.kController.kBuff.kBattleFightBackIceBuff then

@@ -172,6 +172,28 @@ function FriendListInfoCell:updateData()
     end
     
     self._pParams._pVipFnt:setString(self._pDataInfo.vipLevel)
+    
+    -- 好友助战cd
+    local lastHelpTime = os.time() - self._pDataInfo.cheerTime
+    --local lastHelpTime = 100
+    --判断是否有cd
+    if lastHelpTime - TableConstants.FriendsAssistCD.Value < 0 then
+        self._pParams._pZzTextTime:setString(TableConstants.FriendsAssistCD.Value - lastHelpTime.."秒") 
+        local timeCallBack = function(time,id)
+            if  self._pParams._pZzTextTime then 
+                self._pParams._pZzTextTime:setVisible(true)
+                self._pParams._pZzTextTime:setString(time.."秒") 
+            end
+            if time == 0 then
+                self._pParams._pZzTextTime:setVisible(false)
+            end
+        end
+        if lastHelpTime <= TableConstants.FriendsAssistCD.Value then
+            CDManager:getInstance():insertCD({"friendHelpFight"..self._pDataInfo.roleId,TableConstants.FriendsAssistCD.Value - lastHelpTime,timeCallBack})
+        end
+    else
+        self._pParams._pZzTextTime:setVisible(false)
+    end
 end
 
 -- 整体到放大尺寸
@@ -194,6 +216,7 @@ end
 function FriendListInfoCell:onExitFriendListInfoCell()
     NetRespManager:getInstance():removeEventListenersByHost(self)
     ResPlistManager:getInstance():removeSpriteFrames("FriendListInfo.plist")
+    CDManager:getInstance():deleteOneCdByKey("friendHelpFight"..self._pDataInfo.roleId)
 end
 
 function FriendListInfoCell:hanleMsgUpdateFriendSkill(event)

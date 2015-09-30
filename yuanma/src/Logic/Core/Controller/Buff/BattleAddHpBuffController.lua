@@ -19,7 +19,8 @@ function BattleAddHpBuffController:ctor()
     self._kTypeID = kType.kController.kBuff.kBattleAddHpBuff    -- 控制类机型ID
     self._fTimeMax = 0                                          -- 持续时间
     self._fAddHpValue = 0                                       -- 每秒回生命值
-    
+    self._fAddHpOnLostHpRate = 0                                -- 每秒恢复目标已损失生命值的比率
+
 end
 
 -- 创建函数
@@ -35,6 +36,7 @@ function BattleAddHpBuffController:dispose()
     self._strAniName = "ParticleHeal.plist"  -- 粒子
     self._fTimeMax = self._pBuffInfo.Param1    
     self._fAddHpValue = self._pBuffInfo.Param2
+    self._fAddHpOnLostHpRate = self._pBuffInfo.Param3
     
     return
 end

@@ -29,6 +29,7 @@ end
 
 -- 进入函数
 function BattlePetRoleStandState:onEnter(args)
+    --cclog("宠物站立")
     --print(self:getMaster()._strCharTag.."宠物角色站立状态")
     -- mmo.DebugHelper:showJavaLog("--STATE--PET--:Stand")
     if self:getMaster() then

@@ -10,4 +10,5 @@ TableSystemMail=
 	{ MailID = 5.0, Title = '家族职位变动', MailType = '家族', Addresser = '家族管理员', ParameterNum = 2.0, Content = '%s已将您降职至%s。', Adjunct = 0.0, },
 	{ MailID = 6.0, Title = '开除出家族', MailType = '家族', Addresser = '家族管理员', ParameterNum = 2.0, Content = '%s已将您从%s家族开除，24小时之内不可再次申请加入家族。', Adjunct = 0.0, },
 	{ MailID = 7.0, Title = '家族申请通过', MailType = '家族', Addresser = '家族管理员', ParameterNum = 1.0, Content = '%s家族已通过了您的加入申请，请跟家族成员们一起斩妖除魔吧~！', Adjunct = 0.0, },
+	{ MailID = 8.0, Title = '充值返利礼包', MailType = '系统', Addresser = '系统管理员', ParameterNum = 0.0, Content = '亲爱的玩家，您在“充值返利”活动中获得的奖励尚未领取，请在附件中领取！', },
 }

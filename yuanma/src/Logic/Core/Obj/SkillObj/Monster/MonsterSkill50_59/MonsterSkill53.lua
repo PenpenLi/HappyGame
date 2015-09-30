@@ -141,9 +141,11 @@ function MonsterSkill53:onEnterChantDo(state)
     self:setVisible(true)
     
     -- 刷新方向（考虑野怪是否有指定转向）
+    --[[
     if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
         self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self)
     end
+    ]]
     
     -- 播放攻击时的人物动作
     self:getMaster():playAttackAction(self._nRoleAttackActionIndex)
@@ -211,18 +213,26 @@ function MonsterSkill53:onEnterReleaseDo(state)
     end  
 
     -- 搜索目标
+    --[[
     if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
         self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self)   -- 刷新方向（考虑野怪是否有指定转向）
     end
-    local tTargets = self:getAIManager():objSearchNearestEnemysInRangeForDamage(self:getMaster(), self._pSkillInfo.WarnRange, nil, self._pSkillInfo.TargetGroupType)
-    -- 记录所有目标的位置
-    if table.getn(tTargets) == 0 then
+    ]]
+    if self._pSkillInfo.EarlyWarningType == kType.kSkillEarlyWarning.kType3 then
         local offsetY = self._pSkillInfo.WarnRange*math.sin(math.rad(self:getMaster():getAngle3D()))
         local offsetX = self._pSkillInfo.WarnRange*math.cos(math.rad(self:getMaster():getAngle3D()))
         self._posTargetsPos = cc.p(self:getMaster():getPositionX()+offsetX, self:getMaster():getPositionY()+offsetY)
     else
-        local index = getRandomNumBetween(1,table.getn(tTargets))
-        self._posTargetsPos = cc.p(tTargets[1].enemy:getPositionX(),tTargets[index].enemy:getPositionY()+tTargets[index].enemy:getHeight()/2)
+        local tTargets = self:getAIManager():objSearchNearestEnemysInRangeForDamage(self:getMaster(), self._pSkillInfo.WarnRange, nil, self._pSkillInfo.TargetGroupType)
+        -- 记录所有目标的位置
+        if table.getn(tTargets) == 0 then
+            local offsetY = self._pSkillInfo.WarnRange*math.sin(math.rad(self:getMaster():getAngle3D()))
+            local offsetX = self._pSkillInfo.WarnRange*math.cos(math.rad(self:getMaster():getAngle3D()))
+            self._posTargetsPos = cc.p(self:getMaster():getPositionX()+offsetX, self:getMaster():getPositionY()+offsetY)
+        else
+            local index = getRandomNumBetween(1,table.getn(tTargets))
+            self._posTargetsPos = cc.p(tTargets[1].enemy:getPositionX(),tTargets[index].enemy:getPositionY()+tTargets[index].enemy:getHeight()/2)
+        end
     end
     self:setPosition(cc.p(self._posTargetsPos.x, self._posTargetsPos.y))
     self:playActionByIndex(1)

@@ -565,7 +565,7 @@ function ChatDialog:searchRoleInfo(event)
        NoticeManager:getInstance():showSystemMessage("您不能和自己聊天！")
      return 
     end
-    self._pSearchEditBox:setString("")
+    self._pSearchEditBox:setText("")
     ChatManager:getInstance():setDesInfoByRoleInfo(event[1])
     self:JumpPrivateDesRole(event[1].roleId)
 end

@@ -95,6 +95,9 @@ end
 function CopysChallengeItem:dispose(dataInfo, mapInfo)
     --注册（请求游戏副本列表）
     NetRespManager:getInstance():addEventListener(kNetCmd.kQueryBattleList, handler(self, self.updateQueryBattleList))
+    -- 购买战斗次数的网络回复
+    NetRespManager:getInstance():addEventListener(kNetCmd.kBuyBattleResp ,handler(self, self.buyBattleNumResp21317))
+
     ResPlistManager:getInstance():addSpriteFrames("ChallengeCopys.plist")
     ResPlistManager:getInstance():addSpriteFrames("CopysBgLock.plist")
     ResPlistManager:getInstance():addSpriteFrames("EnterIntoEffect.plist")
@@ -185,7 +188,7 @@ function CopysChallengeItem:initUI()
                 return
             end
             if self._nCurCount <= 0 then 
-                NoticeManager:getInstance():showSystemMessage("今日已无副本次数！")
+                DialogManager:getInstance():showDialog("BuyStrengthDialog",{2,self._pDataInfo.CopysType,self._pDataInfo.ID})
                 return
             end
             
@@ -455,6 +458,14 @@ function CopysChallengeItem:setNeedItemInfo(info)
     self._pItemCost:loadTexture(itemIcon,ccui.TextureResType.plistType)
     local strMsg = string.format("%d/%d",BagCommonManager:getInstance():getItemNumById(info),self._pDataInfo.ItemNum)
     self._pItemCostNum:setString(strMsg)
+end
+
+function CopysChallengeItem:buyBattleNumResp21317(event)
+    if self._pDataInfo.ID == event.copyId and event.copyType == self._pDataInfo.CopysType then 
+        self._pCurCountTextNum:setString(self._nCurCount + 1 .."/"..self._nTotalCount)
+        self._pCurCountTextNum:setColor(cGreen)
+        self._nCurCount = self._nCurCount + 1
+    end
 end
 
 return CopysChallengeItem

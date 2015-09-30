@@ -298,7 +298,7 @@ function BattleBuffControllerMachine:cancelAllDebuffs()
                v._kTypeID == kType.kController.kBuff.kBattlePoisonBuff or
                v._kTypeID == kType.kController.kBuff.kBattleAttriDownBuff or
                v._kTypeID == kType.kController.kBuff.kBattleSpeedDownBuff or
-               v._kTypeID == kType.kController.kBuff.kBattleSunderArmorBuffthen then
+               v._kTypeID == kType.kController.kBuff.kBattleSunderArmorBuff then
                   v:cancel()
             end
             

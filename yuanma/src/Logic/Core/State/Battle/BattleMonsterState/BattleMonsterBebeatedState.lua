@@ -49,15 +49,23 @@ function BattleMonsterBebeatedState:onEnter(args)
         local pAttackerSkill = args[1]
         -- 攻击等级与防御等级的差值
         local nAttackAndDefDiff = args[2]
-        -- 受击的角度
-        local fBeatenAngle = mmo.HelpFunc:gAngleAnalyseForRotation(master:getPositionX(), master:getPositionY(),pAttackerSkill:getMaster():getPositionX(), pAttackerSkill:getMaster():getPositionY())
-        
-        -- 设置受击类型
-        self._kBeatenType = TableTempleteAttackLevelDiff[nAttackAndDefDiff].MonstersAndNpcsBeaten[2]
-        -- 击退位移
-        self._fBeatenOffset = TableTempleteAttackLevelDiff[nAttackAndDefDiff].MonstersAndNpcsBeaten[1]
-        -- 设置受击角度
-        self._fBeatenAngle = fBeatenAngle      
+
+        if pAttackerSkill then
+            -- 受击的角度
+            local fBeatenAngle = mmo.HelpFunc:gAngleAnalyseForRotation(master:getPositionX(), master:getPositionY(),pAttackerSkill:getMaster():getPositionX(), pAttackerSkill:getMaster():getPositionY())
+            -- 设置受击角度
+            self._fBeatenAngle = fBeatenAngle 
+        end
+
+        if nAttackAndDefDiff >= 1 then
+            -- 设置受击类型
+            self._kBeatenType = TableTempleteAttackLevelDiff[nAttackAndDefDiff].MonstersAndNpcsBeaten[2]
+            -- 击退位移
+            self._fBeatenOffset = TableTempleteAttackLevelDiff[nAttackAndDefDiff].MonstersAndNpcsBeaten[1]
+        elseif nAttackAndDefDiff == -1 then  -- 强制原地倒下（用于牛魔王的冲撞技能）
+            self._kBeatenType = kType.kBeaten.kFall
+            self._fBeatenAngle = self:getMaster():getAngle3D()
+        end
         
         -- 如果野怪不能移动，则需要调整已经计算出来的_kBeatenType
         if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].CanMove == 0 then

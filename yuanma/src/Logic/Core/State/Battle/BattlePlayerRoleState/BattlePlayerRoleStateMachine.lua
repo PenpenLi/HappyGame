@@ -68,11 +68,14 @@ function BattlePlayerRoleStateMachine:update(dt)
 
     if self:getMaster() then
         if self._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kDead and self:getMaster()._nCurHp > 0 then
-            -- 角色本身未被攻击时间的累积计算，一旦被打，则在相应状态中需要清空_fNoHurtTimeCounter，一旦累积时间到了可以恢复保户值的时间，则立即恢复连击保户值
-            self._fNoHurtTimeCounter = self._fNoHurtTimeCounter + dt
-            if self._fNoHurtTimeCounter >= self:getMaster()._pRoleInfo.ComboInteruptRecover then  -- 未被攻击时间到，立即恢复连击保户值
-                self:getMaster()._nCurComboInterupt = self:getMaster()._pRoleInfo.ComboInterupt
+            -- 每秒连击保户值的恢复(前提是：没有破甲buff的前提下)
+            if self:getMaster():getBuffControllerMachine():isBuffExist(kType.kController.kBuff.kBattleSunderArmorBuff) == false then
+                self:getMaster()._nCurComboInterupt = self:getMaster()._nCurComboInterupt + dt * self:getMaster()._pRoleInfo.ComboInteruptRecover
+                if self:getMaster()._nCurComboInterupt >= self:getMaster()._pRoleInfo.ComboInterupt then
+                    self:getMaster()._nCurComboInterupt = self:getMaster()._pRoleInfo.ComboInterupt
+                end
             end
+            self._fNoHurtTimeCounter = self._fNoHurtTimeCounter + dt
             -- 角色本身未被攻击时间一旦超过了LifeRecoverTime秒，每秒触发一次，恢复”每秒恢复的血量”的值
             if self._fNoHurtTimeCounter >= TableConstants.LifeRecoverTime.Value then  -- 一旦超过了LifeRecoverTime秒，每秒触发一次，恢复”每秒恢复的血量”的值
                 self._nAutoHealTimeCounter = self._nAutoHealTimeCounter + dt
@@ -84,7 +87,6 @@ function BattlePlayerRoleStateMachine:update(dt)
             else
                 self._nAutoHealTimeCounter = 0
             end
-    
     
             -- 角色持续一段时间忽略攻击
             if self._fIgnorHurtTimeCounter == 0 then        -- 刚刚被设置为0，开始忽略所有攻击

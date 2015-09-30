@@ -134,13 +134,19 @@ function FriendRole:initAni()
     local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kWeapon].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
     local tWeaponTempleteInfo = TableTempleteEquips[templeteID]
 
+
+ --先初始化人物信息
+    for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
+        GetCompleteItemInfo(self._pRoleInfo.equipemts[i],self._pRoleInfo.roleCareer)
+    end
+
+
     -- 判断是否加载时装身
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[2] == true then -- 时装身        
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tBodyTempleteInfo = TableTempleteEquips[templeteID] 
+                tBodyTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break
             end
         end
@@ -192,10 +198,9 @@ function FriendRole:initAni()
     local tFashionBackTempleteInfo = nil
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[1] == true then
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tFashionBackTempleteInfo = TableTempleteEquips[templeteID]
+               tFashionBackTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -217,10 +222,9 @@ function FriendRole:initAni()
     local tFashionHaloTempleteInfo = nil
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[3] == true then        
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tFashionHaloTempleteInfo = TableTempleteEquips[templeteID] 
+                tFashionHaloTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end

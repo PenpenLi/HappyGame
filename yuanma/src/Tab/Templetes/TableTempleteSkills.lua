@@ -5313,9 +5313,102 @@ RoleKartun1_1 = 0.0,
 RoleKartun1_2 = 0,
 RoleKartun1_3 = 0,
 }, SkillRoarVoice = 'SkillRoarVoice1', SkillProcessSound = 'SkillProcessSound1', SkillReleaseSound = 'SkillReleaseSound1', },
-	{ TempleteID = 283.0, },
-	{ TempleteID = 284.0, },
-	{ TempleteID = 285.0, },
+	{ TempleteID = 283.0, SkillName = 'boss技能0307【妲己】【瞬移】', DetailInfo = {
+AniType = 2.0, 
+AniResName = "ThugSkill0301", 
+PvrName = "ThugSkill0301", 
+ClassName = "MonsterSkill59",
+ActsFrameRegions  = {{0,27}}, 
+ActsSpeed  = {1.7}, 
+ActsLoop  = {false}, 
+FrameEventBodyRects1_1 = {{0,0,0,0}},
+
+}, MissShock = {
+Shock1_1 = {0.0,0,0},
+
+}, HitShock = {
+Shock1_1 = {0.98,0.2,1},
+
+}, SplashShock = {
+Splash1_1 = 0.0,
+
+}, MissScreenKartun = {
+ScreenKartun1_1 = 0.0,
+
+}, HitScreenKartun = {
+ScreenKartun1_1 = 0.0,
+
+}, MissRoleKartun = {
+RoleKartun1_1 = 0.0,
+
+}, HitRoleKartun = {
+RoleKartun1_1 = 0.0,
+
+}, SkillRoarVoice = 'SkillRoarVoice1', SkillProcessSound = 'SkillProcessSound1', SkillReleaseSound = 'SkillReleaseSound1', },
+	{ TempleteID = 284.0, SkillName = 'boss技能0407【蚩尤】【蚩尤】', DetailInfo = {
+AniType = 2.0, 
+AniResName = "ThugSkill0301", 
+PvrName = "ThugSkill0301", 
+ClassName = "MonsterSkill60",
+ActsFrameRegions  = {{0,27}}, 
+ActsSpeed  = {1.7}, 
+ActsLoop  = {false}, 
+FrameEventBodyRects1_1 = {{0,0,0,0}},
+
+}, MissShock = {
+Shock1_1 = {0.0,0,0},
+
+}, HitShock = {
+Shock1_1 = {0.98,0.2,1},
+
+}, SplashShock = {
+Splash1_1 = 0.0,
+
+}, MissScreenKartun = {
+ScreenKartun1_1 = 0.0,
+
+}, HitScreenKartun = {
+ScreenKartun1_1 = 0.0,
+
+}, MissRoleKartun = {
+RoleKartun1_1 = 0.0,
+
+}, HitRoleKartun = {
+RoleKartun1_1 = 0.0,
+
+}, SkillRoarVoice = 'SkillRoarVoice1', SkillProcessSound = 'SkillProcessSound1', SkillReleaseSound = 'SkillReleaseSound1', },
+	{ TempleteID = 285.0, SkillName = 'boss技能0105【牛魔王】', DetailInfo = {
+AniType = 2.0, 
+AniResName = "MonsterSkill0303", 
+PvrName = "MonsterSkill0303", 
+ClassName = "MonsterSkill61",
+ActsFrameRegions  = {{0,18}}, 
+ActsSpeed  = {1.0}, 
+ActsLoop  = {true}, 
+FrameEventBodyRects1_1 = {{-100,-15,200,200}},
+FrameEventBodyRects1_2 = {{-100,-15,200,200}},
+}, MissShock = {
+Shock1_1 = {0.0,0,0},
+Shock1_2 = {0.0,0,0},
+}, HitShock = {
+Shock1_1 = {0.95,0.2,1},
+Shock1_2 = {0.0,0,0},
+}, SplashShock = {
+Splash1_1 = 0.0,
+Splash1_2 = 0.0,
+}, MissScreenKartun = {
+ScreenKartun1_1 = 0.0,
+ScreenKartun1_2 = 0.0,
+}, HitScreenKartun = {
+ScreenKartun1_1 = 0.0,
+ScreenKartun1_2 = 0.0,
+}, MissRoleKartun = {
+RoleKartun1_1 = 0.0,
+RoleKartun1_2 = 0.0,
+}, HitRoleKartun = {
+RoleKartun1_1 = 0.0,
+RoleKartun1_2 = 0.0,
+}, SkillRoarVoice = 'SkillRoarVoice1', SkillProcessSound = 'SkillProcessSound1', SkillReleaseSound = 'SkillReleaseSound1', },
 	{ TempleteID = 286.0, },
 	{ TempleteID = 287.0, },
 	{ TempleteID = 288.0, },

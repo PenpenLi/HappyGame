@@ -9,8 +9,6 @@ function OnePetParams:ctor()
     self._pIcon = self._pOnePetBg:getChildByName("Icon")
     --宠物品质框
     self._pIconP = self._pOnePetBg:getChildByName("IconP")
-    --上阵按钮
-    self._pUpButton = self._pOnePetBg:getChildByName("UpButton")
     --self._pUpButton:getTitleRenderer():enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
     --宠物名称
     self._pName = self._pOnePetBg:getChildByName("Name")
@@ -30,20 +28,26 @@ function OnePetParams:ctor()
     self._pPetSkill02 = self._pOnePetBg:getChildByName("PetSkill02")
     --宠物技能（具体哪个）03
     self._pPetSkill03 = self._pOnePetBg:getChildByName("PetSkill03")
+    --宠物基本属性挂点
+    self._pSxNode = self._pOnePetBg:getChildByName("SxNode")
     --宠物基本属性 4个字
-    self._pAttribute = self._pOnePetBg:getChildByName("Attribute")
+    self._pAttribute = self._pSxNode:getChildByName("Attribute")
     --攻击
-    self._pAttack01 = self._pOnePetBg:getChildByName("Attack01")
+    self._pAttack01 = self._pSxNode:getChildByName("Attack01")
     --攻击（具体数值）
-    self._pAttack02 = self._pOnePetBg:getChildByName("Attack02")
+    self._pAttack02 = self._pSxNode:getChildByName("Attack02")
     --防御
-    self._pDefend01 = self._pOnePetBg:getChildByName("Defend01")
+    self._pDefend01 = self._pSxNode:getChildByName("Defend01")
     --防御（具体数值）
-    self._pDefend02 = self._pOnePetBg:getChildByName("Defend02")
+    self._pDefend02 = self._pSxNode:getChildByName("Defend02")
     --生命
-    self._pHp01 = self._pOnePetBg:getChildByName("Hp01")
+    self._pHp01 = self._pSxNode:getChildByName("Hp01")
     --生命（具体数值）
-    self._pHp02 = self._pOnePetBg:getChildByName("Hp02")
+    self._pHp02 = self._pSxNode:getChildByName("Hp02")
+    --上阵按钮
+    self._pUpButton = self._pSxNode:getChildByName("UpButton")
+    --已上阵图标
+    self._pUpUpUp = self._pSxNode:getChildByName("UpUpUp")
     --宠物特性 2个字
     self._pRoleAttribute = self._pOnePetBg:getChildByName("RoleAttribute")
     --宠物特性01
@@ -61,14 +65,23 @@ function OnePetParams:ctor()
     --宠物特性04
     self._pRoleAttribute0401 = self._pOnePetBg:getChildByName("RoleAttribute0401")
     --宠物特性04具体数值
-    self._pRoleAttribute0402 = self._pOnePetBg:getChildByName("RoleAttribute0402")    
+    self._pRoleAttribute0402 = self._pOnePetBg:getChildByName("RoleAttribute0402")  
+
+    --合成宠物碎片挂点 
+    self._pJhNode = self._pOnePetBg:getChildByName("JhNode")
+    --聚魂按钮
+    self._pJhButton = self._pJhNode:getChildByName("JhButton")
+    --进度条底板
+    self._pJhSpBarBg = self._pJhNode:getChildByName("JhSpBarBg")
+    --进度条
+    self._pJhBar = self._pJhNode:getChildByName("JhBar")
+    --数值
+    self._pJhNum = self._pJhNode:getChildByName("JhNum")
     
     
     
     
     
-    --已上阵图标
-    self._pUpUpUp = self._pOnePetBg:getChildByName("UpUpUp")
 
 
 

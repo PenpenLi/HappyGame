@@ -338,7 +338,7 @@ TableGoldCopysMaps=
 , EntityIDs = {2.0,10,14}, Doors = {{1.0},{}}, MonsterArea1 = {
      {
       
-{monsterID = 303.0, posIndexX= 37, posIndexY = 16},
+{monsterID = 88.0, posIndexX= 37, posIndexY = 16},
      },  
 }, MonsterArea1CenterPosIndex = {26.0,18}, HasCloud = 1.0, HasRain = 1.0, },
 	{ MapID = 12.0, MapsName = 'battle_map_098', MapsPvrName = 'battle_map_098', MapEffect = 'none', EntityIDs = {2.0}, Doors = {{1.0},{}}, MonsterArea1 = {

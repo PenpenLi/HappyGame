@@ -23,6 +23,8 @@ function BattlePlayerRoleRunState:ctor()
     self._fCurAngleInMoveDirections = 0                  -- 当前指定移动方向集合的行进步中的角度
     self._fRunTimeCount = 0                              -- 奔跑的持续时间
     self._nRunSoundID = -1                               -- 跑步的声音ID
+
+    self._fIgnoreHurtTimeCount = -1                      -- 避免此时切换应值等其他3D动作时导致安卓的闪退，做一个缓冲
     
 end
 
@@ -71,6 +73,11 @@ function BattlePlayerRoleRunState:onEnter(args)
         -- 脚步声
         self._nRunSoundID = AudioManager:getInstance():playEffect(self:getMaster()._pTempleteInfo.RunSound,true)
     end
+
+    -- 忽略伤害引用计数+1（连应值都不会有）（避免此时切换应值等其他3D动作时导致安卓的闪退，做一个缓冲）
+    self:getMaster()._pRefRoleIgnoreHurt:add()
+    self._fIgnoreHurtTimeCount = 0
+
     return
 end
 
@@ -85,12 +92,26 @@ function BattlePlayerRoleRunState:onExit()
     
     AudioManager:getInstance():stopEffect(self._nRunSoundID)
     self._nRunSoundID = -1
+
+    if self._fIgnoreHurtTimeCount ~= -1 then
+        self:getMaster()._pRefRoleIgnoreHurt:sub()
+    end
+    self._fIgnoreHurtTimeCount = -1
     
     return
 end
 
 -- 更新逻辑
-function BattlePlayerRoleRunState:update(dt)    
+function BattlePlayerRoleRunState:update(dt)
+
+    if self._fIgnoreHurtTimeCount ~= - 1 then
+        self._fIgnoreHurtTimeCount = self._fIgnoreHurtTimeCount + dt
+        if self._fIgnoreHurtTimeCount >= 0.2 then
+            self:getMaster()._pRefRoleIgnoreHurt:sub()
+            self._fIgnoreHurtTimeCount = -1
+        end
+    end
+
     -- 如果正在显示对话或地图正在移动，则直接返回    
     if self:getTalksManager():isShowingTalks() == true or self:getMapManager():isCameraMoving() == true then
         self._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)

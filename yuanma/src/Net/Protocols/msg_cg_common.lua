@@ -22,6 +22,16 @@ AttrInfo = {
     },
 }
 
+VipAddBattle = {
+    ["name"] = "VipAddBattle",
+    ["id"] = 0,
+    ["attribs"] = {
+        {"copyId", "uint32"},
+        {"copyTp", "uint16"},
+        {"buyCount", "uint16"},
+    },
+}
+
 VipInfo = {
     ["name"] = "VipInfo",
     ["id"] = 0,
@@ -29,6 +39,8 @@ VipInfo = {
         {"vipLevel", "uint32"},
         {"totalCharge", "uint32"},
         {"gainBox", "bool", "repeat"},
+        {"addStrength", "uint16"},
+        {"addBattles", "VipAddBattle", "repeat"},
     },
 }
 
@@ -329,6 +341,7 @@ RoleFightInfo = {
         {"roleId", "uint32"},
         {"roleName", "string"},
         {"level", "uint32"},
+        {"vipLevel", "uint32"},
         {"roleCareer", "uint16"},
         {"roleAttrInfo", "RoleAttrInfo"},
         {"fashionOptions", "bool", "repeat"},
@@ -396,6 +409,7 @@ FriendInfo = {
         {"roleName", "string"},
         {"offlineTime", "uint32"},
         {"friendship", "uint32"},
+        {"cheerTime", "uint32"},
     },
 }
 
@@ -604,6 +618,17 @@ BookInfo = {
     ["attribs"] = {
         {"bookId", "uint32"},
         {"pages", "uint32", "repeat"},
+    },
+}
+
+ActivityInfo = {
+    ["name"] = "ActivityInfo",
+    ["id"] = 0,
+    ["attribs"] = {
+        {"actId", "uint32"},
+        {"startTime", "string"},
+        {"endTime", "string"},
+        {"remainTime", "uint32"},
     },
 }
 

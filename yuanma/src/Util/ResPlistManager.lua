@@ -137,13 +137,18 @@ function ResPlistManager:collectPvrNameForWorld()
         table.insert(self._tPvrNameCollector, strWeaponPvrName)
     end
     
+    
+    --先初始化人物信息
+    for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
+        GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i],nCareer)
+     end
+    
     -- 加载时装身贴图
     if pMainPlayerRoleInfo.fashionOptions and pMainPlayerRoleInfo.fashionOptions[2] == true then
         for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = pMainPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                local templeteID = TableEquips[pMainPlayerRoleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[pMainPlayerRoleInfo.roleCareer]
-                strBodyPvrName = TableTempleteEquips[templeteID].Texture
+                strBodyPvrName = pMainPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                 break     
             end
         end
@@ -156,10 +161,9 @@ function ResPlistManager:collectPvrNameForWorld()
     if pMainPlayerRoleInfo.fashionOptions and pMainPlayerRoleInfo.fashionOptions[1] == true then
         local strBackPvrName = ""    
         for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart =pMainPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                local templeteID = TableEquips[pMainPlayerRoleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[pMainPlayerRoleInfo.roleCareer]
-                strBackPvrName = TableTempleteEquips[templeteID].Texture
+                strBackPvrName = pMainPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                 break
             end
         end
@@ -172,10 +176,9 @@ function ResPlistManager:collectPvrNameForWorld()
     if pMainPlayerRoleInfo.fashionOptions and pMainPlayerRoleInfo.fashionOptions[3] == true then
         local strHaloPvrName = ""
         for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = pMainPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                local templeteID = TableEquips[pMainPlayerRoleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[pMainPlayerRoleInfo.roleCareer]
-                strHaloPvrName = TableTempleteEquips[templeteID].Texture
+                strHaloPvrName = pMainPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                 break     
             end
         end
@@ -228,9 +231,18 @@ function ResPlistManager:collectPvrNameForBattle()
     table.insert(self._tPvrNameCollector, "HurtedThunderEffect")
     table.insert(self._tPvrNameCollector, "MissHitEffect")
     table.insert(self._tPvrNameCollector, "MonsterDebutEffect")
+    table.insert(self._tPvrNameCollector, "BossStartEffect")
+    table.insert(self._tPvrNameCollector, "MonsterDeadAttachBuffWarningEffect6")     -- 持续加血Buff警示
+    table.insert(self._tPvrNameCollector, "MonsterDeadAttachBuffWarningEffect7")     -- 无敌Buff警示
+    table.insert(self._tPvrNameCollector, "MonsterDeadAttachBuffWarningEffect9")     -- 属性增益Buff警示
+    table.insert(self._tPvrNameCollector, "MonsterDeadAttachBuffWarningEffect11")    -- 减速Buff警示
     table.insert(self._tPvrNameCollector, "StunBuff")
     table.insert(self._tPvrNameCollector, "ThunderBuff")
     table.insert(self._tPvrNameCollector, "PenetrateBuff")
+    table.insert(self._tPvrNameCollector, "EarlyWarningEffect1")
+    table.insert(self._tPvrNameCollector, "EarlyWarningEffect2")
+    table.insert(self._tPvrNameCollector, "EarlyWarningEffect3")
+    table.insert(self._tPvrNameCollector, "EarlyWarningEffect4")
     
     -- 怒气UI特效
     table.insert(self._tPvrNameCollector, "AngerUIEffect1")
@@ -261,13 +273,17 @@ function ResPlistManager:collectPvrNameForBattle()
         table.insert(self._tPvrNameCollector, strWeaponPvrName)
     end
     
+    --先初始化人物信息
+    for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
+        GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i],nCareer)
+    end
+    
     -- 加载时装身贴图    
     if pMainPlayerRoleInfo.fashionOptions and pMainPlayerRoleInfo.fashionOptions[2] == true then
         for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = pMainPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                local templeteID = TableEquips[pMainPlayerRoleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[pMainPlayerRoleInfo.roleCareer]
-                strBodyPvrName = TableTempleteEquips[templeteID].Texture
+                strBodyPvrName = pMainPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                 break     
             end
         end
@@ -280,10 +296,9 @@ function ResPlistManager:collectPvrNameForBattle()
     if pMainPlayerRoleInfo.fashionOptions and pMainPlayerRoleInfo.fashionOptions[1] == true then
         local strBackPvrName = ""    
         for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = pMainPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                local templeteID = TableEquips[pMainPlayerRoleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[pMainPlayerRoleInfo.roleCareer]
-                strBackPvrName = TableTempleteEquips[templeteID].Texture
+                strBackPvrName = pMainPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                 break     
             end
         end
@@ -296,10 +311,9 @@ function ResPlistManager:collectPvrNameForBattle()
     if pMainPlayerRoleInfo.fashionOptions and pMainPlayerRoleInfo.fashionOptions[3] == true then
         local strHaloPvrName = ""
         for i=1,table.getn(pMainPlayerRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(pMainPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = pMainPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                local templeteID = TableEquips[pMainPlayerRoleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[pMainPlayerRoleInfo.roleCareer]
-                strHaloPvrName = TableTempleteEquips[templeteID].Texture
+                strHaloPvrName = pMainPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                 break     
             end
         end
@@ -350,14 +364,18 @@ function ResPlistManager:collectPvrNameForBattle()
         if self:checkPvrNameCollectorItemExist(strWeaponPvrName) == false then
             table.insert(self._tPvrNameCollector, strWeaponPvrName)
         end
+        
+        --先初始化人物信息
+        for i=1,table.getn(pFriendRoleInfo.equipemts) do --遍历装备集合
+            GetCompleteItemInfo(pFriendRoleInfo.equipemts[i],pFriendRoleInfo.roleCareer)
+        end
 
         -- 加载时装身贴图    
         if pFriendRoleInfo.fashionOptions and pFriendRoleInfo.fashionOptions[2] == true then
             for i=1,table.getn(pFriendRoleInfo.equipemts) do --遍历装备集合
-                local nPart = GetCompleteItemInfo(pFriendRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+                local nPart = pFriendRoleInfo.equipemts[i].dataInfo.Part -- 部位
                 if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                    local templeteID = TableEquips[pFriendRoleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[pFriendRoleInfo.roleCareer]
-                    strBodyPvrName = TableTempleteEquips[templeteID].Texture
+                    strBodyPvrName = pFriendRoleInfo.equipemts[i].templeteInfo.Texture
                     break     
                 end
             end
@@ -370,10 +388,9 @@ function ResPlistManager:collectPvrNameForBattle()
         if pFriendRoleInfo.fashionOptions and pFriendRoleInfo.fashionOptions[1] == true then
             local strBackPvrName = ""    
             for i=1,table.getn(pFriendRoleInfo.equipemts) do --遍历装备集合
-                local nPart = GetCompleteItemInfo(pFriendRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+                local nPart =pFriendRoleInfo.equipemts[i].dataInfo.Part -- 部位
                 if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                    local templeteID = TableEquips[pFriendRoleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[pFriendRoleInfo.roleCareer]
-                    strBackPvrName = TableTempleteEquips[templeteID].Texture
+                    strBackPvrName = pFriendRoleInfo.equipemts[i].templeteInfo.Texture
                     break
                 end
             end
@@ -386,10 +403,9 @@ function ResPlistManager:collectPvrNameForBattle()
         if pFriendRoleInfo.fashionOptions and pFriendRoleInfo.fashionOptions[3] == true then
             local strHaloPvrName = ""
             for i=1,table.getn(pFriendRoleInfo.equipemts) do --遍历装备集合
-                local nPart = GetCompleteItemInfo(pFriendRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+                local nPart =pFriendRoleInfo.equipemts[i].dataInfo.Part -- 部位
                 if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                    local templeteID = TableEquips[pFriendRoleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[pFriendRoleInfo.roleCareer]
-                    strHaloPvrName = TableTempleteEquips[templeteID].Texture
+                    strHaloPvrName = pFriendRoleInfo.equipemts[i].templeteInfo.Texture
                     break     
                 end
             end
@@ -432,14 +448,18 @@ function ResPlistManager:collectPvrNameForBattle()
         if self:checkPvrNameCollectorItemExist(strWeaponPvrName) == false then
             table.insert(self._tPvrNameCollector, strWeaponPvrName)
         end
-
+        
+        --先初始化人物信息
+        for i=1,table.getn(pPvpPlayerRoleInfo.equipemts) do --遍历装备集合
+            GetCompleteItemInfo(pPvpPlayerRoleInfo.equipemts[i],pPvpPlayerRoleInfo.roleCareer)
+        end
+        
         -- 加载时装身贴图    
         if pPvpPlayerRoleInfo.fashionOptions and pPvpPlayerRoleInfo.fashionOptions[2] == true then
             for i=1,table.getn(pPvpPlayerRoleInfo.equipemts) do --遍历装备集合
-                local nPart = GetCompleteItemInfo(pPvpPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+                local nPart = pPvpPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
                 if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                    local templeteID = TableEquips[pPvpPlayerRoleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[pPvpPlayerRoleInfo.roleCareer]
-                    strBodyPvrName = TableTempleteEquips[templeteID].Texture
+                    strBodyPvrName = pPvpPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                     break     
                 end
             end
@@ -452,10 +472,9 @@ function ResPlistManager:collectPvrNameForBattle()
         if pPvpPlayerRoleInfo.fashionOptions and pPvpPlayerRoleInfo.fashionOptions[1] == true then
             local strBackPvrName = ""    
             for i=1,table.getn(pPvpPlayerRoleInfo.equipemts) do --遍历装备集合
-                local nPart = GetCompleteItemInfo(pPvpPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+                local nPart = pPvpPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
                 if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                    local templeteID = TableEquips[pPvpPlayerRoleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[pPvpPlayerRoleInfo.roleCareer]
-                    strBackPvrName = TableTempleteEquips[templeteID].Texture
+                    strBackPvrName = pPvpPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                     break     
                 end
             end
@@ -468,10 +487,9 @@ function ResPlistManager:collectPvrNameForBattle()
         if pPvpPlayerRoleInfo.fashionOptions and pPvpPlayerRoleInfo.fashionOptions[3] == true then
             local strHaloPvrName = ""
             for i=1,table.getn(pPvpPlayerRoleInfo.equipemts) do --遍历装备集合
-                local nPart = GetCompleteItemInfo(pPvpPlayerRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+                local nPart = pPvpPlayerRoleInfo.equipemts[i].dataInfo.Part -- 部位
                 if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                    local templeteID = TableEquips[pPvpPlayerRoleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[pPvpPlayerRoleInfo.roleCareer]
-                    strHaloPvrName = TableTempleteEquips[templeteID].Texture
+                    strHaloPvrName = pPvpPlayerRoleInfo.equipemts[i].templeteInfo.Texture
                     break     
                 end
             end

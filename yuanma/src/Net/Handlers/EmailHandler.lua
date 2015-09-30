@@ -89,7 +89,7 @@ end
 function EmailHandler:handleEmailNotice29513(msg)
     if msg.header.result == 0 then 
         local event = msg["body"]
-        
+        print("yuanjs:sendMail")
         EmailManager:getInstance():addEmailInfo(event.mail)
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kMailNotice, event.mail)
 

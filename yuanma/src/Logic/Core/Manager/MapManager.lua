@@ -961,13 +961,16 @@ end
 function MapManager:screenKartun(time)    
     if time ~= 0 then
         -- 开始卡顿
-        local nodes = self._pKartunActionNode:getActionManager():pauseAllRunningActions()
-        local kartunOver = function()
-            -- 恢复卡顿
-            self._pKartunActionNode:getActionManager():resumeTargets(nodes)
+        if self._pKartunActionNode:getNumberOfRunningActions() == 0 then
+            local nodes = self._pKartunActionNode:getActionManager():pauseAllRunningActions()
+            local kartunOver = function(sender,table)
+                -- 恢复卡顿
+                self._pKartunActionNode:getActionManager():resumeTargets(table[1])
+            end
+            self._pKartunActionNode:stopAllActions()
+            self._pKartunActionNode:runAction(cc.Sequence:create(cc.DelayTime:create(time),cc.CallFunc:create(kartunOver,{nodes})))
         end
-        self._pKartunActionNode:stopAllActions()
-        self._pKartunActionNode:runAction(cc.Sequence:create(cc.DelayTime:create(time),cc.CallFunc:create(kartunOver)))
+
     end
 end
 

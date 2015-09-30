@@ -661,3 +661,25 @@ function createEditBoxBySize(nViewSize,nMaxLength,nOpacity,sDefString)
 
     return pEditBox
 end
+
+--给一个3d模型赋值材质（）
+function setSprite3dMaterial(pSprite3d,tMaterial,auto)
+    if (tMaterial == nil or table.getn(tMaterial)==0) or pSprite3d == nil then --如果没有材质数据则直接返回
+        return 
+    end
+
+    for k,v in pairs(tMaterial) do
+       local pTexture = v 
+       local pLen =  string.find(v,"[.]")-#v-2
+       local pMaterialName = string.sub(v,1,pLen)
+      
+       local pMeshes = pSprite3d:getMeshByName(pMaterialName)
+       
+       if pMeshes == nil then
+       local sdf = 1
+       end
+       ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(pTexture)
+       pMeshes:setTexture(v..".pvr.ccz")
+
+    end
+end

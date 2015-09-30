@@ -96,6 +96,7 @@ function WorldUILayer:ctor()
     self._pLvUpEffectAniNode = nil              --人物升级特效
 
     self._pStrongerBtn = nil                   -- 我要变强
+    self._pActivityBtn = nil                   -- 活动入口
 end
 
 -- 创建函数
@@ -406,6 +407,14 @@ function WorldUILayer:initUI()
     self._pBuyPhysicalButton = params._pBuyButton1 
     self._pBuyPhysicalButton:setZoomScale(nButtonZoomScale)
     self._pBuyPhysicalButton:setPressedActionEnabled(true)
+    -- 玩家购买体力的逻辑 
+    self._pBuyPhysicalButton:addTouchEventListener(function (sender,eventType) 
+        if eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick")
+        elseif eventType == ccui.TouchEventType.ended then
+            DialogManager:getInstance():showDialog("BuyStrengthDialog",{1})
+        end
+    end)
 
     self._pBuyGoldCoinButton = params._pBuyButton2 
     self._pBuyGoldCoinButton:setZoomScale(nButtonZoomScale)
@@ -441,7 +450,7 @@ function WorldUILayer:initUI()
     self._pStrongerBtn = ccui.Button:create("icon_0002.png","icon_0002.png","icon_0002.png",ccui.TextureResType.plistType)
     self._pStrongerBtn:setPosition(mmo.VisibleRect:left().x + 65,mmo.VisibleRect:left().y-160)   
     self._pStrongerBtn:addTouchEventListener(function (sender,eventType) 
-         if eventType == ccui.TouchEventType.ended then
+        if eventType == ccui.TouchEventType.ended then
             DialogManager:getInstance():showDialog("StrongerDialog")
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
@@ -449,6 +458,18 @@ function WorldUILayer:initUI()
     end) 
     self:addChild(self._pStrongerBtn)                                                                                                                                            
 
+    -- 活动入口
+    self._pActivityBtn = ccui.Button:create("icon_0002.png","icon_0002.png","icon_0002.png",ccui.TextureResType.plistType)
+    self._pActivityBtn:setPosition(mmo.VisibleRect:left().x + 65,mmo.VisibleRect:left().y-260)   
+    self._pActivityBtn:addTouchEventListener(function (sender,eventType) 
+        if eventType == ccui.TouchEventType.ended then
+            DialogManager:getInstance():showDialog("ActivityDialog")
+        elseif eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick")
+        end
+    end) 
+    self._pActivityBtn:setTitleText("活动")
+    self:addChild(self._pActivityBtn)       
 
     --初始化聊天信息
     self:createChatFunc()
@@ -745,7 +766,7 @@ end
 
 -- 进行二阶段新手
 function WorldUILayer:showNewbieByRoleLevel()
-    if table.getn(self._tNewbieOpenArray) > 0 then
+    if table.getn(self._tNewbieOpenArray) > 0 and NewbieManager._bSkipGuide == false then
         DialogManager:closeDialogByName("TaskDialog") 
         DialogManager:closeDialogByName("DrunkeryDialog") 
         self:openUpAndDownMenu()
@@ -1651,6 +1672,9 @@ function WorldUILayer:createTalkHeaders(talkID)
                     pAni = cc.Sprite3D:create(fullAniName)
                     pAni:setTexture(fullTextureName)
                     self:addChild(pAni)
+                    --设置材质信息
+                    setSprite3dMaterial(pAni,tBodyTempleteInfo.Material)
+
                     -- 3D武器模型
                     local pWeaponRC3bName = tWeaponTempleteInfo.Model1..".c3b"
                     local pWeaponLC3bName = nil
@@ -1668,6 +1692,10 @@ function WorldUILayer:createTalkHeaders(talkID)
                         local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()*30))
                         pWeaponR:runAction(act)
                         pAni:getAttachNode("boneRightHandAttach"):addChild(pWeaponR)
+                        --设置材质信息
+                        setSprite3dMaterial(pWeaponR,tWeaponTempleteInfo.Material)
+
+
                     end
                     if pWeaponLC3bName then
                         local pWeaponL = cc.Sprite3D:create(pWeaponLC3bName)
@@ -1677,6 +1705,8 @@ function WorldUILayer:createTalkHeaders(talkID)
                         local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()*30))
                         pWeaponL:runAction(act)
                         pAni:getAttachNode("boneLeftHandAttach"):addChild(pWeaponL)
+                         --设置材质信息
+                        setSprite3dMaterial(pWeaponL,tWeaponTempleteInfo.Material)
                     end
                 end
 
@@ -1704,6 +1734,8 @@ function WorldUILayer:createTalkHeaders(talkID)
                     local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()*30))
                     pBack:runAction(act)
                     pAni:getAttachNode("boneBackAttach"):addChild(pBack)
+                    --设置材质信息
+                    setSprite3dMaterial(pBack,tFashionBackTempleteInfo.Material)
                 end
 
                 -- 创建待机动作

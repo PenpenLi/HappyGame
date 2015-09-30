@@ -21,7 +21,8 @@ function BattlePetRoleRunState:ctor()
     self._fCurStepMoveDistanceBuf = 0                 -- 当前指定移动方向集合的行进步中累计的移动间距缓存
     self._fCurAngleInMoveDirections = 0               -- 当前指定移动方向集合的行进步中的角度
     self._bExictlyToTarget = false                    -- 是否精确走到目标位置（false时：用于跟随主人，true时：用于追怪）
-    
+    self._fIgnoreHurtTimeCount = -1                   -- 避免此时切换应值等其他3D动作时导致安卓的闪退，做一个缓冲
+
 end
 
 -- 创建函数
@@ -32,6 +33,7 @@ end
 
 -- 进入函数
 function BattlePetRoleRunState:onEnter(args)
+    --cclog("宠物奔跑")
     if self:getMaster() then
         -- 刷新动作
         self:getMaster():playRunAction()
@@ -48,7 +50,10 @@ function BattlePetRoleRunState:onEnter(args)
             self._bExictlyToTarget = args.bExictlyToTarget
         end
     end
-
+    -- 忽略伤害引用计数+1（连应值都不会有）（避免此时切换应值等其他3D动作时导致安卓的闪退，做一个缓冲）
+    self:getMaster()._pRefRoleIgnoreHurt:add()
+    self._fIgnoreHurtTimeCount = 0
+        
     return
 end
 
@@ -60,12 +65,25 @@ function BattlePetRoleRunState:onExit()
     self._fCurStepMoveDistanceBuf = 0
     self._fCurAngleInMoveDirections = 0
     self._bExictlyToTarget = false
+    if self._fIgnoreHurtTimeCount ~= -1 then
+        self:getMaster()._pRefRoleIgnoreHurt:sub()
+    end
+    self._fIgnoreHurtTimeCount = -1
     
     return
 end
 
 -- 更新逻辑
 function BattlePetRoleRunState:update(dt)
+
+    if self._fIgnoreHurtTimeCount ~= - 1 then
+        self._fIgnoreHurtTimeCount = self._fIgnoreHurtTimeCount + dt
+        if self._fIgnoreHurtTimeCount >= 0.2 then
+            self:getMaster()._pRefRoleIgnoreHurt:sub()
+            self._fIgnoreHurtTimeCount = -1
+        end
+    end
+
     if self:getMaster() then
         -- 奔跑逻辑    
         self:procRun(dt)
@@ -467,14 +485,31 @@ function BattlePetRoleRunState:procRun(dt)
 
         if self._bExictlyToTarget == false then  -- 跟随主人时，距离全部走完还差3个格子时可以回到站立状态
             if self._nCurStepIndexInMoveDirections > table.getn(self._tMoveDirections) - 3 then
-                self._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattlePetRole.kStand)
+                local target = nil
+                if self:getMaster()._strCharTag == "main" then
+                    target = self:getRolesManager()._pMainPlayerRole
+                elseif self:getMaster()._strCharTag == "pvp" then
+                    target = self:getRolesManager()._pPvpPlayerRole
+                end
+                local posIndex = self:getMaster():getPositionIndex()
+                local targetPosIndex = self:getMapManager():convertPiexlToIndex(cc.p(target:getPositionX(), target:getPositionY()))
+                local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)
+                if table.getn(path) - 3 > 0 then       -- 继续寻路
+                    self._tMoveDirections = path
+                    self._nCurStepIndexInMoveDirections = 1
+                    self._fCurStepMoveDistanceBuf = 0
+                    self._fCurAngleInMoveDirections = self:getMaster():getAngle3D()
+                    -- 位置矫正
+                    self:getMaster():adjustPos()
+                else  -- 在制定距离内，恢复到站立即可
+                    self._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattlePetRole.kStand)
+                end
             end
         elseif self._bExictlyToTarget == true then  -- 追怪时，距离全部走完还差1个格子时可以回到站立状态
             if self._nCurStepIndexInMoveDirections > table.getn(self._tMoveDirections) - 1 then
                 self._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattlePetRole.kStand)
             end
         end
-        
     end
     
 end 

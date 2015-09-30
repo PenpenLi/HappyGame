@@ -341,25 +341,28 @@ end
 --得到所有可以分解的装备列表
 function BagCommonManager:InitResolveAllEquip()
     local tAllCanResolveEqu = {}  --所有可分解的装备
+    local tWhiteResloveEqu = {}   --白色可以分级的装备
+    local tGreenResloveEqu = {}   --绿色可以分解的装备
     local tBlueResolveEqu = {}    --蓝色可分解的装备
     local tPurpleResolveEqu = {}  --紫色分解的装备
     local tOrangeResolveEqu = {}  --橙色可分解的装备
     self._tArrayAllResolveEqu = {}
 
+    tAllCanResolveEqu = self._tEquipArry 
     for k,v in pairs(self._tEquipArry) do
         local nQua = v.dataInfo.Quality
-        if nQua > kType.kQuality.kGreen then --如果是大于蓝色的那么就添加到表里
-            table.insert(tAllCanResolveEqu,v)
-            if nQua == kType.kQuality.kBlue then  --蓝色装备
-                table.insert(tBlueResolveEqu,v)
-            elseif nQua == kType.kQuality.kPurple then --紫色装备
-                table.insert(tPurpleResolveEqu,v)
-
-            elseif nQua == kType.kQuality.kOrange then --橙色装备
-                table.insert(tOrangeResolveEqu,v)
-            end
-
+        if nQua == kType.kQuality.kWhite then --如果是大于蓝色的那么就添加到表里
+            table.insert(tWhiteResloveEqu,v)
+        elseif nQua == kType.kQuality.kGreen then --如果是大于蓝色的那么就添加到表里
+            table.insert(tGreenResloveEqu,v)
+        elseif nQua == kType.kQuality.kBlue then  --蓝色装备
+           table.insert(tBlueResolveEqu,v)
+        elseif nQua == kType.kQuality.kPurple then --紫色装备
+           table.insert(tPurpleResolveEqu,v)
+        elseif nQua == kType.kQuality.kOrange then --橙色装备
+           table.insert(tOrangeResolveEqu,v)
         end
+
     end
 
     -- 得到的是一个表数组

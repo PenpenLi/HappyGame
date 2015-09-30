@@ -16,6 +16,8 @@ function FriendGroomCell:ctor()
     -- 层名称
     self._strName = "FriendGroomCell"        
 
+    self._fNormalScale = 1.0                  -- 正常大小尺寸
+    self._fBigScale = 1.04                    -- 按下时的放大尺寸
     -- 地图背景
     self._pParams = nil
     self._pBg = nil
@@ -78,15 +80,29 @@ function FriendGroomCell:dispose(dataInfo)
 end
 
 function FriendGroomCell:initUI()
-    --图标按钮
-    local  onTouchButton = function (sender, eventType)
-        if eventType == ccui.TouchEventType.ended then
-
+    -- 背景图
+    local  onTouchBg = function (sender, eventType)
+        if eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick")
+            self:toBigScale()
+            self._fMoveDis = 0
+        elseif eventType == ccui.TouchEventType.moved then
+            self._fMoveDis = self._fMoveDis + 1
+            if self._fMoveDis >= 5 then
+                self:toNormalScale()
+            end
+        elseif eventType == ccui.TouchEventType.ended then
+            if self:getScale() > self._fNormalScale then
+                -- 显示邮件内容弹框
+                DialogManager:getInstance():showDialog("FriendTipsDialog",{self._pDataInfo})
+            end
+            self:toNormalScale()
+            self._fMoveDis = 0
         end
     end
 
     --图标按钮
-    local  onTouchBg = function (sender, eventType)
+    local onTouchButton = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then
             FriendCGMessage:sendMessageApplyFriend22010(self._pDataInfo.roleId)
             self._pParams._pAddButton:setVisible(false)
@@ -101,7 +117,11 @@ function FriendGroomCell:initUI()
     self._pParams = params
     self._pCCS = params._pCCS
     self._pBg = params._pGroomInfoBg
-
+    
+    self._pBg:setTouchEnabled(true)
+    self._pBg:setSwallowTouches(false)
+    self._pBg:addTouchEventListener(onTouchBg)
+    
     local x,y = self._pBg:getPosition()
     local size = self._pBg:getContentSize()
     local anchor = self._pBg:getAnchorPoint()
@@ -112,7 +132,7 @@ function FriendGroomCell:initUI()
     self._pCCS:setAnchorPoint(cc.p(0,0))
     self:addChild(self._pCCS)
     
-    self._pParams._pAddButton:addTouchEventListener(onTouchBg)
+    self._pParams._pAddButton:addTouchEventListener(onTouchButton)
 
     self:updateData()
 end
@@ -136,6 +156,16 @@ function FriendGroomCell:setInfo(info)
     self._pDataInfo = info
 
     self:updateData()
+end
+
+-- 整体到放大尺寸
+function FriendGroomCell:toBigScale()
+    self:setScale(self._fBigScale)
+end
+
+-- 整体到正常尺寸
+function FriendGroomCell:toNormalScale()
+    self:setScale(self._fNormalScale)
 end
 
 -- 退出函数

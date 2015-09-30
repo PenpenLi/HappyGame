@@ -431,6 +431,8 @@ function HuaShanDialog:createRoleModel(equipemts,fashionOptions,roleCareer)
     self:updateRoleWepanModel(pWeaPonAni1,pWeaPonAni2,pWeaPonTexTure) --更换武器模型
     self:updateRoleFashionBackModel(pFashionBackAni,pFashionBackTure) --更换翅膀模型
     self:updateRoleFashionHaloModel(pFashionHaloAni,pFashionHaloTure,nScale) --更换光环
+    --设置材质信息
+    self:setMaterialInfo(equipemts)
 
     self._pRolePlayer:stopAllActions()
     self._pRoleAnimation = cc.Animation3D:create(pRoleModelAni..".c3b")
@@ -642,6 +644,31 @@ function HuaShanDialog:setModelScaleByInfo(pScale)
     end
     
 end
+
+--设置材质信息
+function HuaShanDialog:setMaterialInfo(tEquipemts)
+    for k, v in pairs(tEquipemts) do
+        local pEquInfo = v
+        local nPart = pEquInfo.dataInfo.Part -- 部位
+        local ptempleteInfo  = pEquInfo.templeteInfo
+        if nPart == kEqpLocation.kBody then -- 身
+            setSprite3dMaterial(self._pRolePlayer,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kWeapon then  -- 武器
+            setSprite3dMaterial(self._pWeapon1,ptempleteInfo.Material)
+            setSprite3dMaterial(self._pWeapon2,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBody then --时装身可能会影响人物模型
+            setSprite3dMaterial(self._pRolePlayer,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBack then  --时装背（翅膀）
+            setSprite3dMaterial(self._pFashionBack,ptempleteInfo.Material)
+
+        elseif nPart == kEqpLocation.kFashionHalo then  --时装光环
+
+        end
+    end
+
+end
+
+
 --  退出回调
 function HuaShanDialog:onExitHuaShanDialog()
     

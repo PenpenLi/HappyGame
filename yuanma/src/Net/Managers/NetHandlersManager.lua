@@ -89,6 +89,8 @@ function NetHandlersManager:registNetHandlers()
     require("OtherPlayersHandler"):create()
     -- 注册藏经阁Handler
     require("SturaLibraryHandler"):create()
+    -- 注册活动的Handler
+    require("ActivityHandler"):create()
 end
 
 -- 执行监听回调

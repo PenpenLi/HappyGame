@@ -19,7 +19,8 @@ function BattlePoisonBuffController:ctor()
     self._kTypeID = kType.kController.kBuff.kBattlePoisonBuff -- 控制类机型ID
     self._fTimeMax = 0                                  -- 持续时间
     self._fHurtValue = 0                                -- 每秒减少生命值
-    
+    self._fLoseHpOnMaxHpRate = 0                        -- 每秒减少目标最大生命值的比率
+
 end
 
 -- 创建函数
@@ -35,6 +36,7 @@ function BattlePoisonBuffController:dispose()
     self._strAniName = "ParticlePoison.plist"  -- 粒子
     self._fTimeMax = self._pBuffInfo.Param1*(1 - self._pMaster._fDebuffTimeRate)
     self._fHurtValue = self._pBuffInfo.Param2
+    self._fLoseHpOnMaxHpRate = self._pBuffInfo.Param3
     
     return
 end

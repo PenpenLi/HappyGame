@@ -175,4 +175,8 @@ kNetCmd =
     kStopServiceNotice = "k29529",              -- 强制退服通知（停服）
     kQuerySturaLibraryResp = "k22401",          -- 查询藏经阁信息回复
     kSturaInsertPageResp = "k22403",            -- 藏经阁注入残页
+    kBuyStrengthResp = "k21315",                -- 购买体力
+    kBuyBattleResp = "k21317",                  -- 购买战斗次数
+    kQueryOnlineAwardResp = "k22507",           -- 获取在线礼包的回复 
+    kGainOnlineAwardResp = "k22509",            -- 领取在线礼包的回复
 }

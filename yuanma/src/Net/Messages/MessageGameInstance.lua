@@ -26,7 +26,7 @@ function MessageGameInstance:sendMessageQueryBattleList21000(tCopyTypes)
 end
 
 -- 请求进入副本战斗
-function MessageGameInstance:sendMessageEntryBattle21002(battleId,identity)
+function MessageGameInstance:sendMessageEntryBattle21002(battleId,identity,friendId)
     local msg = {}
     -------------------------------------
     msg.header = {}
@@ -39,6 +39,11 @@ function MessageGameInstance:sendMessageEntryBattle21002(battleId,identity)
     msg.body = {} 
     msg.body.battleId = battleId                            -- 副本id
     msg.body.identity = identity                            -- 标识id
+    if friendId ~= nil then
+        msg.body.friendId = friendId
+    else
+        msg.body.friendId = 0
+    end
     -------------------------------------
     send(msg)
 end

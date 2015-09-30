@@ -31,6 +31,7 @@ function Role:ctor()
         self._fAttriValueOffsets[i] = 0
     end
     self._fSunderArmorLoseHpRate = 0            -- 角色破甲时掉Hp（仅被技能攻击时）时额外附加的最大HP伤害的百分比
+    self._bMustBlock = false                    -- 是否必须格挡
     ---------------------------------- 火 冰 雷 属性积蓄值相关参数 ----------------------------------
     self._nCurFireSaving = 0                    -- 当前火属性积蓄值
     self._nCurIceSaving = 0                     -- 当前冰属性积蓄值
@@ -369,7 +370,7 @@ function Role:addBuffByID(buffID)
                 end
             end
         end
-        
+
         -- 产生buff
         local buff = require(className):create(self, TableBuff[buffID])
         self:getBuffControllerMachine():addController(buff)

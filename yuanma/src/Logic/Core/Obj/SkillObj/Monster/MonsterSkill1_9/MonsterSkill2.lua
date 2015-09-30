@@ -134,9 +134,11 @@ function MonsterSkill2:onEnterChantDo(state)
     self._pCurState = state
 
     -- 刷新方向（考虑野怪是否有指定转向）
+    --[[
     if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
         self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self)
     end
+    ]]
     
     self:setVisible(true)
     

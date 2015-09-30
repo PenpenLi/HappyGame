@@ -116,12 +116,7 @@ function CopysDialog:dispose(args)
     self._pScrollView:setInnerContainerSize(cc.size(nViewWidth,nViewHeight))
 
     for i=1,table.getn(goldAndMaterialCopys) do
-        local item = nil
-        --if goldAndMaterialCopys[i].CopysType ~= kType.kCopy.kChallenge then
-        --    item = require("CopysItem"):create(goldAndMaterialCopys[i], switchMapInfoAction[goldAndMaterialCopys[i].CopysType][goldAndMaterialCopys[i].MapID])
-       -- else
-            item = require("CopysChallengeItem"):create(goldAndMaterialCopys[i], switchMapInfoAction[goldAndMaterialCopys[i].CopysType][goldAndMaterialCopys[i].MapID])
-        --end
+        local item = require("CopysChallengeItem"):create(goldAndMaterialCopys[i], switchMapInfoAction[goldAndMaterialCopys[i].CopysType][goldAndMaterialCopys[i].MapID])
         item:setPosition((i-1) * 340 , 0)
         item:setSelfPos((i-1) * 340, 0)
         item:setAnchorPoint(cc.p(0.5, 0.5))

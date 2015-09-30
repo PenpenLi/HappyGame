@@ -100,6 +100,8 @@ function BattleUILayer:ctor()
     self._pResultByGradeNode = nil              -- 材料副本或金钱副本评分
     self._pTimeCountDownNode = nil              -- 根据战斗时长评分节点
     self._pGoldDropNode = nil                   -- 金钱副本中的已获得金币相关UI
+
+    self._pBossAppearUIEffectAni = nil          -- BOSS出场时的UI警示特效
     
 end
 
@@ -125,6 +127,9 @@ function BattleUILayer:dispose()
     
     -- 初始化UI
     self:initUI()
+
+    -- 初始化特效
+    self:initEffects()
     
     -- 初始化进度条
     self:initBars()
@@ -394,6 +399,26 @@ function BattleUILayer:initVSEffect()
         end
         self:runAction(cc.Sequence:create(cc.DelayTime:create(1.0),cc.CallFunc:create(playVSEffect)))
     end
+end
+
+-- 初始化特效
+function BattleUILayer:initEffects()
+    -- BOSS出场时的UI警示特效
+    self._pBossAppearUIEffectAni = cc.CSLoader:createNode("BossStartEffect.csb")
+    self:addChild(self._pBossAppearUIEffectAni)
+    self._pBossAppearUIEffectAni:setVisible(false)
+
+end
+
+-- 播放Boss出场时的UI警示特效
+function BattleUILayer:showBossAppearUIEffect()
+    self._pBossAppearUIEffectAni:setPosition(mmo.VisibleRect:center())
+    self._pBossAppearUIEffectAni:stopAllActions()
+    self._pBossAppearUIEffectAni:setVisible(false)
+    local action = cc.CSLoader:createTimeline("BossStartEffect.csb")
+    action:gotoFrameAndPlay(0, action:getDuration(), false)
+    self._pBossAppearUIEffectAni:runAction(action)
+    self._pBossAppearUIEffectAni:runAction(cc.Sequence:create(cc.Show:create(),cc.DelayTime:create(action:getDuration()*cc.Director:getInstance():getAnimationInterval()),cc.Hide:create()))
 end
 
 -- 设置玩家血量最大值
@@ -781,6 +806,7 @@ function BattleUILayer:disposeWidgets()
     
     local function onTestButton(sender, eventType)
         if eventType == ccui.TouchEventType.ended then
+
             MonstersManager:getInstance():debugCurWaveMonstersAllDead()
             if RolesManager:getInstance()._pMainPlayerRole then
                 RolesManager:getInstance()._pMainPlayerRole:resetSpeed()
@@ -790,7 +816,9 @@ function BattleUILayer:disposeWidgets()
                 RolesManager:getInstance()._pPvpPlayerRole._nCurHp = 0
                 RolesManager:getInstance()._pPvpPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kDead, true, {})
             end
-            
+
+            --MonstersManager:getInstance()._pBoss:playSkillEarlyWarningEffect(kType.kSkillEarlyWarning.kType4,{pos=cc.p(MonstersManager:getInstance()._pBoss:getPositionX(), MonstersManager:getInstance()._pBoss:getPositionY())})
+
             --BattleManager:getInstance():pauseTime()
             --PetsManager:getInstance()._pMainPetRole:setHp(700,2000)
 

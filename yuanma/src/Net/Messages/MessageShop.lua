@@ -113,3 +113,37 @@ function ShopSystemCGMessage:GenerateOrder(channelId,rechargeId)
     -------------------------------------
     send(msg)
 end
+
+-- 购买体力
+function ShopSystemCGMessage:BuyStrengthReq21314()
+    local msg = {}
+    ------------------------
+    msg.header = {}
+    msg.header.cmdNum = 21314                              -- 消息协议号
+    msg.header.cmdSeq = nSeqNum                             -- 消息序列号（每次加1）
+    msg.header.reserve = 1                                  -- 保留字段
+    msg.header.srcId = 0                                    -- 角色ID字段
+    msg.header.sessionId = 0                                -- 会话Id字段
+    -------------------------------------
+    msg.body = {}
+    -------------------------------------
+    send(msg)
+end
+
+-- 购买战斗次数
+function ShopSystemCGMessage:BuyBattleReq21316 (kCopyType,nCopyId)
+    local msg = {}
+    ------------------------
+    msg.header = {}
+    msg.header.cmdNum = 21316                               -- 消息协议号
+    msg.header.cmdSeq = nSeqNum                             -- 消息序列号（每次加1）
+    msg.header.reserve = 1                                  -- 保留字段
+    msg.header.srcId = 0                                    -- 角色ID字段
+    msg.header.sessionId = 0                                -- 会话Id字段
+    -------------------------------------
+    msg.body = {}
+    msg.body.copyTp = kCopyType                             -- 购买次数副本的类型
+    msg.body.copyId = nCopyId                               -- 购买次数副本的Id
+    -------------------------------------
+    send(msg)    
+end

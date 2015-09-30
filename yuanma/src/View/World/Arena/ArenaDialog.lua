@@ -91,7 +91,8 @@ function ArenaDialog:dispose(args)
     NetRespManager:getInstance():addEventListener(kNetCmd.kBuyGoods, handler(self,self.handleMsgBuyGoods20505))
     -- 新手中
     NetRespManager:getInstance():addEventListener(kNetCmd.kWorldLayerTouch,handler(self, self.handleTouchable))
-
+    -- 购买战斗次数的网络回复
+    NetRespManager:getInstance():addEventListener(kNetCmd.kBuyBattleResp ,handler(self, self.buyBattleNumResp21317))
 	local function onNodeEvent(event)
 		if event == "exit" then
 			self:onExitArenaDialog()
@@ -288,7 +289,7 @@ function ArenaDialog:setEnemyList(tEnemy)
 			if sender:getScale() > 1 then
 				-- 向服务器发送挑战协议
 				if self._nRemainBattleNum <= 0 then 
-					NoticeManager:getInstance():showSystemMessage("挑战次数不足")
+					DialogManager:getInstance():showDialog("BuyStrengthDialog",{2,kCopy.kPVP, 0})
 					return
 				end
 				ArenaCGMessage:fightReq21602(tEnemy[sender:getTag() - 5000].roleId)
@@ -576,6 +577,13 @@ function ArenaDialog:handleMsgBuyGoods20505(event)
 	self._pCurHonorNumText:setString(FinanceManager:getInstance():getValueByFinanceType(kFinance.kHR))
 end
 
+-- 购买挑战次数的网络回调
+function ArenaDialog:buyBattleNumResp21317(event)
+	if event.copyType == kCopy.kPVP then 
+		self._nRemainBattleNum = self._nRemainBattleNum + 1
+		self._pRemainFightNumFntText:setString(self._nRemainBattleNum)
+ 	end
+end
 
 function ArenaDialog:onExitArenaDialog()
 	self:onExitDialog()

@@ -281,3 +281,18 @@ kContributionType = {
     KCash = 2,  --// 家族资金
 }
 
+--// 宠物操作类型
+kPetHandleType = {
+    kNone = 0,  --// 无效类型
+    kCompound = 1,  --// 宠物合成
+    kUpdate = 2,  --// 宠物升级
+    kPromotion = 3,  --// 宠物升阶
+    kResonance = 4,  --// 宠物共鸣
+}
+
+--// 活动类型
+kActivityType = {
+    kNone = 0,  --// 无效类型
+    kOnline = 1,  --// 在线奖励
+}
+

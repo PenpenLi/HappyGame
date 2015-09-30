@@ -23,6 +23,10 @@ function ShopSystemHandler:ctor()
 	NetHandlersManager:registHandler(20509,self.handlerMsgGainVipBox20509)
     -- 生成订单 的回复
     NetHandlersManager:registHandler(20511,self.handlerMsgGenerateOrder20511)
+    -- 购买体力的回复
+    NetHandlersManager:registHandler(21315,self.handlerMsgBuyStrength21315)
+    -- 购买战斗次数的回复
+    NetHandlersManager:registHandler(21317,self.handlerMsgBuyBattle21317)
 end
 
 -- 创建函数
@@ -99,6 +103,45 @@ function ShopSystemHandler:handlerMsgGenerateOrder20511(msg)
     else
         print("返回错误码："..msg.header.result)
     end
+end
+
+-- 购买体力的回复
+function ShopSystemHandler:handlerMsgBuyStrength21315(msg)
+	print("ShopSystemHandler 21315")
+	if msg.header.result == 0 then 
+		local roleInfo = RolesManager._pMainRoleInfo
+		roleInfo.strength = msg.body.currStrength
+		roleInfo.vipInfo.addStrength = msg.body.buyCount
+		NetRespManager:getInstance():dispatchEvent(kNetCmd.kUpdateRoleInfo, {})
+	else
+		print("返回错误码：" ..msg.header.result)
+	end
+end
+
+-- 购买战斗次数回复
+function ShopSystemHandler:handlerMsgBuyBattle21317(msg)
+	print("ShopSystemHandler 21317")
+	if msg.header.result == 0 then 
+		local event = {
+			copyType = msg.body.argsBody.copyTp,
+			copyId = msg.body.argsBody.copyId,
+		}
+
+		NetRespManager:getInstance():dispatchEvent(kNetCmd.kBuyBattleResp, event)
+		-- 更新本地的Vip信息
+		local temp = RolesManager._pMainRoleInfo.vipInfo.addBattles
+
+		for i,pVipAddBattleInfo in ipairs(temp) do
+			if pVipAddBattleInfo.copyId == msg.body.argsBody.copyId 
+				and pVipAddBattleInfo.copyTp == msg.body.argsBody.copyTp then 
+				pVipAddBattleInfo.buyCount = pVipAddBattleInfo.buyCount + 1
+				return
+			end
+		end
+		table.insert(temp,{copyId = msg.body.argsBody.copyId, copyTp = msg.body.argsBody.copyTp, buyCount = 1 })	
+	else
+		print("返回错误码：" ..msg.header.result)
+	end
 end
 
 return ShopSystemHandler

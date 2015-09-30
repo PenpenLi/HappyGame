@@ -40,6 +40,8 @@ function StoryInfoDialog:ctor()
     self._pHasTextBattle = false                                    --是否是测试战斗。不正常进来。不能进行结算
     self._pChooseButton = nil
     self._pIconPic = nil
+    ----------------------------------------------------------------------------
+    self._nRemainBattleNum = 0                                      -- 关卡的剩余挑战次数
 end
 
 -- 创建函数
@@ -51,7 +53,10 @@ end
 
 -- 处理函数
 function StoryInfoDialog:dispose(args)
+    -- 进入战斗的网络回复
     NetRespManager:getInstance():addEventListener(kNetCmd.kEntryBattle ,handler(self, self.entryBattleCopy))
+    -- 购买战斗次数的网络回复
+    NetRespManager:getInstance():addEventListener(kNetCmd.kBuyBattleResp ,handler(self, self.buyBattleNumResp21317))
     self._pStoryCopys = args[1]   --本地数据
     if table.getn(args) >= 2 then --服务器传过来的数据（消耗次数跟星级）
        self._pCopyHasOpen = true
@@ -172,8 +177,8 @@ function StoryInfoDialog:initUI()
      else --关卡未开启
         nCurrentCount = nAllCount
     end
-
-    self._pResidueCount:setString((nCurrentCount+nExtCount).."/"..(nExtCount+nAllCount))   --关卡的剩余次数
+    self._nRemainBattleNum = nCurrentCount+nExtCount
+    self._pResidueCount:setString(self._nRemainBattleNum.."/"..(nExtCount+nAllCount))   --关卡的剩余次数
 
 
     --关卡的星级图片
@@ -193,7 +198,11 @@ function StoryInfoDialog:initUI()
            if self._pHasTextBattle then
               self:entryBattleCopy()
            else  
-              MessageGameInstance:sendMessageEntryBattle21002(self._pStoryCopys.ID,0) 
+                if self._nRemainBattleNum < 1 then 
+                    DialogManager:getInstance():showDialog("BuyStrengthDialog",{2,kCopy.kStory,self._pStoryCopys.ID})
+                    return
+                end
+                MessageGameInstance:sendMessageEntryBattle21002(self._pStoryCopys.ID,0,self._pFriendHelpInfo~=nil and self._pFriendHelpInfo.roleId or 0) 
            end    
         elseif eventType == ccui.TouchEventType.began then
            AudioManager:getInstance():playEffect("ButtonClick")
@@ -267,6 +276,22 @@ function StoryInfoDialog:entryBattleCopy()
     end
 end
 
+-- 购买战斗次数的网络回调
+function StoryInfoDialog:buyBattleNumResp21317(event)
+    if self._pStoryCopys.ID == event.copyId and event.copyType == kCopy.kStory then 
+        local nAllCount = self._pStoryCopys.Times
+        self._pStoryInfo.currentCount  = self._pStoryInfo.currentCount + 1
+        if self._pCopyHasOpen then --标示关卡已经开启   
+            nCurrentCount = self._pStoryInfo.currentCount         --关卡当前次数
+            nExtCount = self._pStoryInfo.extCount                 --额外增加的次数
+            nStartNum = self._pStoryInfo.bestStar
+        else --关卡未开启
+            nCurrentCount = nAllCount
+        end
+        self._nRemainBattleNum = nCurrentCount+nExtCount 
+        self._pResidueCount:setString(self._nRemainBattleNum.."/"..(nExtCount+nAllCount))   --关卡的剩余次数
+    end 
+end
 
 --初始化ScrollView界面数据
 function StoryInfoDialog:loadScrollViewDate()

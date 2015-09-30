@@ -28,6 +28,7 @@ end
 
 -- 进入函数
 function BattlePetRoleSkillAttackState:onEnter(args)
+    --cclog("宠物攻击")
     --print(self:getMaster()._strCharTag.."宠物角色技能攻击状态")
     -- mmo.DebugHelper:showJavaLog("--STATE--PET--:SkillAttack "..self:getMaster()._tSkills[args.skillIndex]._strName)
     if self:getMaster() then

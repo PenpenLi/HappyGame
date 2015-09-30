@@ -13,6 +13,7 @@ local instFileUtils = cc.FileUtils:getInstance()
 ProcotolFilePath = 
 {
 	"src/Net/Protocols/msg_ce.lua",
+    "src/Net/Protocols/msg_cg_activity.lua",
     "src/Net/Protocols/msg_cg_arena.lua",
     "src/Net/Protocols/msg_cg_battle.lua",
     "src/Net/Protocols/msg_cg_beauty.lua",

@@ -26,6 +26,7 @@ require("NetProcotolPath")
 
 
 require("msg_ce")
+require("msg_cg_activity")
 require("msg_cg_arena")
 require("msg_cg_battle")
 require("msg_cg_beauty")
@@ -52,6 +53,7 @@ require("msg_cg_winery")
 require("msg_cg_family")
 require("msg_cg_cjg")
 -- cgmessage require
+require("MessageActivity")
 require("MessageArena")
 require("MessageBagCommon")
 require("MessageBeautyClub")

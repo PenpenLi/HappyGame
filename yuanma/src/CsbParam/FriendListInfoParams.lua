@@ -25,6 +25,8 @@ function FriendListDialogParams:ctor()
     self._pIntimacyNum = self._pListInfoBg:getChildByName("IntimacyNum")
     --是否在线
     self._pText = self._pListInfoBg:getChildByName("Text")
+    --助战冷却时间
+    self._pZzTextTime = self._pListInfoBg:getChildByName("ZzTextTime")
     --已上阵图标
     self._pAlreadyIcon = self._pListInfoBg:getChildByName("AlreadyIcon")
 end

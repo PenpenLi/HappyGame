@@ -123,7 +123,7 @@ function PetsManager:createMainPetRoleOnMap(bDebug)
                 end
             end
             -- 添加主角宠物到地图
-            self._pMainPetRole:setPositionByIndex(self._posMainPetRoleStartPosIndex)
+            self._pMainPetRole:setPositionByIndex(cc.p(self._posMainPetRoleStartPosIndex.x + 2, self._posMainPetRoleStartPosIndex.y))
             self._pMainPetRole:setPositionZ(self._posMainPetRoleStartPosIndex.y*(MapManager:getInstance()._f3DZ))
             MapManager:getInstance()._pTmxMap:addChild(self._pMainPetRole, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - self._pMainPetRole:getPositionY())
             -- 刷新相机
@@ -155,12 +155,11 @@ function PetsManager:createPvpPetRoleOnMap(bDebug)
             -- 获取位置的行列索引值
             self._posPvpPetRoleStartPosIndex = MapManager:getInstance():convertPiexlToIndex(cc.p(posPvpPetRoleStart["x"], posPvpPetRoleStart["y"]))
             -- 添加pvp宠物到地图
-            self._pPvpPetRole:setPositionByIndex(self._posPvpPetRoleStartPosIndex)
+            self._pPvpPetRole:setPositionByIndex(cc.p(self._posPvpPetRoleStartPosIndex.x + 2, self._posPvpPetRoleStartPosIndex.y))
             self._pPvpPetRole:setPositionZ(self._posPvpPetRoleStartPosIndex.y*(MapManager:getInstance()._f3DZ))
             MapManager:getInstance()._pTmxMap:addChild(self._pPvpPetRole, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - self._pPvpPetRole:getPositionY())
             -- 刷新相机
             self._pPvpPetRole:refreshCamera()
-            
         end
 
         if bDebug == true then
@@ -183,7 +182,7 @@ function PetsManager:createOtherPetRolesOnMap()
         -- 宠物
         local role = require("OtherPetRole"):create(vInfo[1].petInfo,self._tOtherPetRolesMasters[kInfo])
         -- 添加宠物到地图
-        role:setPositionByIndex(role._pMaster:getPositionIndex())
+        role:setPositionByIndex(cc.p(role._pMaster:getPositionIndex().x + 2, role._pMaster:getPositionIndex().y))
         role:setPositionZ(role._pMaster:getPositionIndex().y*(MapManager:getInstance()._f3DZ))
         MapManager:getInstance()._pTmxMap:addChild(role, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - role:getPositionY())
         table.insert(self._tOtherPetRoles,role)      

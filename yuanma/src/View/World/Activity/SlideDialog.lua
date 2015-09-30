@@ -150,7 +150,7 @@ function SlideDialog:changePageIndex(index)
 end
 
 function SlideDialog:initTouchEvent()
-	 -- 触摸注册
+	-- 触摸注册
     local function onTouchBegin(touch,event)
         local location = touch:getLocation()
         if cc.rectContainsPoint(self._recBg,location) == true then

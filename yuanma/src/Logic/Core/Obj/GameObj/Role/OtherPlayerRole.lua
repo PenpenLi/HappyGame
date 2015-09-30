@@ -95,13 +95,20 @@ function OtherPlayerRole:initAni()
     local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kWeapon].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
     local tWeaponTempleteInfo = TableTempleteEquips[templeteID]
 
+
+    --先初始化人物信息
+     for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
+        GetCompleteItemInfo(self._pRoleInfo.equipemts[i],self._pRoleInfo.roleCareer)
+     end
+
+
+
     -- 判断是否加载时装身
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[2] == true then -- 时装身        
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBody then  -- 时装身部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionBody].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tBodyTempleteInfo = TableTempleteEquips[templeteID] 
+                tBodyTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -128,7 +135,7 @@ function OtherPlayerRole:initAni()
         local pWeaponTextureName = tWeaponTempleteInfo.Texture..".pvr.ccz"
         ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tWeaponTempleteInfo.Texture)
         self._strWeaponTexturePvrName = tWeaponTempleteInfo.Texture
-        if pWeaponRC3bName then
+        if pWeaponRC3bName then     
             self._pWeaponR = cc.Sprite3D:create(pWeaponRC3bName)
             self._pWeaponR:setTexture(pWeaponTextureName)
             self._pWeaponR:setScale(tWeaponTempleteInfo.ModelScale1)
@@ -155,10 +162,9 @@ function OtherPlayerRole:initAni()
     local tFashionBackTempleteInfo = nil
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[1] == true then
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart =self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionBack then  -- 时装背部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionBack].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tFashionBackTempleteInfo = TableTempleteEquips[templeteID]
+                tFashionBackTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -181,10 +187,9 @@ function OtherPlayerRole:initAni()
     local tFashionHaloTempleteInfo = nil
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[3] == true then        
         for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
-            local nPart = GetCompleteItemInfo(self._pRoleInfo.equipemts[i]).dataInfo.Part -- 部位
+            local nPart = self._pRoleInfo.equipemts[i].dataInfo.Part -- 部位
             if nPart == kEqpLocation.kFashionHalo then  -- 时装光环部位
-                local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kFashionHalo].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
-                tFashionHaloTempleteInfo = TableTempleteEquips[templeteID] 
+                tFashionHaloTempleteInfo = self._pRoleInfo.equipemts[i].templeteInfo
                 break     
             end
         end
@@ -211,6 +216,9 @@ function OtherPlayerRole:initAni()
     else
         self._pName:setVisible(false)
     end
+    
+    --设置材质特效信息
+    self:setMaterialInfo()
     
     -- 叠色
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
@@ -413,6 +421,29 @@ function OtherPlayerRole:getAttriValueByType(type)
     
     return value + offset
 end
+
+--设置材质特效信息
+function OtherPlayerRole:setMaterialInfo()
+    for k, v in pairs(self._pRoleInfo.equipemts) do
+        local pEquInfo = GetCompleteItemInfo(v,self._pRoleInfo.roleCareer)
+        local nPart = pEquInfo.dataInfo.Part -- 部位
+        local ptempleteInfo  = pEquInfo.templeteInfo
+        if nPart == kEqpLocation.kBody then -- 身
+            setSprite3dMaterial(self._pAni,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kWeapon then  -- 武器
+            setSprite3dMaterial(self._pWeaponR,ptempleteInfo.Material)
+            setSprite3dMaterial(self._pWeaponL,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBody then --时装身可能会影响人物模型
+            setSprite3dMaterial(self._pAni,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation._pBack then  --时装背（翅膀）
+               setSprite3dMaterial(self._pFashionBack,ptempleteInfo.Material)
+
+        elseif nPart == kEqpLocation.kFashionHalo then  --时装光环
+        
+        end
+    end
+end
+
 
 -- 刷新头顶字
 function OtherPlayerRole:refreshName()

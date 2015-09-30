@@ -632,6 +632,9 @@ kType =
                 kMonsterSkill56 = 355,
                 kMonsterSkill57 = 356,
                 kMonsterSkill58 = 357,
+                kMonsterSkill59 = 358,
+                kMonsterSkill60 = 359,
+                kMonsterSkill61 = 360,
 
                 --------实体相关-------------------
                 kPoisonPoolSkill = 400,
@@ -692,6 +695,16 @@ kType =
             kBody = 1,
             kWeapon = 2,
             kBack = 3,
+        },
+        ----------------- 野怪技能的提前预警 ---------------------
+        kSkillEarlyWarning = 
+        {
+            kNone = 0,
+            kType1 = 1,
+            kType2 = 2,
+            kType3 = 3,
+            kType4 = 4,
+            kType5 = 5,
         },
         ------------------
         kObjCmd = 

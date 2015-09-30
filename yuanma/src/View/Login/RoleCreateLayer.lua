@@ -191,6 +191,8 @@ function RoleCreateLayer:initRoles()
         pRole:setScale(TableTempleteCareers[i].ScaleInLogin)
         pRole:setPosition(mmo.VisibleRect:width()/2,121)
         self:addChild(pRole)
+        --设置材质信息
+        setSprite3dMaterial(pRole,TableTempleteEquips[TableTempleteCareers[i].FashionEquTempleteID[2]].Material)
         table.insert(self._tCRRoleList, pRole)
         -- 武器模型
         local pWeaponRC3bName = TableTempleteEquips[TableTempleteCareers[i].WeaponEquTempleteID].Model1..".c3b"
@@ -210,6 +212,8 @@ function RoleCreateLayer:initRoles()
             pWeaponR:runAction(act)
             pRole:getAttachNode("boneRightHandAttach"):addChild(pWeaponR)
             table.insert(self._tCRWeaponList[i], pWeaponR)
+            --设置材质信息
+            setSprite3dMaterial(pWeaponR,TableTempleteEquips[TableTempleteCareers[i].WeaponEquTempleteID].Material)
         end
         if pWeaponLC3bName then
             local pWeaponL = cc.Sprite3D:create(pWeaponLC3bName)
@@ -220,6 +224,7 @@ function RoleCreateLayer:initRoles()
             pWeaponL:runAction(act)
             pRole:getAttachNode("boneLeftHandAttach"):addChild(pWeaponL)
             table.insert(self._tCRWeaponList[i], pWeaponL)
+            setSprite3dMaterial(pWeaponL,TableTempleteEquips[TableTempleteCareers[i].WeaponEquTempleteID].Material)
         end
         -- 时装【背】
         if TableTempleteEquips[TableTempleteCareers[i].FashionEquTempleteID[1]].Model1 then
@@ -236,6 +241,7 @@ function RoleCreateLayer:initRoles()
             pBack:runAction(act)
             pRole:getAttachNode("boneBackAttach"):addChild(pBack)
             table.insert(self._tCRBackList, pBack)
+            setSprite3dMaterial(pBack,TableTempleteEquips[TableTempleteCareers[i].FashionEquTempleteID[1]].Material)
         end
         
         -- 动作初始化

@@ -20,6 +20,7 @@ function BattleMonsterRunState:ctor()
     self._nCurStepIndexInMoveDirections = 0              -- 指定的移动方向集合中当前的步数
     self._fCurStepMoveDistanceBuf = 0                    -- 当前指定移动方向集合的行进步中累计的移动间距缓存
     self._fCurAngleInMoveDirections = 0                  -- 当前指定移动方向集合的行进步中的角度
+    self._fIgnoreHurtTimeCount = -1                      -- 避免此时切换应值等其他3D动作时导致安卓的闪退，做一个缓冲
 
 end
 
@@ -45,8 +46,10 @@ function BattleMonsterRunState:onEnter(args)
                 self:getMaster():adjustPos()
             end
         end
-
     end
+    -- 忽略伤害引用计数+1（连应值都不会有）（避免此时切换应值等其他3D动作时导致安卓的闪退，做一个缓冲）
+    self:getMaster()._pRefRoleIgnoreHurt:add()
+    self._fIgnoreHurtTimeCount = 0
     return
 end
 
@@ -57,12 +60,24 @@ function BattleMonsterRunState:onExit()
     self._nCurStepIndexInMoveDirections = 0
     self._fCurStepMoveDistanceBuf = 0
     self._fCurAngleInMoveDirections = 0
+    if self._fIgnoreHurtTimeCount ~= -1 then
+        self:getMaster()._pRefRoleIgnoreHurt:sub()
+    end
+    self._fIgnoreHurtTimeCount = -1
 
     return
 end
 
 -- 更新逻辑
 function BattleMonsterRunState:update(dt)
+
+    if self._fIgnoreHurtTimeCount ~= - 1 then
+        self._fIgnoreHurtTimeCount = self._fIgnoreHurtTimeCount + dt
+        if self._fIgnoreHurtTimeCount >= 0.2 then
+            self:getMaster()._pRefRoleIgnoreHurt:sub()
+            self._fIgnoreHurtTimeCount = -1
+        end
+    end
 
     -- 如果正在显示对话或地图正在移动，则直接返回
     if self:getTalksManager():isShowingTalks() == true or self:getMapManager():isCameraMoving() == true then
@@ -92,6 +107,7 @@ function BattleMonsterRunState:update(dt)
                     local targetsInView, targetsInWarning = self:getAIManager():objSearchNearestEnemysInViewAndSkillWarningRange(self:getMaster(), self:getMaster()._tReverseIDSkills[self:getMaster()._tCurSkillChain[1]])
                     if #targetsInWarning ~= 0 then  -- 警戒范围内有目标，则直接开始战斗
                         -- monster发起进攻
+                        self:getMaster():playStandAction()
                         self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kSkillAttack)
                         return
                     end

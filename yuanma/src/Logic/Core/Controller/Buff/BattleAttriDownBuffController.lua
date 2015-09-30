@@ -19,7 +19,9 @@ function BattleAttriDownBuffController:ctor()
     self._kTypeID = kType.kController.kBuff.kBattleAttriDownBuff    -- 控制类机型ID
     self._fTimeMax = 0                                        -- 持续时间
     self._fSubAttriValue = 0                                  -- 属性的点数
+    self._fSubAttriRate = 0                                   -- 减少属性的百分比比例
     self._kAttriType = kAttribute.kNone                       -- 属性的类型
+    self._fAttriValueReference = 0                            -- 参考的当前时刻该属性的数值
     
 end
 
@@ -37,6 +39,8 @@ function BattleAttriDownBuffController:dispose()
     self._fTimeMax = self._pBuffInfo.Param1*(1 - self._pMaster._fDebuffTimeRate)
     self._fSubAttriValue = self._pBuffInfo.Param2
     self._kAttriType = self._pBuffInfo.Param3
+    self._fSubAttriRate = self._pBuffInfo.Param4
+    self._fAttriValueReference = self._pMaster:getAttriValueByType(self._kAttriType)
 
     return
 end
@@ -56,12 +60,14 @@ function BattleAttriDownBuffController:onEnter()
     self._pMaster:addChild(self._pAniParent)
     
     -- 添加属性变化偏移量
+    self._pMaster:addAttriValueOffset(self._kAttriType, -self._fAttriValueReference*self._fSubAttriRate)
     self._pMaster:addAttriValueOffset(self._kAttriType, -self._fSubAttriValue)
     
     -- 添加动作
     local timeUp = function()
         -- 恢复属性变化偏移量
         self._pMaster:addAttriValueOffset(self._kAttriType, self._fSubAttriValue)
+        self._pMaster:addAttriValueOffset(self._kAttriType, self._fAttriValueReference*self._fSubAttriRate)
         self._bEnable = false
     end
     self._pAni:runAction(cc.Sequence:create(cc.DelayTime:create(self._fTimeMax+0.1),cc.CallFunc:create(timeUp)))
@@ -98,6 +104,7 @@ function BattleAttriDownBuffController:cancel()
     if self._bEnable == true then
         self._bEnable = false
         self._pMaster:addAttriValueOffset(self._kAttriType, self._fSubAttriValue)
+        self._pMaster:addAttriValueOffset(self._kAttriType, self._fAttriValueReference*self._fSubAttriRate)
     end
 
 end
