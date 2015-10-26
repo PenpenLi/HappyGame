@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
-MinimumVisualStudioVersion = 10.0.40219.1
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lesion1", "Lesion1\Lesion1.vcxproj", "{A7C02599-C6D7-4624-95B1-2C63D9EDCA06}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lesion2", "Lesion2\Lesion2.vcxproj", "{D591BEC2-53F3-49D2-8B23-F372767C1EEF}"
@@ -14,6 +12,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GDIdemo1", "GDIdemo1\GDIdemo1.vcxproj", "{6C484544-62B7-4EB0-ACDB-E0FBBA8CE1E3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GDIdemo2", "GDIdemo2\GDIdemo2.vcxproj", "{312E4879-B54D-4961-8F05-E932AC4783AA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestOne", "TestOne\TestOne.vcxproj", "{A672DAD2-EAD3-489C-A113-1DDEA36510AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +45,10 @@ Global
 		{312E4879-B54D-4961-8F05-E932AC4783AA}.Debug|Win32.Build.0 = Debug|Win32
 		{312E4879-B54D-4961-8F05-E932AC4783AA}.Release|Win32.ActiveCfg = Release|Win32
 		{312E4879-B54D-4961-8F05-E932AC4783AA}.Release|Win32.Build.0 = Release|Win32
+		{A672DAD2-EAD3-489C-A113-1DDEA36510AD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A672DAD2-EAD3-489C-A113-1DDEA36510AD}.Debug|Win32.Build.0 = Debug|Win32
+		{A672DAD2-EAD3-489C-A113-1DDEA36510AD}.Release|Win32.ActiveCfg = Release|Win32
+		{A672DAD2-EAD3-489C-A113-1DDEA36510AD}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
