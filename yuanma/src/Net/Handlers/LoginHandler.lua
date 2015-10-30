@@ -123,6 +123,8 @@ function LoginHandler:handleMsgCreateRole20005(msg)
         --请求剧情副本信息
         MessageGameInstance:sendMessageQueryStoryBattleList21008(0)
         
+        ActivityMessage:QueryActivityListReq22500()
+       
         TDGAAccount:setAccount(tostring(msg["body"]["roleInfo"].roleId))
         --mmo.HelpFunc:onLogin(tostring(msg["body"]["roleInfo"].roleName))
         

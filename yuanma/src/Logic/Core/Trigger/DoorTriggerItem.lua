@@ -66,6 +66,18 @@ function DoorTriggerItem:work()
             if PetsManager:getInstance()._pMainPetRole then
                 args._nMainPetRoleCurHp = PetsManager:getInstance()._pMainPetRole._nCurHp               -- 血值需要传入下一张战斗地图
             end
+            -- 其他玩家的血值和怒气值需要传入下一张战斗地图
+            args._tOtherPlayerRolesCurHp = {}
+            args._tOtherPlayerRolesCurAnger = {}
+            for k, v in pairs(RolesManager:getInstance()._tOtherPlayerRoles) do 
+                args._tOtherPlayerRolesCurHp[k] = v._nCurHp
+                args._tOtherPlayerRolesCurAnger[k] = v._nCurAnger
+            end
+            -- 其他玩家宠物的血值需要传入下一张战斗地图
+            args._tOtherPetRolesCurHp = {}
+            for k, v in pairs(PetsManager:getInstance()._tOtherPetRoles) do 
+                args._tOtherPetRolesCurHp[k] = v._nCurHp
+            end
             args._nCurCopyType = self._nCopyType
             args._nCurStageID = self._nStageID
             args._nCurStageMapID = self._nStageMapID
@@ -80,6 +92,13 @@ function DoorTriggerItem:work()
             args._tPvpRoleMountActvSkills = {}
             args._tPvpPasvSkills = {}
             args._tPvpPetRoleInfosInQueue = {}
+            args._tPvpPetCooperates = {}
+            args._tOtherPlayerRolesInfosOnBattleMap = {}
+            args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+            args._tOtherPlayerRolesMountActvSkillsInfos = {}
+            args._tOtherPlayerRolesPasvSkillsInfos = {}
+            args._tOtherPetCooperates = {}
+            args._bIsFirstBattleOfNewbie = false
 
             --切换战斗场景
             LayerManager:getInstance():gotoRunningSenceLayer(BATTLE_SENCE_LAYER,args)
@@ -90,8 +109,8 @@ function DoorTriggerItem:work()
         act:setTag(nTriggerItemTag)
         self:getMapManager()._pTmxMap:runAction(act)
         
-        cc.Director:getInstance():getRunningScene():closeAllDialogsWithNoAni()
-        
+        -- 关闭所有对话框
+        DialogManager:getInstance():closeAllDialogsWithNoAni()
         
         if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
             -- 场景触摸被禁用

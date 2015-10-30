@@ -6,7 +6,7 @@
 -- author:    taoye
 -- e-mail:    553681974@qq.com
 -- created:   2015/9/25
--- descrip:   怪物技能攻击60   牛魔王  冲撞  
+-- descrip:   怪物技能攻击61   牛魔王  冲撞  
 --===================================================
 local MonsterSkill61 = class("MonsterSkill61",function(master, skillInfo)
     return require("SkillObj"):create(master, skillInfo)

@@ -21,7 +21,7 @@ function HomeLoginDialogParams:ctor()
    --查找家族输入框底板
    self._pPutInBg = self._pBackGround:getChildByName("PutInBg")
    --查找家族输入框
-   self._pPutInText = self._pPutInBg:getChildByName("PutInText")
+   self._pPutInTextNode = self._pPutInBg:getChildByName("PutInTextNode")
    --查找家族按钮
    self._pLookUpButton = self._pPutInBg:getChildByName("LookUpButton")
    

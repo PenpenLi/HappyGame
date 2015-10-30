@@ -94,12 +94,6 @@ function MonsterSkill11:procActionsFrameEvents()
     elseif self._strFrameEventName == "hurt1_1" then
         self:setCurAttackFrameEventInfo(1,1)
         self:getAIManager():skillCollidingOnEnemysAndHurt(self:getMaster(), self)
-    elseif self._strFrameEventName == "hurt1_2" then
-        self:setCurAttackFrameEventInfo(1,2)
-        self:getAIManager():skillCollidingOnEnemysAndHurt(self:getMaster(), self)
-    elseif self._strFrameEventName == "hurt1_3" then
-        self:setCurAttackFrameEventInfo(1,3)
-        self:getAIManager():skillCollidingOnEnemysAndHurt(self:getMaster(), self)
     elseif self._strFrameEventName == "end1" then
         self:clearCurAttackFrameEventInfo()
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kIdle)

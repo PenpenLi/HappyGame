@@ -57,7 +57,7 @@ function StoryCopyDialog:dispose(args)
         if cc.rectContainsPoint(self._recBg,location) == false then
             --self:close()
         end
-        return false   --可以向下传递事件
+        return true   --可以向下传递事件
     end
     local function onTouchMoved(touch,event)
         local location = touch:getLocation()

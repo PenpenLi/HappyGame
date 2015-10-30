@@ -7,6 +7,417 @@
 -- created:   2015/6/23
 -- descrip:   剧情层
 --===================================================
+
+-------------------------------------------------------- 第一场引导战斗数据配置区域 -------------------------------------------------
+--------------------------------- 主角玩家的详细信息 ---------------------------
+local mainRoleInfo = {
+    ["level"] = 20,
+    ["equipemts"] = {
+        [1] = {     -- 头
+            ["position"] = 0,
+            ["id"] = 100001,
+            ["equipment"] = {
+                [1] = {
+                    ["fightingPower"] = 228,
+                    ["stones"] = {
+                    },
+                    ["majorAttr"] = {
+                        ["attrType"] = 1,
+                        ["attrValue"] = 57,
+                    },
+                    ["minorAttr"] = {
+                    },
+                },
+            },
+            ["value"] = 0,
+            ["baseType"] = 1,
+        },
+         [2] = {        -- 身
+             ["position"] = 0,
+             ["id"] = 100053,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 324,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 1,
+                         ["attrValue"] = 81,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [3] = {    -- 手
+             ["position"] = 0,
+             ["id"] = 100021,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 1428,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 3,
+                         ["attrValue"] = 84,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [4] = {    -- 胳膊
+             ["position"] = 0,
+             ["id"] = 100031,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 918,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 3,
+                         ["attrValue"] = 54,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [5] = {    -- 武器
+             ["position"] = 0,
+             ["id"] = 100201,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 3080,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 2,
+                         ["attrValue"] = 77,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [6] = {        -- 项链
+             ["position"] = 0,
+             ["id"] = 100051,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 2337,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 4,
+                         ["attrValue"] = 57,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [7] = {        -- 戒指
+             ["position"] = 0,
+             ["id"] = 100061,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 3696,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 5,
+                         ["attrValue"] = 88,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [8] = {        -- 时装背
+             ["position"] = 0,
+             ["id"] = 100071,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 2720,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 2,
+                         ["attrValue"] = 68,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [9] = {        -- 时装身
+             ["position"] = 0,
+             ["id"] = 100081,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 2277,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 16,
+                         ["attrValue"] = 69,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+         [10] = {       -- 时装光环
+             ["position"] = 0,
+             ["id"] = 100091,
+             ["equipment"] = {
+                 [1] = {
+                     ["fightingPower"] = 2337,
+                     ["stones"] = {
+                     },
+                     ["majorAttr"] = {
+                         ["attrType"] = 4,
+                         ["attrValue"] = 57,
+                     },
+                     ["minorAttr"] = {
+                     },
+                 },
+             },
+             ["value"] = 0,
+             ["baseType"] = 1,
+         },
+     },
+     ["roleName"] = RolesManager:getInstance()._pMainRoleInfo.roleName,
+     ["roleCareer"] = RolesManager:getInstance()._pMainRoleInfo.roleCareer,
+     ["reviveCount"] = 0,
+     ["roleId"] = 10008,
+     ["exp"] = 0,
+     ["finances"] = {
+         [1] = {
+             ["amount"] = 100000,
+             ["finance"] = 2,
+         },
+         [2] = {
+             ["amount"] = 9999,
+             ["finance"] = 1,
+         },
+         [3] = {
+             ["amount"] = 2000,
+             ["finance"] = 3,
+         },
+         [4] = {
+             ["amount"] = 100000,
+             ["finance"] = 4,
+         },
+     },
+     ["fashionOptions"] = {
+         [1] = false,
+         [2] = false,
+         [3] = false,
+     },
+     ["strength"] = 120,
+     ["roleAttrInfo"] = {
+         ["coldAttack"] = 0,
+         ["hp"] = 9999999,
+         ["resistance"] = 0,
+         ["lifePerSecond"] = 0,
+         ["penetration"] = 0,
+         ["block"] = 0,
+         ["fightingPower"] = 25681,
+         ["lifeSteal"] = 0,
+         ["attack"] = 175,
+         ["critRate"] = 118,
+         ["fireAttack"] = 0,
+         ["defend"] = 162,
+         ["critDmage"] = 92,
+         ["speed"] = 200,
+         ["attrEnhanced"] = 0,
+         ["furyRegeneration"] = 0,
+         ["dodgeRate"] = 0,
+         ["lightningAttack"] = 0,
+         ["resilience"] = 0,
+     },
+}
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+local enterBattle = function()
+    -- 备份玩家的真实信息，以便第一场战斗结束后进行恢复
+    RolesManager:getInstance()._pMainRoleInfoBakOfNewbie = RolesManager:getInstance()._pMainRoleInfo
+    -- 战斗数据组装
+    -- 【战斗数据对接】
+    local copyIndex = 1
+    local copyDataInfo = TableStoryCopys[copyIndex]
+    local copyFirstMapInfo = TableStoryCopysMaps[copyDataInfo.MapID]
+    local args = {}
+    args._strNextMapName = copyFirstMapInfo.MapsName
+    args._strNextMapPvrName = copyFirstMapInfo.MapsPvrName
+    args._nNextMapDoorIDofEntity = copyFirstMapInfo.Doors[1][1]
+    args._pMainRoleInfo = mainRoleInfo
+    args._nMainPlayerRoleCurHp = nil      -- 从副本进入时，这里为无效值
+    args._nMainPlayerRoleCurAnger = nil   -- 从副本进入时，这里为无效值
+    args._nMainPetRoleCurHp = nil         -- 从副本进入时，这里为无效值
+    args._tOtherPlayerRolesCurHp = {}      -- 从副本进入时，这里为无效值
+    args._tOtherPlayerRolesCurAnger = {}   -- 从副本进入时，这里为无效值
+    args._tOtherPetRolesCurHp = {}         -- 从副本进入时，这里为无效值
+    args._nCurCopyType =TableStoryCopys[copyIndex].CopysType
+    args._nCurStageID = TableStoryCopys[copyIndex].ID
+    args._nCurStageMapID = TableStoryCopys[copyIndex].MapID
+    args._nBattleId = TableStoryCopys[copyIndex].ID
+    args._fTimeMax = TableStoryCopys[copyIndex].Timeing
+    args._bIsAutoBattle = false
+    args._tMonsterDeadNum = {}
+    args._nIdentity = 0
+    args._tTowerCopyStepResultInfos = {}
+    args._pPvpRoleInfo = nil
+    args._tPvpRoleMountAngerSkills = {}
+    args._tPvpRoleMountActvSkills = {}
+    args._tPvpPasvSkills = {}
+    args._tPvpPetRoleInfosInQueue = {}
+    args._tPvpPetCooperates = {}
+    args._tOtherPlayerRolesInfosOnBattleMap = {}
+    args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+    args._tOtherPlayerRolesMountActvSkillsInfos = {}
+    args._tOtherPlayerRolesPasvSkillsInfos = {}
+    args._tOtherPetCooperates = {}
+    args._bIsFirstBattleOfNewbie = true
+
+    if mainRoleInfo.roleCareer == kCareer.kWarrior then
+        SkillsManager:getInstance()._tMainRoleMountActvSkills = 
+        {
+            ------------------------------- 战士相关技能 ---------------------------------------
+            -- 钢气斩
+            {
+              id=2,
+              level=1
+            },
+            --一断剑
+            {
+              id=5,
+              level=1
+            },
+           -- 万仞山
+            {
+              id=8,
+              level=1
+            },
+            -- 炎螺旋
+            {
+              id=11,
+              level=1
+            },
+        }
+        SkillsManager:getInstance()._tMainRoleMountAngerSkills = 
+        {
+            ------------------------------- 战士相关怒气技能 ---------------------------------------
+            -- 绝剑·空裂          
+            {
+                id=14,
+                level=1
+            },
+        
+        }
+        SkillsManager:getInstance()._tMainRoleSkillsLevels.pasvSkills = 
+        {
+            ------------------------------- 战士相关被动技能 ---------------------------------------
+        }
+    elseif mainRoleInfo.roleCareer == kCareer.kMage then
+        SkillsManager:getInstance()._tMainRoleMountActvSkills = 
+        {
+            ------------------------------- 法师相关技能 ---------------------------------------
+            -- 道法烈焰
+            {
+                id=18,
+                level=1
+            },
+            -- 道法凝冰
+            {
+                id=21,
+               level=1
+            },
+             --道法天雷
+            {
+               id=24,
+               level=1
+            },
+            {
+                id=27,
+                level=1
+            },
+            
+        }
+        SkillsManager:getInstance()._tMainRoleMountAngerSkills = 
+        {
+            ------------------------------- 法师相关怒气技能 ---------------------------------------            
+                {
+                    id=30,
+                    level=1
+                },
+        }
+        SkillsManager:getInstance()._tMainRoleSkillsLevels.pasvSkills = 
+        {
+            ------------------------------- 法师相关被动技能 ---------------------------------------
+        }
+    elseif mainRoleInfo.roleCareer == kCareer.kThug then
+        SkillsManager:getInstance()._tMainRoleMountActvSkills = 
+        {
+            ------------------------------- 刺客相关技能 ---------------------------------------
+            --飞镖
+            {
+               id=34,
+               level=1
+            },
+            -- 连影杀
+            {
+               id=37,
+               level=1
+            },
+            -- 罗天坠
+           {
+              id=40,
+              level=1
+            },
+            {
+               id=43,
+               level=1
+            },
+        }
+        SkillsManager:getInstance()._tMainRoleMountAngerSkills = 
+        {
+            ------------------------------- 刺客相关怒气技能 ---------------------------------------            
+                {
+                    id=46,
+                    level=1
+                },
+        }
+        SkillsManager:getInstance()._tMainRoleSkillsLevels.pasvSkills = 
+        {
+            ------------------------------- 刺客相关被动技能 ---------------------------------------
+        }
+    end
+    -- 进入战斗
+    LayerManager:getInstance():gotoRunningSenceLayer(BATTLE_SENCE_LAYER, args)
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
 local StoryLayer = class("StoryLayer",function()
     return require("Layer"):create()
 end)
@@ -27,8 +438,7 @@ end
 
 -- 处理函数
 function StoryLayer:dispose()
-    NetRespManager:getInstance():addEventListener(kNetCmd.kEntryBattle ,handler(self, self.entryBattleCopy))
-    
+
     -- 初始化BG
     self:initBG()
 
@@ -51,8 +461,6 @@ end
 function StoryLayer:onExitStoryLayer()    
     self:onExitLayer()
 
-    -- 释放网络监听事件
-    NetRespManager:getInstance():removeEventListenersByHost(self)
 end
 
 -- 循环更新
@@ -75,7 +483,9 @@ function StoryLayer:initVideo()
     if isMobilePlatform() == true and bSkipGuideCGMove == false then
         -- mask
         local pMask = cc.LayerColor:create(cc.c4b(0,0,0,255))
-        local pLoadingText = cc.Label:createWithTTF("Loading......", strCommonFontName, 40)
+        local pLoadingText = cc.Label:createWithTTF("玩命加载中，请稍后......", strCommonFontName, 40)
+        pLoadingText:setTextColor(cFontWhite)
+        pLoadingText:enableOutline(cFontOutline,2)
         pLoadingText:setPosition(cc.p(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2))
         pMask:addChild(pLoadingText)
         self:addChild(pMask,9999)
@@ -154,8 +564,7 @@ function StoryLayer:initBG()
     local  onTouchButton = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then
             NewbieManager:getInstance():setPlayStoryAniOver()
-            self._pSelectedCopysFirstMapInfo = TableStoryCopysMaps[TableStoryCopys[1].MapID]
-            MessageGameInstance:sendMessageEntryBattle21002(TableStoryCopys[1].ID,0) 
+            enterBattle()   -- 准备进入战斗
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
         end
@@ -212,6 +621,7 @@ function StoryLayer:initBG()
     self._pBg:addChild(self._pGoBtn)
     self._pBg:addChild(self._pSkipBtn)
     
+    -- 查询任务列表
     if TasksManager:getInstance()._bGetInitData == false then
         TaskCGMessage:sendMessageQueryTasks21700()
     end
@@ -270,37 +680,6 @@ function StoryLayer:doWhenCloseOver()
     --LayerManager:getInstance():transformToLoading()
 end
 
-function StoryLayer:entryBattleCopy(event)
-    --战斗数据组装
-    -- 【战斗数据对接】
-    local args = {}
-    args._strNextMapName = self._pSelectedCopysFirstMapInfo.MapsName
-    args._strNextMapPvrName = self._pSelectedCopysFirstMapInfo.MapsPvrName
-    args._nNextMapDoorIDofEntity = self._pSelectedCopysFirstMapInfo.Doors[1][1]
-    --require("TestMainRoleInfo")    --roleInfo  
-    args._pMainRoleInfo = RolesManager:getInstance()._pMainRoleInfo
-    args._nMainPlayerRoleCurHp = nil      -- 从副本进入时，这里为无效值
-    args._nMainPlayerRoleCurAnger = nil   -- 从副本进入时，这里为无效值
-    args._nMainPetRoleCurHp = nil         -- 从副本进入时，这里为无效值
-    args._nCurCopyType =TableStoryCopys[1].CopysType
-    args._nCurStageID = TableStoryCopys[1].ID
-    args._nCurStageMapID = TableStoryCopys[1].MapID
-    args._nBattleId = TableStoryCopys[1].ID
-    args._fTimeMax = TableStoryCopys[1].Timeing
-    args._bIsAutoBattle = false
-    args._tMonsterDeadNum = {}
-    args._nIdentity = 0
-    args._tTowerCopyStepResultInfos = {}
-    args._pPvpRoleInfo = nil
-    args._tPvpRoleMountAngerSkills = {}
-    args._tPvpRoleMountActvSkills = {}
-    args._tPvpPasvSkills = {}
-    args._tPvpPetRoleInfosInQueue = {}
-
-    --切换战斗场景
-    LayerManager:getInstance():gotoRunningSenceLayer(BATTLE_SENCE_LAYER,args)
-end
-
 -- 创建并播放视频
 function StoryLayer:createVideo()
     if self._pVideoPlayer == nil then
@@ -330,8 +709,7 @@ function StoryLayer:createVideo()
             -- 动画结束(需要延时调用，因为ios8.4以后的版本在设备黑屏回来时需要断线重连，需要给断线重连一定的时间)
             local timeUp = function()
                 NewbieManager:getInstance():setPlayStoryAniOver()
-                self._pSelectedCopysFirstMapInfo = TableStoryCopysMaps[TableStoryCopys[1].MapID]
-                MessageGameInstance:sendMessageEntryBattle21002(TableStoryCopys[1].ID,0)
+                enterBattle()   -- 准备进入战斗
             end
             self:runAction(cc.Sequence:create(cc.DelayTime:create(1.5),cc.CallFunc:create(timeUp)))
 

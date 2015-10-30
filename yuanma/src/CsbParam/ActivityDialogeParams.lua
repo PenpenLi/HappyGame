@@ -19,6 +19,29 @@ function ActivityDialogeParams:ctor()
     self._pOnLineNode = self._pRightBg:getChildByName("OnLineNode")
     --在线礼包滚动框
     self._pOlScrollView = self._pOnLineNode:getChildByName("OlScrollView")
+
+
+    
+
+    --激活码挂点
+   self._pCodeNode = self._pRightBg:getChildByName("CodeNode")
+   --领取按钮
+    self._pOkButton = self._pCodeNode:getChildByName("OkButton")
+    --输入框文字
+    self._pCodeText = self._pCodeNode:getChildByName("CodeText")
+    --等级礼包挂点
+    self._pLvUpNode = self._pRightBg:getChildByName("LvUpNode")
+    --等级礼包右侧滚动框
+    self._pLvUpView = self._pLvUpNode:getChildByName("LvUpView")
+
+    --右侧界面月签到节点
+    self._pSignInNode = self._pRightBg:getChildByName("SignInNode")
+
+    --右侧体力赠送节点
+    self._pPowerNode = self._pRightBg:getChildByName("PowerNode")
+     --右侧累计充值节点
+    self._pRechargeNode = self._pRightBg:getChildByName("RechargeNode")
+    
     
 end
 

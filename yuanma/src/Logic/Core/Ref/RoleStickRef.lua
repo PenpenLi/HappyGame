@@ -27,7 +27,7 @@ end
 
 -- 为0的时候要进行的操作（需要重载）
 function RoleStickRef:doWhenIsZero()
-    if self._pMaster._strCharTag == "main" then
+    if self._pMaster._kRoleType == kType.kRole.kPlayer and self._pMaster._strCharTag == "main" then
         -- print("摇杆恢复使用！")
         local layer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
         if layer then
@@ -39,7 +39,7 @@ end
 
 -- 不为0的时候要进行的操作（需要重载）
 function RoleStickRef:doWhenIsNotZero()
-    if self._pMaster._strCharTag == "main" then
+    if self._pMaster._kRoleType == kType.kRole.kPlayer and self._pMaster._strCharTag == "main" then
         --  print("摇杆禁用！")
         local layer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
         if layer then

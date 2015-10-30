@@ -17,6 +17,18 @@ function LoginLayer:ctor()
     self._strName = "LoginLayer"                    -- 层名称
     self._pTouchListener = nil                      -- 触摸监听器
     self._pBg = nil                                 -- 登录背景
+    self._tPeoples = {}                             -- 四大天王
+    self._pLightNode = nil                          -- 光照点对象
+    self._pTitle = nil                              -- logo
+    self._nTitleAniCounter = 1                      -- 标题动画时间计数
+    self._nLightCount = 1                           -- 光照所在轨迹点计数
+    self._posLightCircleCenter = nil                -- 光照椭圆形圆心
+    self._fCircleR = 0                              -- 光照半径
+    self._tCirclePoints = {}                        -- 光照轨迹点集合
+    self._nWaterCircleCount = 1                     -- 水纹所在轨迹点计数
+    self._posWaterCircleCenter = nil                -- 水纹椭圆圆形圆心
+    self._fWaterCircleR = 0                         -- 水纹半径           
+    self._tWaterCirclePoints={}                     -- 水纹轨迹点集合
     self._pStartGamePanelCCS = nil                  -- 开始游戏相关的CCS
     self._pServerBarNode = nil                      -- 服务器button节点
     self._pGameStartButtonNode = nil                -- 开始游戏button节点
@@ -34,9 +46,7 @@ function LoginLayer:ctor()
     self._pUserCenterButton = nil                   -- 用户中心按钮
     self._pChangeAccountButton = nil                -- 切换账户按钮
     self._pQuitButton = nil                         -- 退出游戏按钮
-    
     self._bWaitingForLoginZTOverParams = false      -- 等待母包登录参数
-    
     self._bRefresh = false                          -- 是否从新连接地址
     
     
@@ -117,6 +127,8 @@ function LoginLayer:checkConnecting()
         if isConnect() == true then
             cclog("服务器连接成功！")
         end
+        --链接成功打开公告板子
+       -- DialogManager:getInstance():showDialog("AnnouncementDialog")
         -- 请求服务器列表
         LoginCGMessage:sendMessageServerList10002()
      if self._bRefresh then
@@ -164,10 +176,110 @@ end
 -- 处理控件回调相关
 function LoginLayer:initUI()
     -- 登录系统背景
-    self._pBg = cc.Sprite:createWithSpriteFrameName("LoginBgRes/dljm_bg.png")
+    self._pBg = mmo.HelpFunc:createRippleNode("CoverBgRes/dljm_bg.png")
     self._pBg:setPosition(mmo.VisibleRect:center())
+    self._pBg:setScaleX(1400/self._pBg:getContentSize().width)
+    self._pBg:setScaleY(780/self._pBg:getContentSize().height)
     self:addChild(self._pBg)
+
+    -- 背景滚云
+    local tCloudPos = {
+                        cc.p(0,mmo.VisibleRect:height()*5/6),
+                        cc.p(0,mmo.VisibleRect:height()*3/6),
+                        cc.p(0,mmo.VisibleRect:height()*1/6),
+                      }
+    local time = 10
+    local tCloudFrontAction = {
+                     cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(time,cc.p(-1366,0)),cc.MoveBy:create(0,cc.p(1366,0)))),
+                     cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(time,cc.p(-1366,0)),cc.MoveBy:create(0,cc.p(1366,0)))),
+                     cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(time,cc.p(-1366,0)),cc.MoveBy:create(0,cc.p(1366,0))))
+                    }
+    local tCloudBackAction = {
+                     cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(time,cc.p(-1366,0)),cc.MoveBy:create(0,cc.p(1366,0)))),
+                     cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(time,cc.p(-1366,0)),cc.MoveBy:create(0,cc.p(1366,0)))),
+                     cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(time,cc.p(-1366,0)),cc.MoveBy:create(0,cc.p(1366,0))))
+                    }
+    for i = 1, 3 do
+        local cloudFront = cc.Sprite:createWithSpriteFrameName("LoginBgRes/cloud"..i..".png")
+        cloudFront:setAnchorPoint(cc.p(0,0.5))
+        cloudFront:setScaleX(1366/cloudFront:getContentSize().width)
+        cloudFront:setScaleY(mmo.VisibleRect:height()*0.35/cloudFront:getContentSize().height)
+        cloudFront:setPosition(tCloudPos[i])
+        cloudFront:runAction(tCloudFrontAction[i])
+
+        local cloudBack = cc.Sprite:createWithSpriteFrameName("LoginBgRes/cloud"..i..".png")
+        cloudBack:setAnchorPoint(cc.p(0,0.5))
+        cloudBack:setScaleX(1366/cloudBack:getContentSize().width)
+        cloudBack:setScaleY(mmo.VisibleRect:height()*0.35/cloudBack:getContentSize().height)
+        cloudBack:setPosition(cc.p(cloudFront:getPositionX()+cloudFront:getBoundingBox().width,cloudFront:getPositionY()))
+        cloudBack:runAction(tCloudBackAction[i])
+
+        self:addChild(cloudFront)
+        self:addChild(cloudBack)
+    end
+
+    -- 四大天王
+    local tPeoplePos = {cc.p(210,-2),cc.p(mmo.VisibleRect:width()/2 - 190,-2),cc.p(mmo.VisibleRect:width()/2 + 80,-2),cc.p(mmo.VisibleRect:width() - 220,-2)}
+    local tPeopleZorder = {10,7,8,9}
+    local time = 4
+    local tAction = {
+                     cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(-40,0))),cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(40,0))))),
+                     cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(-25,0))),cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(25,0))))),
+                     cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(25,0))),cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(-25,0))))),
+                     cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(40,0))),cc.EaseSineInOut:create(cc.MoveBy:create(time,cc.p(-40,0)))))
+                    }
+    for i = 1, 4 do
+        local people = cc.Sprite:createWithSpriteFrameName("LoginBgRes/people"..i..".png")
+        people:setAnchorPoint(cc.p(0.5, 0))
+        people:setPosition(tPeoplePos[i])
+        people:runAction(tAction[i])
+        self:addChild(people,tPeopleZorder[i])
+        self._tPeoples[i] = people
+    end
+
+    -- 柱子
+    local post = cc.Sprite:createWithSpriteFrameName("LoginBgRes/post.png")
+    post:setAnchorPoint(cc.p(1.0, 0))
+    post:setPosition(mmo.VisibleRect:width()+2, 0)
+    self:addChild(post,20)
     
+    -- 游戏logo
+    ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr("light")
+    self._pLightNode = mmo.HelpFunc:createLightNode("light.pvr.ccz")
+    self._pLightNode:setScale(1.5)
+    self._pLightNode:setOpacity(100)
+    self._pLightNode:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.FadeTo:create(2,20),cc.FadeTo:create(2,100))))
+    self:addChild(self._pLightNode,20)
+
+    ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr("title")
+    ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr("title_mask")
+    self._pTitle = mmo.HelpFunc:createNormalMappedNode(self._pLightNode, "title.pvr.ccz", "title_mask.pvr.ccz","light.pvr.ccz",4) --cc.Sprite:createWithSpriteFrameName("LoginBgRes/title.png")
+    self._pTitle:setAnchorPoint(cc.p(0.5,1.0))
+    self._pTitle:setScale(0.5)
+    self._pTitle:setPosition(mmo.VisibleRect:width()/2, mmo.VisibleRect:height()+4)
+    self._pTitle:runAction(cc.EaseElasticOut:create(cc.ScaleTo:create(3,1.1)))
+    self:addChild(self._pTitle,20)
+
+    -- 计算椭圆形水纹轨迹
+    self._nWaterCircleCount = 1
+    self._posWaterCircleCenter = cc.p(mmo.VisibleRect:width()/2, mmo.VisibleRect:height()/2)
+    self._fWaterCircleR = 300
+    self._tWaterCirclePoints={}
+    local dx = 0.05
+    for a = 0, 2*math.pi, dx do
+        table.insert(self._tWaterCirclePoints,{x=self._posWaterCircleCenter.x+math.cos(a)*self._fWaterCircleR,y=self._posWaterCircleCenter.y+math.sin(a)*self._fWaterCircleR})
+    end
+
+    -- 计算椭圆形光点轨迹
+    self._nLightCount = 1
+    self._posLightCircleCenter = cc.p(mmo.VisibleRect:width()/2, mmo.VisibleRect:height() - 110)
+    self._fCircleR = 180
+    self._tCirclePoints={}
+    local dx = 0.1
+    for a = 0, 2*math.pi, dx do
+        table.insert(self._tCirclePoints,{x=self._posLightCircleCenter.x+math.cos(a)*self._fCircleR*2,y=self._posLightCircleCenter.y+math.sin(a)*self._fCircleR})
+    end
+
     -- 加载组件
     local params = require("StartGamePanelParams"):create()
     self._pStartGamePanelCCS = params._pCCS
@@ -193,7 +305,7 @@ function LoginLayer:initUI()
     
     self._pSetButton = params._pSetButton
     self._pStartGamePanelCCS:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()*0.30)
-    self:addChild(self._pStartGamePanelCCS)
+    self:addChild(self._pStartGamePanelCCS,30)
     
     self._pChangeServerButton:setZoomScale(nButtonZoomScale)
     self._pChangeServerButton:setPressedActionEnabled(true)
@@ -211,7 +323,6 @@ function LoginLayer:initUI()
     ]]
     self._pVersionText:setString("内部开发版本")
     
-
     --shareButton
     local pShareBtn = self._pSetButton:clone()
     pShareBtn:setPosition(cc.p(100,384))
@@ -322,7 +433,7 @@ function LoginLayer:disposeWidget()
                 self:closeServerList()
             end
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("ServerButton")
         end
     end
     -- 给切换服务器按钮添加监听机制
@@ -367,7 +478,7 @@ function LoginLayer:disposeWidget()
             if table.getn(LoginManager:getInstance()._tServerList) ~= 0 then
                 local serverInfo = LoginManager:getInstance():getLastServerInfo()
                 if serverInfo.zoneStatus == kZoneStateType.SST_STOP then    -- 当前服务器是维护状态
-                    showAlertDialog("服务器维护中。")
+                    showSystemAlertDialog("服务器维护中。")
                     return
                 end
                 if isMobilePlatform() == true and bOpenMobileAndWinMacSameLoginWay == false then
@@ -381,7 +492,7 @@ function LoginLayer:disposeWidget()
             end
             
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("StartGameButton")
         end
     end
     -- 给开始游戏按钮添加监听机制
@@ -390,7 +501,30 @@ function LoginLayer:disposeWidget()
 end
 
 -- 循环更新
-function LoginLayer:update(dt)    
+function LoginLayer:update(dt)
+
+    -- 刷新背景水纹位置
+    mmo.HelpFunc:doRippleNodeTouch(self._pBg, self._tWaterCirclePoints[self._nWaterCircleCount], 1024, 12)
+    self._nWaterCircleCount = self._nWaterCircleCount + 1
+    if self._nWaterCircleCount > table.getn(self._tWaterCirclePoints) then
+        self._nWaterCircleCount = 1
+    end
+
+    -- 刷新光照点的椭圆形位置
+    self._pLightNode:setPosition(self._tCirclePoints[self._nLightCount])
+    self._nLightCount = self._nLightCount + 1
+    if self._nLightCount > table.getn(self._tCirclePoints) then
+        self._nLightCount = 1
+    end
+
+    --------------------------------- logo shake ----------------------------------------------
+    local rand_x = 0.07*math.sin(math.rad(self._nTitleAniCounter*0.5+4356))
+    local rand_y = 0.07*math.sin(math.rad(self._nTitleAniCounter*0.37+5436)) 
+    local rand_z = 0.07*math.sin(math.rad(self._nTitleAniCounter*0.2+54325))
+    self._pTitle:setRotation3D({x=math.deg(rand_x),y=math.deg(rand_y),z=math.deg(rand_z)})
+    self._nTitleAniCounter = self._nTitleAniCounter+1
+    --------------------------------------------------------------------------------------------
+
     self:checkConnecting()
     if self._bWaitingForLoginZTOverParams == true then      -- 监测母包登录成功后的返回参数集合
         local tLoginOverParams = nil
@@ -425,8 +559,6 @@ end
 
 -- 网络登录账户回调
 function LoginLayer:loginAccountNetBack(event)
-    --登录成功打开公告板子
-    --DialogManager:getInstance():showDialog("AnnouncementDialog")
     -- 隐藏掉所有debug按钮
     self:hideAllAccountWidgets()
     --用户Id唯一标示用户（静态）
@@ -494,15 +626,15 @@ function LoginLayer:loginGameNetBack(event)
         roleOperateLayer = self:getGameScene():getLayerByName("RoleSelectLayer")
     end
 
-    roleLayer:setPositionX(self._pBg:getContentSize().width)
-    roleOperateLayer:setPositionX(self._pBg:getContentSize().width)
+    roleLayer:setPositionX(self._pBg:getBoundingBox().width)
+    roleOperateLayer:setPositionX(self._pBg:getBoundingBox().width)
 
     -- 创建动画过度
-    local act = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(-self._pBg:getContentSize().width, 0))), cc.CallFunc:create(self.close))
-    local actCopy = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(-self._pBg:getContentSize().width, 0))))
+    local act = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(-self._pBg:getBoundingBox().width, 0))), cc.CallFunc:create(self.close))
+    local actCopy = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(-self._pBg:getBoundingBox().width, 0))))
     self:runAction(act)
     roleLayer:runAction(actCopy)
-    local actCopy1 = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(-self._pBg:getContentSize().width, 0))))
+    local actCopy1 = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(-self._pBg:getBoundingBox().width, 0))))
     roleOperateLayer:runAction(actCopy1)
    
     return
@@ -570,23 +702,21 @@ function LoginLayer:refreshServerInfo()
         self._pLastSeverStatusText:setString("")
     elseif info.zoneStatus == kZoneStateType.SST_NORMAL then
         self._pLastSeverStatusText:setString("普通")
-        self._pLastSeverStatusText:setColor(cGreen)
+        self._pLastSeverStatusText:setTextColor(cFontGreen)
     elseif info.zoneStatus == kZoneStateType.SST_HOT then
         self._pLastSeverStatusText:setString("火爆")
-        self._pLastSeverStatusText:setColor(cRed)
+        self._pLastSeverStatusText:setTextColor(cFontRed)
     elseif info.zoneStatus == kZoneStateType.SST_STOP then
         self._pLastSeverStatusText:setString("维护")
-        self._pLastSeverStatusText:setColor(cGrey)
+        self._pLastSeverStatusText:setTextColor(cFontGrey)
     end
-    --self._pLastSeverStatusText:enableShadow(cc.c4b(0, 0, 0, 255))
     
     if info.zoneName == "" then
         self._pLastSeverNameText:setString("")
     else
         self._pLastSeverNameText:setString(info.zoneName)
     end
-    self._pLastSeverNameText:setColor(cGrey)
-    --self._pLastSeverNameText:enableShadow(cc.c4b(0, 0, 0, 255))
+    self._pLastSeverNameText:setTextColor(cFontGrey)
     
     return
 end
@@ -604,7 +734,7 @@ end
 function LoginLayer:showServerList()
     self._pServerListPanel = require("ServerListPanel"):create()
     self._pServerListPanel:setPosition(cc.p(self._pStartGamePanelCCS:getPositionX(), self._pStartGamePanelCCS:getPositionY() + 60))
-    self:addChild(self._pServerListPanel)
+    self:addChild(self._pServerListPanel,100)
     -- 更改按钮上的文字信息
     self._pChangeServerButton:setTitleText("点击收回")
 end
@@ -614,6 +744,7 @@ function LoginLayer:closeServerList()
     self:removeChild(self._pServerListPanel)
     self._pServerListPanel = nil
     self._pChangeServerButton:setTitleText("切换服务器")
+
 end
 
 -- 隐藏掉所有debug部件（登录输入等控件）

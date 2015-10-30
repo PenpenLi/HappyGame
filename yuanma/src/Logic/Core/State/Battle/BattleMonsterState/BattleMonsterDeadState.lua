@@ -132,7 +132,6 @@ function BattleMonsterDeadState:onEnter(args)
 
             -- 如果是BOSS，则需要慢镜头
             if self:getMaster()._nMonsterType == kType.kMonster.kBOSS or self:getMaster()._nMonsterType == kType.kMonster.kThiefBOSS then
-                MonstersManager:getInstance()._bIsBossDead = true  -- boss死亡
                 local cameraOver = function()
                     cc.Director:getInstance():getScheduler():setTimeScale(0.3)
                 end
@@ -165,10 +164,18 @@ function BattleMonsterDeadState:onEnter(args)
                 self:getMaster():removeAllEffects()-- 移除所有特效
                 -- 判断是否为BOSS，如果是，则血条消失
                 if self:getMaster()._nMonsterType == kType.kMonster.kBOSS or self:getMaster()._nMonsterType == kType.kMonster.kThiefBOSS then
-                    cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpBG:setVisible(false)
+                    MonstersManager:getInstance()._bIsBossDead = true  -- boss死亡
+                    cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode:setVisible(false)
+                    cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode._tBoss = nil
                     cc.Director:getInstance():getScheduler():setTimeScale(1.0)   -- 如果是BOSS，死亡结束后恢复正常镜头速度
+                    local cameraMoveOver = function()  -- 死亡镜头结束回来后的回调函数
+                        --第一场BOSS死亡需要进入剧情动画
+                        if BattleManager:getInstance()._bIsFirstBattleOfNewbie == true and StoryGuideManager:getInstance()._bIsStory == false then
+                             StoryGuideManager:getInstance():createStoryGuideById(TableConstants.NewbieQueneID.Value)
+                        end
+                    end
                     -- 相机复原，回到正常比例
-                    self:getMapManager():moveMapCameraByPos(2, 0.5, cc.p(-1,-1), 0.5, 1.0, cc.p(self:getMaster():getPositionX(),self:getMaster():getPositionY()), true)
+                    self:getMapManager():moveMapCameraByPos(2, 0.5, cc.p(-1,-1), 0.5, 1.0, cc.p(self:getMaster():getPositionX(),self:getMaster():getPositionY()), true, cameraMoveOver)
                     -- 特写标记
                     self:getMapManager()._bBossDeadFilming = false
                     -- 恢复设置所有角色positionZ到最小值
@@ -183,7 +190,6 @@ function BattleMonsterDeadState:onEnter(args)
                 self:getMaster()._bActive = false
                 self._pOwnerMachine._pMaster._pAni = nil
                 self._pOwnerMachine._pMaster = nil
-                
             end
             -- 设置透明度和positionZ层级  
             self:getMaster()._pAni:runAction(cc.Sequence:create(cc.FadeOut:create(1.5), cc.CallFunc:create(deadOver)))

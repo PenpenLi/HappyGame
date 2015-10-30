@@ -37,6 +37,7 @@ function PetsManager:clearCache()
     self._tOtherPetRoles = {}                           -- 其他玩家的宠物集合
     self._tOtherPetRolesInfos = {}                      -- 其他玩家的宠物信息集合
     self._tOtherPetRolesMasters = {}                    -- 其他玩家的宠物的主人集合
+    self._tOtherPetRolesCurHp = {}                      -- 其他玩家的宠物的血量备份(切换场景时会被重置)  必要的时候这里会有数据，在主角宠物初始化的时候如果这里有值则以这里的数值为主（比如从战斗地图切换到另一张战斗地图，血值需要共享上一张战斗的值）
     ----------------------------- 永远放在最下面  ---------------------------------------
     -- 下面是需要保留的数据
     if self._tMainPetRoleInfosInQueue ~= nil and table.getn(self._tMainPetRoleInfosInQueue) ~= 0 then    -- 主角的宠物数据信息集合（最多3个）
@@ -47,7 +48,7 @@ function PetsManager:clearCache()
         self._nCurMainPetRoleIndexInQueue = 1               -- 当前主角宠物在上阵队列中的index
     end
     self._tMainPetsInfos = {}                               -- 所拥有的所有宠物信息（服务器返回）集合
-    
+
 end
 
 -- 循环处理
@@ -65,7 +66,6 @@ function PetsManager:update(dt)
         end
     end
 
-    
     -- 主角的宠物
     self:updateMainPetRole(dt)
     -- PVP对手的宠物
@@ -79,14 +79,6 @@ function PetsManager:update(dt)
     end
 end
 
-function PetsManager:removeMainPetRoleFromMap()
-    -- 移除角色
-    if self._pMainPetRole ~= nil then
-        self._pMainPetRole:removeFromParent(true)
-        self._pMainPetRole = nil
-    end
-end
-
 -- 创建主角宠物
 function PetsManager:createMainPetRoleOnMap(bDebug)
     -- 每次回到家园时，主角宠物均为队列中的第一个
@@ -96,9 +88,22 @@ function PetsManager:createMainPetRoleOnMap(bDebug)
     
     if table.getn(self._tMainPetRoleInfosInQueue) ~= 0 and self._nCurMainPetRoleIndexInQueue <= table.getn(self._tMainPetRoleInfosInQueue) then
         if self._pMainPetRole == nil then
+            -- 宠物共鸣信息集合
+            local cooperateInfo = {}
+            -- 查找是否存在宠物共鸣影响（如果存在，则获取信息）
+            if #RolesManager:getInstance()._tMainPetCooperates > 0 then 
+                for k,v in pairs(RolesManager:getInstance()._tMainPetCooperates[1].RequiredPet) do 
+                    if self._tMainPetRoleInfosInQueue[self._nCurMainPetRoleIndexInQueue].petId == v then
+                        cooperateInfo = RolesManager:getInstance()._tMainPetCooperates[1]
+                        break
+                    end
+                end
+            end
             -- 创建主角的宠物
-            self._pMainPetRole = require("PetRole"):create(self._tMainPetRoleInfosInQueue[self._nCurMainPetRoleIndexInQueue],"main")
-
+            self._pMainPetRole = require("PetRole"):create(self._tMainPetRoleInfosInQueue[self._nCurMainPetRoleIndexInQueue],"main", RolesManager:getInstance()._pMainPlayerRole,cooperateInfo)
+            self._pMainPetRole._nIndexInQueue = self._nCurMainPetRoleIndexInQueue
+            RolesManager:getInstance()._pMainPlayerRole._pCurPetRole = self._pMainPetRole
+            -- 宠物关联
             -- 如果当前血值有固定好的数值，则以这些指定数值为准（比如从战斗地图切换到另一张战斗地图，相应的数值需要共享上一张战斗的值）
             if self._nMainPetRoleCurHp then
                 self._pMainPetRole._nCurHp = self._nMainPetRoleCurHp
@@ -143,12 +148,33 @@ function PetsManager:createMainPetRoleOnMap(bDebug)
     return nil
 end
 
+function PetsManager:removeMainPetRoleFromMap()
+    -- 移除角色
+    if self._pMainPetRole ~= nil then
+        self._pMainPetRole:removeFromParent(true)
+        self._pMainPetRole = nil
+    end
+end
+
 -- 创建Pvp宠物
 function PetsManager:createPvpPetRoleOnMap(bDebug)
     if table.getn(self._tPvpPetRoleInfosInQueue) ~= 0 then
         if self._pPvpPetRole == nil then
+            -- 宠物共鸣信息集合
+            local cooperateInfo = {}
+            -- 查找是否存在宠物共鸣影响（如果存在，则获取信息）
+            if RolesManager:getInstance()._tPvpPetCooperates[1] then
+                for k,v in pairs(RolesManager:getInstance()._tPvpPetCooperates[1].RequiredPet) do 
+                    if self._tPvpPetRoleInfosInQueue[self._nCurPvpPetRoleIndexInQueue].petId == v then
+                        cooperateInfo = RolesManager:getInstance()._tPvpPetCooperates[1]
+                        break
+                    end
+                end            
+            end
             -- 创建pvp的宠物
-            self._pPvpPetRole = require("PetRole"):create(self._tPvpPetRoleInfosInQueue[self._nCurPvpPetRoleIndexInQueue],"pvp")
+            self._pPvpPetRole = require("PetRole"):create(self._tPvpPetRoleInfosInQueue[self._nCurPvpPetRoleIndexInQueue],"pvp",RolesManager:getInstance()._pPvpPlayerRole,cooperateInfo)
+            self._pPvpPetRole._nIndexInQueue = 1
+            RolesManager:getInstance()._pPvpPlayerRole._pCurPetRole = self._pPvpPetRole
             -- 获取pvp宠物的位置
             local pCustomsLayer = MapManager:getInstance()._pTmxMap:getObjectGroup("CustomsLayer")
             local posPvpPetRoleStart = pCustomsLayer:getObject("PvpPetStartPos")
@@ -179,10 +205,28 @@ function PetsManager:createOtherPetRolesOnMap()
     -- 清空地图上显示对象的元素记录
     self._tOtherPetRoles = {}
     for kInfo, vInfo in pairs(self._tOtherPetRolesInfos) do
-        -- 宠物
-        local role = require("OtherPetRole"):create(vInfo[1].petInfo,self._tOtherPetRolesMasters[kInfo])
+        -- 宠物共鸣信息集合
+        local cooperateInfo = {}
+        -- 查找是否存在宠物共鸣影响（如果存在，则获取信息）
+        if RolesManager:getInstance()._tOtherPetCooperates[kInfo] and RolesManager:getInstance()._tOtherPetCooperates[kInfo][1] then
+            for k,v in pairs(RolesManager:getInstance()._tOtherPetCooperates[kInfo][1].RequiredPet) do 
+                if vInfo[1].petInfo.petId == v then
+                    cooperateInfo = RolesManager:getInstance()._tOtherPetCooperates[kInfo][1]
+                    break
+                end
+            end
+        end
+        -- 创建其他玩家宠物
+        local role = require("OtherPetRole"):create(vInfo[1].petInfo,"main",self._tOtherPetRolesMasters[kInfo],cooperateInfo)
+        role._nIndexInQueue = 1
+        role._pMaster._pCurPetRole = role
+        -- 如果当前血值有固定好的数值，则以这些指定数值为准（比如从战斗地图切换到另一张战斗地图，相应的数值需要共享上一张战斗的值）
+        if self._tOtherPetRolesCurHp[kInfo] then
+            role._nCurHp = self._tOtherPetRolesCurHp[kInfo]
+        end
+        local posIndex = AIManager:getInstance():objBlinkToRandomPosAccordingToTargetObj(role,role._pMaster,1,3)
         -- 添加宠物到地图
-        role:setPositionByIndex(cc.p(role._pMaster:getPositionIndex().x + 2, role._pMaster:getPositionIndex().y))
+        role:setPositionByIndex(posIndex)
         role:setPositionZ(role._pMaster:getPositionIndex().y*(MapManager:getInstance()._f3DZ))
         MapManager:getInstance()._pTmxMap:addChild(role, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - role:getPositionY())
         table.insert(self._tOtherPetRoles,role)      
@@ -191,54 +235,62 @@ function PetsManager:createOtherPetRolesOnMap()
 end
 
 -- 移除所有 其他玩家宠物角色
-function PetsManager:removeAllOtherPetRolesOnMap()
+function PetsManager:removeAllOtherPetRolesOnWorldMap()
     for kRole, vRole in pairs(self._tOtherPetRoles) do
         vRole:removeFromParent(true)
     end
     self._tOtherPetRoles = {}
     self._tOtherPetRolesInfos = {}
     self._tOtherPetRolesMasters = {}
+
 end
 
 -- 切换到下一个宠物
 -- 参数：如果index有值，则切换到指定index的宠物
 --       如果index没有值，则按照顺序切换到下一个宠物
-function PetsManager:changeToNextMainPetRoleOnMap(index)
-    local createPet = function()
-        if self._nCurMainPetRoleIndexInQueue <= table.getn(self._tMainPetRoleInfosInQueue) then
-            -- 备份宠物当前位置
-            local posMainPet = cc.p(self._pMainPetRole:getPositionX(),self._pMainPetRole:getPositionY())
-            local posMainPetZ = self._pMainPetRole:getPositionZ()
-            -- 移除角色
-            self._pMainPetRole:removeFromParent(true)
-            self._pMainPetRole = nil
-            -- 创建主角的宠物
-            self._pMainPetRole = require("PetRole"):create(self._tMainPetRoleInfosInQueue[self._nCurMainPetRoleIndexInQueue],"main")
-            -- 添加主角宠物到地图
-            self._pMainPetRole:setPosition(posMainPet)
-            self._pMainPetRole:setPositionZ(posMainPetZ)
-            if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle then
-                self._pMainPetRole:addBuffByID(TableConstants.ReviveBuff.Value)  -- 添加一个虚影buff
-            end
-            MapManager:getInstance()._pTmxMap:addChild(self._pMainPetRole, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - self._pMainPetRole:getPositionY())
-            -- 刷新相机
-            self._pMainPetRole:refreshCamera()
-        else
-            -- 移除角色
-            self._pMainPetRole:removeFromParent(true)
-            self._pMainPetRole = nil
-        end
-        
-    end
-    
+function PetsManager:changeToNextMainPetRoleOnMap(index)    
     if index == nil then
         self._nCurMainPetRoleIndexInQueue = self._nCurMainPetRoleIndexInQueue + 1         -- 当前宠物index自加
     else
         self._nCurMainPetRoleIndexInQueue = index      -- 指定index为当前宠物
     end
-    
     -- 创建宠物
-    createPet()
+    if self._nCurMainPetRoleIndexInQueue <= table.getn(self._tMainPetRoleInfosInQueue) then
+        -- 备份宠物当前位置
+        local posMainPet = cc.p(self._pMainPetRole:getPositionX(),self._pMainPetRole:getPositionY())
+        local posMainPetZ = self._pMainPetRole:getPositionZ()
+        -- 移除角色
+        self._pMainPetRole:removeFromParent(true)
+        self._pMainPetRole = nil
+
+        -- 宠物共鸣信息集合
+        local cooperateInfo = {}
+        -- 查找是否存在宠物共鸣影响（如果存在，则获取信息）
+        for k,v in pairs(RolesManager:getInstance()._tMainPetCooperates[1].RequiredPet) do 
+            if self._tMainPetRoleInfosInQueue[self._nCurMainPetRoleIndexInQueue].petId == v then
+                cooperateInfo = RolesManager:getInstance()._tMainPetCooperates[1]
+                break
+            end
+        end
+        -- 创建主角的宠物
+        self._pMainPetRole = require("PetRole"):create(self._tMainPetRoleInfosInQueue[self._nCurMainPetRoleIndexInQueue],"main", RolesManager:getInstance()._pMainPlayerRole,cooperateInfo)
+        self._pMainPetRole._nIndexInQueue = self._nCurMainPetRoleIndexInQueue
+        RolesManager:getInstance()._pMainPlayerRole._pCurPetRole = self._pMainPetRole
+        -- 添加主角宠物到地图
+        self._pMainPetRole:setPosition(posMainPet)
+        self._pMainPetRole:setPositionZ(posMainPetZ)
+        if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle then
+            self._pMainPetRole:addBuffByID(TableConstants.ReviveBuff.Value)  -- 添加一个虚影buff
+        end
+        MapManager:getInstance()._pTmxMap:addChild(self._pMainPetRole, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - self._pMainPetRole:getPositionY())
+        -- 刷新相机
+        self._pMainPetRole:refreshCamera()
+    else
+        -- 移除角色
+        self._pMainPetRole:removeFromParent(true)
+        self._pMainPetRole = nil
+        RolesManager:getInstance()._pMainPlayerRole._pCurPetRole = nil
+    end
 
 end
 
@@ -247,41 +299,152 @@ end
 -- 参数：如果index有值，则切换到指定index的宠物
 --       如果index没有值，则按照顺序切换到下一个宠物
 function PetsManager:changeToNextPvpPetRoleOnMap(index)
-    local createPet = function()
-        if self._nCurPvpPetRoleIndexInQueue <= table.getn(self._tPvpPetRoleInfosInQueue) then
-            -- 备份宠物当前位置
-            local posPvpPet = cc.p(self._pPvpPetRole:getPositionX(),self._pPvpPetRole:getPositionY())
-            local posPvpPetZ = self._pPvpPetRole:getPositionZ()
-            -- 移除角色
-            self._pPvpPetRole:removeFromParent(true)
-            self._pPvpPetRole = nil
-            -- 创建pvp的宠物
-            self._pPvpPetRole = require("PetRole"):create(self._tPvpPetRoleInfosInQueue[self._nCurPvpPetRoleIndexInQueue],"pvp")
-            -- 添加pvp宠物到地图
-            self._pPvpPetRole:setPosition(posPvpPet)
-            self._pPvpPetRole:setPositionZ(posPvpPetZ)
-            if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle then
-                self._pPvpPetRole:addBuffByID(TableConstants.ReviveBuff.Value)  -- 添加一个虚影buff
-            end
-            MapManager:getInstance()._pTmxMap:addChild(self._pPvpPetRole, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - self._pPvpPetRole:getPositionY())
-            -- 刷新相机
-            self._pPvpPetRole:refreshCamera()
-        else
-            -- 移除角色
-            self._pPvpPetRole:removeFromParent(true)
-            self._pPvpPetRole = nil
-        end
-
-    end
-
     if index == nil then
         self._nCurPvpPetRoleIndexInQueue = self._nCurPvpPetRoleIndexInQueue + 1         -- 当前宠物index自加
     else
         self._nCurPvpPetRoleIndexInQueue = index      -- 指定index为当前宠物
     end
-
     -- 创建宠物
-    createPet()
+    if self._nCurPvpPetRoleIndexInQueue <= table.getn(self._tPvpPetRoleInfosInQueue) then
+        -- 备份宠物当前位置
+        local posPvpPet = cc.p(self._pPvpPetRole:getPositionX(),self._pPvpPetRole:getPositionY())
+        local posPvpPetZ = self._pPvpPetRole:getPositionZ()
+        -- 移除角色
+        self._pPvpPetRole:removeFromParent(true)
+        self._pPvpPetRole = nil
+
+        -- 宠物共鸣信息集合
+        local cooperateInfo = {}
+        -- 查找是否存在宠物共鸣影响（如果存在，则获取信息）
+
+
+
+
+        if RolesManager:getInstance()._tPvpPetCooperates[1] then
+            for k,v in pairs(RolesManager:getInstance()._tPvpPetCooperates[1].RequiredPet) do 
+                if self._tPvpPetRoleInfosInQueue[self._nCurPvpPetRoleIndexInQueue].petId == v then
+                        cooperateInfo = RolesManager:getInstance()._tPvpPetCooperates[1]
+                    break
+                 end
+            end            
+        end
+
+        -- 创建pvp的宠物
+        self._pPvpPetRole = require("PetRole"):create(self._tPvpPetRoleInfosInQueue[self._nCurPvpPetRoleIndexInQueue],"pvp",RolesManager:getInstance()._pPvpPlayerRole,cooperateInfo)
+        self._pPvpPetRole._nIndexInQueue = self._nCurPvpPetRoleIndexInQueue
+        RolesManager:getInstance()._pPvpPlayerRole._pCurPetRole = self._pPvpPetRole
+        -- 添加pvp宠物到地图
+        self._pPvpPetRole:setPosition(posPvpPet)
+        self._pPvpPetRole:setPositionZ(posPvpPetZ)
+        if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle then
+            self._pPvpPetRole:addBuffByID(TableConstants.ReviveBuff.Value)  -- 添加一个虚影buff
+        end
+        MapManager:getInstance()._pTmxMap:addChild(self._pPvpPetRole, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - self._pPvpPetRole:getPositionY())
+        -- 刷新相机
+        self._pPvpPetRole:refreshCamera()
+    else
+        -- 移除角色
+        self._pPvpPetRole:removeFromParent(true)
+        self._pPvpPetRole = nil
+        RolesManager:getInstance()._pPvpPlayerRole._pCurPetRole = nil
+    end
+
+end
+
+-- 切换到下一个宠物（其他玩家）
+-- 参数：pet：当前准备移除的pet对象
+-- 返回：新创建出来的宠物对象
+function PetsManager:changeToNextOtherPetRoleOnMap(pet)
+    local indexInQueue = pet._nIndexInQueue
+    indexInQueue = indexInQueue + 1         -- 当前宠物index自加
+    -- 创建宠物
+    if indexInQueue <= table.getn(pet._pMaster._pRoleInfo.pets) then
+        -- 备份宠物当前位置
+        local posPet = cc.p(pet:getPositionX(),pet:getPositionY())
+        local posPetZ = pet:getPositionZ()
+        local info = pet._pMaster._pRoleInfo.pets[indexInQueue].petInfo
+        local master = pet._pMaster
+        local deadPetCooperateInfo = pet._pCooperateInfo
+        -- 移除角色
+        for k,v in pairs(self._tOtherPetRoles) do
+            if pet == v then
+                table.remove(self._tOtherPetRoles,k)
+                table.remove(self._tOtherPetRolesInfos,k)
+                table.remove(self._tOtherPetRolesMasters,k)
+                break
+            end            
+        end
+        pet:removeFromParent(true)
+        pet = nil
+
+        -- 宠物共鸣信息集合
+        local cooperateInfo = {}
+        -- 查找是否存在宠物共鸣影响（如果存在，则获取信息）
+        if deadPetCooperateInfo then
+            if type(deadPetCooperateInfo.RequiredPet) == "table" then
+                for k,v in pairs(deadPetCooperateInfo.RequiredPet) do 
+                    if info.petId == v then
+                        cooperateInfo = deadPetCooperateInfo
+                        break
+                    end
+                end
+            end
+        end
+        -- 创建其他玩家宠物
+        pet = require("OtherPetRole"):create(info,"main",master,cooperateInfo)
+        pet._nIndexInQueue = indexInQueue
+        pet._pMaster._pCurPetRole = pet
+        -- 添加宠物到地图
+        pet:setPosition(posPet)
+        pet:setPositionZ(posPetZ)
+        if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle then
+            pet:addBuffByID(TableConstants.ReviveBuff.Value)  -- 添加一个虚影buff
+        end
+        MapManager:getInstance()._pTmxMap:addChild(pet, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - pet:getPositionY())
+        table.insert(self._tOtherPetRoles,pet) 
+        -- 刷新相机
+        pet:refreshCamera()
+    else
+        -- 移除角色
+        for k,v in pairs(self._tOtherPetRoles) do
+            if pet == v then
+                table.remove(self._tOtherPetRoles,k)
+                table.remove(self._tOtherPetRolesInfos,k)
+                table.remove(self._tOtherPetRolesMasters,k)
+                break
+            end            
+        end
+        pet:removeFromParent(true)
+        pet = nil
+    end
+    return pet
+end
+
+-- 设置指定其他玩家的当前宠物死亡(由otherPlayerRole的死亡引起的)
+function PetsManager:setCurOtherPetDeadByOtherPlayerRole(otherPlayerRole)
+    for k,v in pairs(self._tOtherPetRoles) do
+        if v._pMaster == otherPlayerRole then
+            v._nCurHp = 0
+            v:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole):setCurStateByTypeID(kType.kState.kBattleOtherPetRole.kDead, true, {false,nil,true})
+            break
+        end
+    end
+    return
+end
+
+-- 移除指定的otherPet，不再出现队列中的其他宠物
+function PetsManager:removeOtherPet(pet)
+    -- 移除角色
+    for k,v in pairs(self._tOtherPetRoles) do
+        if pet == v then
+            table.remove(self._tOtherPetRoles,k)
+            table.remove(self._tOtherPetRolesInfos,k)
+            table.remove(self._tOtherPetRolesMasters,k)
+            break
+        end            
+    end
+    pet:removeFromParent(true)
+    pet = nil
 
 end
 
@@ -307,11 +470,9 @@ end
 
 function PetsManager:updateOtherPetRole(dt)
     -- 其他玩家宠物
-    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
-        for k,v in pairs(self._tOtherPetRoles) do
-            if v._bActive == true then
-                v:updatePetRole(dt)
-            end
+    for k,v in pairs(self._tOtherPetRoles) do
+        if v._bActive == true then
+            v:updatePetRole(dt)
         end
     end
     return
@@ -359,6 +520,7 @@ end
 
 -- 处理战斗结果
 function PetsManager:disposeWhenBattleResult()
+    -- 主角宠物
     if self._pMainPetRole ~= nil then
         if self._pMainPetRole._bActive == true then
             if self._pMainPetRole:isUnusualState() == false then     -- 正常状态
@@ -367,6 +529,18 @@ function PetsManager:disposeWhenBattleResult()
             end
         end
     end
+--[[
+    -- 其他玩家角色
+    local tOtherPetsArray = self._tOtherPetRoles
+    for i=1,#tOtherPetsArray do
+        if tOtherPetsArray[i]._bActive == true then        
+            if tOtherPetsArray[i]:isUnusualState() == false then     -- 正常状态
+                tOtherPetsArray[i]:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole):setCurStateByTypeID(kType.kState.kBattleOtherPetRole.kStand, true)
+            end
+        end
+    end
+]]
+
 end
 
 -- 判断指定矩形是否与当前主角玩家宠物的bottom发生碰撞
@@ -394,15 +568,45 @@ end
 --------------------------------------------宠物数据表bean相关操作-----------------------------------------------------
 function PetsManager:getPetInfoWithId(id , step , level)
 	local dataInfo = {}
-    dataInfo.data = TablePets[id]
+    dataInfo.data = clone(TablePets[id])
     dataInfo.templete = TableTempletePets[dataInfo.data.TempleteID[step]]
     dataInfo.step = step
     dataInfo.level = level
     dataInfo.id = id
+    
+    if self:isPetField(id) == true then
+        for k, v in pairs(RolesManager:getInstance()._tMainPetCooperatePropties) do
+            if k == 1 then
+                dataInfo.data.Hp = dataInfo.data.Hp * v
+            elseif k == 2 then
+                dataInfo.data.Attack = dataInfo.data.Attack * v
+            elseif k == 3 then
+                dataInfo.data.Defend = dataInfo.data.Defend * v
+            elseif k == 4 then
+                dataInfo.data.CriticalChance = dataInfo.data.CriticalChance * v
+            elseif k == 5 then
+                dataInfo.data.CriticalDmage = dataInfo.data.CriticalDmage * v
+            elseif k == 6 then
+                dataInfo.data.Resilience = dataInfo.data.Resilience * v
+            elseif k == 7 then
+                dataInfo.data.Resistance = dataInfo.data.Resistance * v
+            elseif k == 8 then
+                dataInfo.data.Block = dataInfo.data.Block * v
+            elseif k == 9 then
+                dataInfo.data.Penetration = dataInfo.data.Penetration * v
+            elseif k == 10 then
+                dataInfo.data.DodgeChance = dataInfo.data.DodgeChance * v
+            elseif k == 11 then
+                dataInfo.data.AbilityPower = dataInfo.data.AbilityPower * v
+            end
+        end
+    end
+    
     return dataInfo
 end
 
 function PetsManager:isPetField(id)
+
     for i=1 ,table.getn(self._tMountPetsIdsInQueue) do
         if self._tMountPetsIdsInQueue[i] == id then
 			return true
@@ -411,8 +615,6 @@ function PetsManager:isPetField(id)
 	
     return false
 end
-
-
 
 function PetsManager:setMountPets(ids)
     self._tMountPetsIdsInQueue = ids
@@ -500,5 +702,42 @@ function PetsManager:AdvancePetWithId(id, step)
     end
 end
 
+--宠物共鸣判断
+function PetsManager:updatePetCooperate()
+    RolesManager:getInstance()._tMainPetCooperates = {}
+    RolesManager:getInstance()._tMainPetCooperatePropties = {}
+
+    for i=1,table.getn(TablePetsResonance) do
+        local beActived = true
+        local tableData = TablePetsResonance[i]
+        local requirePets = tableData.RequiredPet
+        local requirePetQ = tableData.RequiredQ
+        
+        for j=1,table.getn(requirePets) do
+            local pet = self:getMyPetDataWithId(requirePets[j])
+            if pet.step < requirePetQ or self:isPetField(requirePets[j]) == false then
+                beActived = false
+            	break
+            end
+        end
+        
+        if beActived == true then
+            table.insert(RolesManager:getInstance()._tMainPetCooperates,tableData)
+        end
+	end
+	
+    for i=1,table.getn(RolesManager:getInstance()._tMainPetCooperates) do
+    	for j=1,table.getn(RolesManager:getInstance()._tMainPetCooperates[i].Property) do
+            local localProptyData = RolesManager:getInstance()._tMainPetCooperates[i].Property[j]
+    		if RolesManager:getInstance()._tMainPetCooperatePropties[localProptyData[1]] == nil then
+    			RolesManager:getInstance()._tMainPetCooperatePropties[localProptyData[1]] = localProptyData[2] + 1
+    	    else
+    	       RolesManager:getInstance()._tMainPetCooperatePropties[localProptyData[1]] = RolesManager:getInstance()._tMainPetCooperatePropties[localProptyData[1]] + localProptyData[2]
+    		end
+    	end
+    end
+    
+    return
+end
 -------------------------------------------------------------------------------------------------------------------
 

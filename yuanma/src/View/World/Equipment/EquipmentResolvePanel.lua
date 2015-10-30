@@ -16,66 +16,49 @@ end)
 -- 构造函数
 function EquipmentResolvePanel:ctor()
     self._strName = "EquipmentResolvePanel"          -- 层名称
-    self._pCCS  = nil   
+    self._pCCS  = nil
     self._pResolveEqiupBg = nil
-    self._pResolveEquipScrollView = nil
-    self._pListController = nil              --优化的ScrollView
-    self._pBlueImage = nil
-    self._pVioletImage = nil
-    self._pOrangeImage = nil
-    self._pAllImage = nil
     self._pResoloveButton = nil                      --分解按钮
     self._fEquCallback = nil                         --外面的回调函数
-    self._tAllSelectEquTypeArray = {}                --选择要分解的类型 蓝色橙色紫色 button
-    self._tAllSelectEquImage = {}                    --选择要分解的类型 蓝色橙色紫色 对勾
+    self._fResColorBtnCallBack = nil                 --点击(全部，蓝紫橙)装备按钮时候回调
     self._tAllResolveEquArrayDate = {}               --所有要分解的装备集合
+    self._tALlResolveItem = {}                       --所有装备的cell
     self._tAllResolveMaterialArray = {}              --材料的Cell
-    self._pItemDate = nil                            --点击装备tips的装备数据
     self._tMaterialInfo = {}                         --分解材料的基本信息
     self._pResolveAniNode = nil                      --动画的node
-    self._pResolveAniAction =nil                     --动画对应的action
     self._bHasHaveStone = false                      --是否分解的装备有宝石
     self._tAllResolveEquitem = {}                    --分解的item
     self.touchLayerFunc = nil                        --屏蔽点基层
+    self._nColorResBtnIndex = 1                      --全部蓝紫橙 按钮的点击下表
 end
 
 -- 创建函数
-function EquipmentResolvePanel:create(func)
+function EquipmentResolvePanel:create(func,fResColorBtnCallBack)
     local layer = EquipmentResolvePanel.new()
-    layer:dispose(func)
+    layer:dispose(func,fResColorBtnCallBack)
     return layer
 end
 
 -- 处理函数
-function EquipmentResolvePanel:dispose(func)
+function EquipmentResolvePanel:dispose(func,fResColorBtnCallBack)
     -- 注册网络回调事件
     ResPlistManager:getInstance():addSpriteFrames("ResolveEquipPanel.plist")
     ResPlistManager:getInstance():addSpriteFrames("ResolveEqiupEffect.plist")
     local params = require("ResolveEquipPanelParams"):create()
     self._pCCS = params._pCCS
     self._pResolveEqiupBg = params._pResolveEqiupBg
-    self._pResolveEquipScrollView = params._pResolveEquipScrollView
-    self._pBlueButton = params._pBlueButton
-    self._pVioletButton = params._pVioletButton
-    self._pOrangeButton = params._pOrangeButton
-    self._pAllButton = params._pAllButton
-    
-    self._pBlueSlect = params._pBlueSlect
-    self._pVioletSlect = params._pVioleSlect
-    self._pOrangeSlect = params._pOrangeSlect
-    self._pAllSlect = params._pAllSlect
-    
+    --{所有，蓝，紫，橙}
+    self._tColorCanResEquBtn = params._tColorCanResEquBtn
+    --可以分解的装备图片挂载
+    self._tCanResolveEqu = params._tCanResolveEqu
+    --分解按钮
     self._pResoloveButton = params._pResoloveButton
+    --一键放入按钮
+    self._pAutoPushEquButton = params._pResoloveButton_Copy
     self:addChild(self._pCCS)
-    
 
-
-    -- 初始化列表管理
-    self._pListController = require("ListController"):create(self,self._pResolveEquipScrollView,listLayoutType.LayoutType_rows,100,100)
-    self._pListController:setVertiaclDis(6)
-    self._pListController:setHorizontalDis(3)
-    
     self._fEquCallback = func
+    self._fResColorBtnCallBack = fResColorBtnCallBack
     ------------------- 结点事件------------------------
     local function onNodeEvent(event)
         if event == "exit" then
@@ -97,13 +80,51 @@ function EquipmentResolvePanel:setDataSource(pItemDate)
         end
     end
     self:initResolveUi() --初始化界面的点击事件和ui
-    --self:initResolveScrollView() --先把全部的ScrollView创建出来
-
     self:updateScrollViewItem() --更新ScrollView数据
-
 end
-
 function EquipmentResolvePanel:initResolveUi()
+
+    local cellButtonCallBack = function (sender, eventType)
+        if eventType == ccui.TouchEventType.ended then
+            local pTag = sender:getTag()
+            print("Std:Tag "..pTag)
+            if self._tAllResolveEquArrayDate[pTag] == nil then --如果当前位置为空，不计算
+                return
+            end
+            table.remove(self._tAllResolveEquArrayDate,pTag)
+            self._fEquCallback()
+            self:updateScrollViewItem()
+        elseif eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick")
+        end
+    end
+
+    --初始化9个装备
+    for k,v in pairs(self._tCanResolveEqu)do
+        local pCell = require("BagItemCell"):create()
+        pCell:setAnchorPoint(cc.p(0,0))
+        pCell:setPosition(cc.p(0,0))
+        pCell._pIconBtn:setTag(k)
+        pCell._pIconBtn:addTouchEventListener(cellButtonCallBack)
+        v:addChild(pCell)
+        table.insert(self._tALlResolveItem,pCell)
+    end
+
+
+    --初始化3个材料的位置
+    local nViewWidth = self._pResolveEqiupBg:getContentSize().width
+    local nLeftAndReightDis = 30
+    local nSize = 90
+    local nStartX = -(nSize*3/2+nLeftAndReightDis)
+    for i=1,3 do
+        local pCell = require("BagItemCell"):create()
+        pCell:setAnchorPoint(cc.p(0,0))
+        pCell:setPosition(nStartX+(i-1)*(nSize+nLeftAndReightDis)-8,-237)
+        pCell:setTouchEnabled(false)
+        self._pCCS:addChild(pCell)
+        table.insert(self._tAllResolveMaterialArray,pCell)
+    end
+
 
     local playResolveEffect = function (tArray)
         local function onFrameEvent(frame)
@@ -121,7 +142,7 @@ function EquipmentResolvePanel:initResolveUi()
             self._pResolveAniNode:setPosition(100,100)
             self:addChild( self._pResolveAniNode)
         end
-         local pResolveAniAction = cc.CSLoader:createTimeline("ResolveEqiupEffect.csb")
+        local pResolveAniAction = cc.CSLoader:createTimeline("ResolveEqiupEffect.csb")
         pResolveAniAction:setFrameEventCallFunc(onFrameEvent)
         pResolveAniAction:gotoFrameAndPlay(0,pResolveAniAction:getDuration(), false)
         self._pResolveAniNode:stopAllActions()
@@ -130,16 +151,16 @@ function EquipmentResolvePanel:initResolveUi()
 
     end
 
-    --分解材料的回调
+    --分解按鈕的回调
     local resoloveButtonCallBack = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then
             if #self._tAllResolveEquArrayDate == 0 then
                 NoticeManager:getInstance():showSystemMessage("请选择分解的材料")
-                return 
+                return
             end
             if BagCommonManager:getInstance():isBagItemsEnough() then
                 NoticeManager:getInstance():showSystemMessage("背包已满")
-                return 
+                return
             end
 
             local tresolovesArray = {}
@@ -155,109 +176,87 @@ function EquipmentResolvePanel:initResolveUi()
         end
     end
 
-
-    --初始化3个材料的位置
-    local nViewWidth = self._pResolveEqiupBg:getContentSize().width
-    local nLeftAndReightDis = 40
-    local nSize = 101
-    local nStartX = -(nSize*3/2+nLeftAndReightDis)
-    for i=1,3 do
-        local pCell = require("BagItemCell"):create()
-        pCell:setAnchorPoint(cc.p(0,0))
-        pCell:setPosition(nStartX+(i-1)*(nSize+nLeftAndReightDis)-8,-190)
-        pCell:setTouchEnabled(false)
-        self._pCCS:addChild(pCell)
-        table.insert(self._tAllResolveMaterialArray,pCell)
-    end
+    self._pResoloveButton:addTouchEventListener(resoloveButtonCallBack)
+    self._pResoloveButton:setZoomScale(nButtonZoomScale)
+    self._pResoloveButton:setPressedActionEnabled(true)
 
 
-    --选择装备类型的回调
+    --选择装备类型的按钮回调
     local onImageViewClicked = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then
             local nTag = sender:getTag()
-            self._tAllResolveEquArrayDate = {}
-            for k,v in pairs(BagCommonManager:getInstance()._tArrayAllResolveEqu[nTag]) do
-                if not self._bHasHaveStone then --如果当前分解的装备列表里面没有宝石
-                    if #v.equipment[1].stones >0 then  --如果发现有宝石
-                        self._bHasHaveStone = true
-                end
-                end
-                table.insert(self._tAllResolveEquArrayDate,v)
-            end
-            self._fEquCallback(self._tAllResolveEquArrayDate)
-            self:updateScrollViewItem()
-            self:clearColorEquTypeImageState()
-            self._tAllSelectEquImage[nTag]:setVisible(true)
+            self:updateColorResEquBtnStateByTag(nTag)
+            self._fResColorBtnCallBack(nTag)
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
         end
     end
     --下面的装备类型选择 蓝色，紫色 橙色 全部
-    self._tAllSelectEquTypeArray = { self._pBlueButton, self._pVioletButton, self._pOrangeButton, self._pAllButton}
-    self._tAllSelectEquImage = { self._pBlueSlect, self._pVioletSlect, self._pOrangeSlect, self._pAllSlect}
-    for k,v in pairs(self._tAllSelectEquTypeArray) do
+    for k,v in pairs(self._tColorCanResEquBtn) do
         v:setTouchEnabled(true)
         v:setTag(k)
         v:addTouchEventListener(onImageViewClicked)
     end
-    --分解材料
-    self._pResoloveButton:addTouchEventListener(resoloveButtonCallBack)
-    self._pResoloveButton:setZoomScale(nButtonZoomScale)
-    self._pResoloveButton:setPressedActionEnabled(true)
-    --self._pResoloveButton:getTitleRenderer():enableOutline(cc.c4b(0, 0, 0, 255), 2)
-    --self._pResoloveButton:getTitleRenderer():enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
+
+    -----自动放入装备的按钮回调
+    local autoPushEquButtonCallBack = function (sender, eventType)
+        if eventType == ccui.TouchEventType.ended then
+            if table.getn(self._tAllResolveEquArrayDate) >= table.getn(self._tCanResolveEqu) then
+               NoticeManager:getInstance():showSystemMessage("可分解的装备已经满了")
+                return
+            end
+            for k,v in pairs(BagCommonManager:getInstance()._tArrayAllResolveEqu[self._nColorResBtnIndex]) do
+                --如果当前可以分解的装备大于8
+                if table.getn(self._tAllResolveEquArrayDate) >= table.getn(self._tCanResolveEqu) then
+                    break
+                end
+                if not self._bHasHaveStone then --如果当前分解的装备列表里面没有宝石
+                    if #v.equipment[1].stones >0 then  --如果发现有宝石
+                        self._bHasHaveStone = true
+                end
+                end
+                local pHasInclude = false
+                for kv,vv in pairs(self._tAllResolveEquArrayDate) do
+                   if vv == v then  --此装备已经添加过
+                      pHasInclude = true
+                      break
+                   end
+                end
+                if pHasInclude == false then
+                   table.insert(self._tAllResolveEquArrayDate,v)
+                end
+
+            end
+            self:_fEquCallback()
+            self:updateScrollViewItem()
+
+
+        elseif eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick")
+        end
+    end
+
+    self._pAutoPushEquButton:addTouchEventListener(autoPushEquButtonCallBack)
+    self._pAutoPushEquButton:setZoomScale(nButtonZoomScale)
+    self._pAutoPushEquButton:setPressedActionEnabled(true)
+
 
 end
 
 --更新左边的ScrollView界面
 function EquipmentResolvePanel:updateScrollViewItem()
 
-    local onTouchButton = function (sender, eventType)
-        if eventType == ccui.TouchEventType.ended then
-            self:clearColorEquTypeImageState()  --清空下面根据装备颜色筛选的图片状态
-            table.remove(self._tAllResolveEquArrayDate, sender:getTag())
-            self._fEquCallback(self._tAllResolveEquArrayDate)
-            self:updateScrollViewItem()
-        elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")   
+    for k,v in pairs(self._tALlResolveItem) do
+        if self._tAllResolveEquArrayDate and self._tAllResolveEquArrayDate[k] ~= nil then
+            v:setItemInfo(self._tAllResolveEquArrayDate[k])
+        else
+            v:setItemInfo(nil)
+
         end
     end
 
-     self._pListController._pDataSourceDelegateFunc = function (delegate,controller, index)
-        local pInfo =   self._tAllResolveEquArrayDate[index]
-        local cell = controller:dequeueReusableCell()
-        if cell == nil then
-            cell = require("BagItemCell"):create()
-        end
-        cell:setItemInfo(pInfo)
-        cell._pIconBtn:setTag(index)
-        cell._pIconBtn:addTouchEventListener(onTouchButton)
-        
-        return cell
-     end
-     
-    if self._pListController._pDataSource and table.getn(self._pListController._pDataSource) >12 then
-        self._pResolveEquipScrollView:scrollToPercentVertical(100,0.1,false)
-     end
-       
-    --获取size的大小
-    local nDateNum = table.getn(self._tAllResolveEquArrayDate)
-    local nRow  = math.ceil(nDateNum/4)
-    nDateNum = 4*nRow
-    local nDefNum = 12                                  --默认创建的背景个数 需要填满一屏 4*5 20个
-    nDefNum = nDefNum > nDateNum and nDefNum or nDateNum
-    
-    self._pListController._pNumOfCellDelegateFunc = function ()
-        return nDefNum
-    end
-    self._pListController:setDataSource(self._tAllResolveEquArrayDate)
-
-    if self._pListController._pDataSource and table.getn(self._pListController._pDataSource) >12 then
-        self._pResolveEquipScrollView:scrollToPercentVertical(100,0.1,false)
-    end
-    
     self._tMaterialInfo = {}
- 
+
     --设置分解材料
     for i=1,#self._tAllResolveEquArrayDate do
         --分解的普通材料
@@ -294,14 +293,14 @@ function EquipmentResolvePanel:updateScrollViewItem()
 
         end
     end
-   for k,v in pairs(self._tAllResolveMaterialArray) do
-      if #self._tMaterialInfo >0 and self._tMaterialInfo[k]~= nil then --如果有分解材料
-         local pInfo = GetCompleteItemInfo(self._tMaterialInfo[k])
-         v:setItemInfo(self._tMaterialInfo[k].value>0 and pInfo or nil)
-      else
-          v:setItemInfo(nil)
-      end
-   end
+    for k,v in pairs(self._tAllResolveMaterialArray) do
+        if #self._tMaterialInfo >0 and self._tMaterialInfo[k]~= nil then --如果有分解材料
+            local pInfo = GetCompleteItemInfo(self._tMaterialInfo[k])
+            v:setItemInfo(self._tMaterialInfo[k].value>0 and pInfo or nil)
+        else
+            v:setItemInfo(nil)
+        end
+    end
 
 end
 
@@ -313,47 +312,55 @@ function EquipmentResolvePanel:SetRightScrollViewClickByIndex(pItemInfo)
 
     for i=1,#self._tAllResolveEquArrayDate do
         if pResolveEquTempInfo == self._tAllResolveEquArrayDate[i] then --如果左侧材料的ScrollView已经有这个装备了
-            print("this equipment is add already")
+           NoticeManager:getInstance():showSystemMessage("装备已经存在了")
             return
         end
     end
-    self:clearColorEquTypeImageState()  --清空下面根据装备颜色筛选的图片状态
+
+    --如果已经够8个了。那就直接返回
+    if table.getn(self._tAllResolveEquArrayDate) >= table.getn(self._tCanResolveEqu) then
+        NoticeManager:getInstance():showSystemMessage("可分解的装备已经满了")
+        return
+     end
+
     table.insert(self._tAllResolveEquArrayDate,pResolveEquTempInfo)
     self:updateScrollViewItem()
-    
+
     if not self._bHasHaveStone then --如果当前分解的装备列表里面没有宝石
-    	if #pResolveEquTempInfo.equipment[1].stones >0 then  --如果发现有宝石
-    	self._bHasHaveStone = true
-    	end
+        if #pResolveEquTempInfo.equipment[1].stones >0 then  --如果发现有宝石
+            self._bHasHaveStone = true
     end
-    
+    end
+
 end
 
 --清空页面数据
 function EquipmentResolvePanel:clearResolveUiDateInfo()
     self._tAllResolveEquArrayDate = {}                --所有要分解的装备集合
-    self._pItemDate = nil                         --点击装备tips的装备数据
     for k,v in pairs(self._tAllResolveMaterialArray) do
         v:setItemInfo(nil)
     end
-    
-    for k=1,12 do
-        local cell = self._pListController:cellWithIndex(k)
-        if cell then
-            cell:setItemInfo(nil)
-        end
-    end
-    --self:updateScrollViewItem()
-    --self._pResolveEquipScrollView:removeAllChildren(true) --清空ScrollView
-    self:clearColorEquTypeImageState()  --清空下面根据装备颜色筛选的图片状态
-    self._bHasHaveStone = false 
-    self:updateScrollViewItem()
 
+    self._bHasHaveStone = false
+    self:updateScrollViewItem()
+    --默认选中第一个
+    self:updateColorResEquBtnStateByTag(self._nColorResBtnIndex)
 end
 
-function EquipmentResolvePanel:clearColorEquTypeImageState()
-    for k,v in pairs(self._tAllSelectEquImage) do     --设置下面的单选框图片选择状态
-        self._tAllSelectEquImage[k]:setVisible(false)
+--更新全部，蓝紫橙按钮的图片状态
+function EquipmentResolvePanel:updateColorResEquBtnStateByTag(nTag)
+    local tMountingBtnTexture = {{"ResolveEquipPanelRes/qbax.png","ResolveEquipPanelRes/qbct.png"},
+        {"ResolveEquipPanelRes/lzax.png","ResolveEquipPanelRes/lzct.png"},
+        {"ResolveEquipPanelRes/zzax.png","ResolveEquipPanelRes/zzct.png"},
+        {"ResolveEquipPanelRes/czax.png","ResolveEquipPanelRes/czct.png"},}
+    self._nColorResBtnIndex = nTag
+    --下面的装备类型选择 蓝色，紫色 橙色 全部
+    for k,v in pairs(self._tColorCanResEquBtn) do
+        if k == nTag then
+            v:loadTextures(tMountingBtnTexture[k][2],tMountingBtnTexture[k][2],nil,ccui.TextureResType.plistType)
+        else
+            v:loadTextures(tMountingBtnTexture[k][1],tMountingBtnTexture[k][2],nil,ccui.TextureResType.plistType)
+        end
     end
 end
 
@@ -364,7 +371,7 @@ end
 
 --点击屏蔽层
 function EquipmentResolvePanel:setTouchLayerEnabled(func)
-   self.touchLayerFunc = func
+    self.touchLayerFunc = func
 end
 
 -- 退出函数

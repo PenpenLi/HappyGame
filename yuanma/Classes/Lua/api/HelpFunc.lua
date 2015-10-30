@@ -62,6 +62,17 @@
         
 --------------------------------
 -- 
+-- @function [parent=#HelpFunc] createNormalMappedNode 
+-- @param self
+-- @param #cc.Node lightNode
+-- @param #string spriteFileName1
+-- @param #string spriteFileName2
+-- @param #string spriteLightFileName
+-- @param #int KBump
+-- @return Node#Node ret (return value: cc.Node)
+        
+--------------------------------
+-- 
 -- @function [parent=#HelpFunc] getSystemSTime 
 -- @param self
 -- @return long long#long long ret (return value: long long)
@@ -162,6 +173,15 @@
         
 --------------------------------
 -- 
+-- @function [parent=#HelpFunc] doRippleNodeTouch 
+-- @param self
+-- @param #cc.Node rippleNode
+-- @param #vec2_table pos
+-- @param #float depth
+-- @param #float r
+        
+--------------------------------
+-- 
 -- @function [parent=#HelpFunc] loginZTGame 
 -- @param self
 -- @param #string zoneId
@@ -216,6 +236,13 @@
 -- @function [parent=#HelpFunc] showWaveEffectByShader 
 -- @param self
 -- @param #cc.Sprite3D sprite
+        
+--------------------------------
+-- 
+-- @function [parent=#HelpFunc] createRippleNode 
+-- @param self
+-- @param #string spriteFrameName
+-- @return Node#Node ret (return value: cc.Node)
         
 --------------------------------
 -- 
@@ -345,6 +372,13 @@
 -- @param self
 -- @param #int zid
 -- @param #int uid
+        
+--------------------------------
+-- 
+-- @function [parent=#HelpFunc] createLightNode 
+-- @param self
+-- @param #string spriteFileName
+-- @return Node#Node ret (return value: cc.Node)
         
 --------------------------------
 -- 

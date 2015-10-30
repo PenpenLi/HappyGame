@@ -5,7 +5,7 @@ function ArrangeEquipPanelParams:ctor()
     --tips底板
     self._pEquipTipsBg = self._pCCS:getChildByName("EquipTipsBg")
    --装备状态
-   self._pEqiupStateText = self._pEquipTipsBg:getChildByName("EqiupStateText")
+   self._pEqiupStateText = self._pCCS:getChildByName("EqiupStateText")
    --装备名称
    self._pEqiupNameText = self._pEquipTipsBg:getChildByName("EqiupNameText")
    --装备强化等级
@@ -33,15 +33,15 @@ function ArrangeEquipPanelParams:ctor()
    --装备附加属性滚动框
    self._pEquipInfoScrollView = self._pEquipTipsBg:getChildByName("EquipInfoScrollView")
       -- 装备附加属性背景图
-   self._pTextFrameBg1 = self._pEquipInfoScrollView:getChildByName("TextFrameBg1")
+   --self._pTextFrameBg1 = self._pEquipInfoScrollView:getChildByName("TextFrameBg1")
    --装备附加属性文字
-   self._pEquipAddAttributeTab = self._pTextFrameBg1 :getChildByName("EqiupAddAttributeTab")
+   self._pEquipAddAttributeTab = self._pEquipInfoScrollView :getChildByName("EqiupAddAttributeTab")
    --装备附加属性值
    self._pAddAttributeText = self._pEquipInfoScrollView:getChildByName("AddAttributeText")
     -- 装备镶嵌属性背景
-   self._pTextFrameBg2 = self._pEquipInfoScrollView:getChildByName("TextFrameBg2")
+   --self._pTextFrameBg2 = self._pEquipInfoScrollView:getChildByName("TextFrameBg2")
    --装备镶嵌属性
-   self._pInlayAttributeTab = self._pTextFrameBg2:getChildByName("InlayAttributeTab")
+   self._pInlayAttributeTab = self._pEquipInfoScrollView:getChildByName("InlayAttributeTab")
    --装备镶嵌属性面板
     self._pInlayAttributePanel = self._pEquipInfoScrollView:getChildByName("InlayAttributePanel")
    --装备镶嵌属性没有时的提示信息
@@ -49,13 +49,14 @@ function ArrangeEquipPanelParams:ctor()
 
 
    --出售
-   self._pSaleTextNum = self._pEquipTipsBg:getChildByName("SaleValue")
-   --按钮标签滚动框
-   self._pButtonListView = self._pEquipTipsBg:getChildByName("ButtonListViewTab")
-   --标签按钮
-   self._pListButton = self._pButtonListView:getChildByName("ListButton1")
+   self._pSaleTextNum = self._pCCS:getChildByName("SaleValue")
    --关闭按钮
     self._pCloseButton = self._pEquipTipsBg:getChildByName("CloseButton")
+
+    --右侧按钮底板
+    self._pRightButtonBg = self._pCCS:getChildByName("RightButtonBg")
+    --按钮
+    self._pButton1 = self._pRightButtonBg:getChildByName("Button1")
 end
 function ArrangeEquipPanelParams:create()
     local params = ArrangeEquipPanelParams.new()

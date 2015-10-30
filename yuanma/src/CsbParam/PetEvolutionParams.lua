@@ -47,9 +47,6 @@ function PetEvolutionParams:ctor()
     --升阶之后的品质
     self._plevelAfter = self._p3DBg:getChildByName("levelAfter")
 
-
-
-
     --宠物详细属性的背景板
     self._pAttributeBg = self._pBackGround:getChildByName("AttributeBg")
     --宠物icon

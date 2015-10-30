@@ -31,16 +31,22 @@ function FoodPanelParams:ctor()
     self._pIconBg1 = self._pWeiSBg:getChildByName("IconBg1")
     --宠物食材1图标
     self._pIcon1 = self._pWeiSBg:getChildByName("Icon1")
+    --宠物食材1数量
+    self._pWeiNum1 = self._pWeiSBg:getChildByName("WeiNum1")
     --喂食按钮1
     self._pWsButton1 = self._pWeiSBg:getChildByName("WsButton1")
-    --宠物食材1底板 
+    --宠物食材2底板 
     self._pIconBg2 = self._pWeiSBg:getChildByName("IconBg2")
-    --宠物食材1图标
+    --宠物食材2图标
     self._pIcon2 = self._pWeiSBg:getChildByName("Icon2")
-    --喂食按钮1
+    --宠物食材2数量
+    self._pWeiNum2 = self._pWeiSBg:getChildByName("WeiNum2")
+    --喂食按钮2
     self._pWsButton2 = self._pWeiSBg:getChildByName("WsButton2")
     --宠物食材3底板 
     self._pIconBg3 = self._pWeiSBg:getChildByName("IconBg3")
+    --宠物食材3数量
+    self._pWeiNum3 = self._pWeiSBg:getChildByName("WeiNum3")
     --宠物食材1图标
     self._pIcon3 = self._pWeiSBg:getChildByName("Icon3")
     --喂食按钮1

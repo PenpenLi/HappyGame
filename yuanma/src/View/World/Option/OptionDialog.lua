@@ -316,8 +316,8 @@ end
 function OptionDialog:requestOtherPlayersInfos()
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
         -- 移除所有其他玩家和其他玩家的宠物
-        RolesManager:getInstance():removeAllOtherPlayerRolesOnMap()
-        PetsManager:getInstance():removeAllOtherPetRolesOnMap()
+        RolesManager:getInstance():removeAllOtherPlayerRolesOnWorldMap()
+        PetsManager:getInstance():removeAllOtherPetRolesOnWorldMap()
 
         -- 请求在线玩家
         local args = nil
@@ -369,7 +369,12 @@ function OptionDialog:updateRolesNameShow()
         if self:getPetsManager()._pPvpPetRole then
             self:getPetsManager()._pPvpPetRole._pName:setVisible(visible)
         end
-
+        for k,v in pairs(self:getRolesManager()._tOtherPlayerRoles) do 
+            v._pName:setVisible(visible)
+        end
+        for k,v in pairs(self:getPetsManager()._tOtherPetRoles) do 
+            v._pName:setVisible(visible)
+        end
     end
 
 end

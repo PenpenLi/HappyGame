@@ -301,18 +301,18 @@ void AppDelegate::initPlatformConfig()
 
 	#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS )
 
-		    //新浪微博
+		//新浪微博
 		__Dictionary *sinaConfigDict = __Dictionary::create();
 		sinaConfigDict -> setObject(String::create("568898243"), "app_key");
 		sinaConfigDict -> setObject(String::create("38a4f8204cc784f81f9f0daaf31e02e3"), "app_secret");
 		sinaConfigDict -> setObject(String::create("http://www.sharesdk.cn"), "redirect_uri");
-		C2DXShareSDK::setPlatformConfig(C2DXPlatTypeSinaWeibo, sinaConfigDict);
+        C2DXShareSDK::setPlatformConfig(C2DXPlatType::C2DXPlatTypeSinaWeibo, sinaConfigDict);
 
 		//微信
 		__Dictionary *wcConfigDict = __Dictionary::create();
 		wcConfigDict -> setObject(String::create("wx63c2bc49f4b63f41"), "app_id");
-		C2DXShareSDK::setPlatformConfig(C2DXPlatTypeWeixiSession, wcConfigDict);
-		C2DXShareSDK::setPlatformConfig(C2DXPlatTypeWeixiTimeline, wcConfigDict);
+        C2DXShareSDK::setPlatformConfig(C2DXPlatType::C2DXPlatTypeWeixiSession, wcConfigDict);
+        C2DXShareSDK::setPlatformConfig(C2DXPlatType::C2DXPlatTypeWeixiTimeline, wcConfigDict);
 
 	#endif
 

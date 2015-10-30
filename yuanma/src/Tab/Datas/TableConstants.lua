@@ -22,8 +22,8 @@ TableConstants = {
 	},
 
 	ResolveMinLevel = {
-		Value = 3,
-		Desc = "装备可分解品质必须至少3星，包括三星。",
+		Value = 1,
+		Desc = "装备可分解品质必须至少1星，包括一星。",
 	},
 
 	GemMixRequire = {
@@ -152,7 +152,7 @@ TableConstants = {
 	},
 
 	PowerNumRecoveryCD = {
-		Value = 30,
+		Value = 360,
 		Desc = "体力值恢复间隔（秒）",
 	},
 
@@ -162,7 +162,7 @@ TableConstants = {
 	},
 
 	ComboBreakTime = {
-		Value = 7,
+		Value = 10,
 		Desc = "连击中断时间（秒）",
 	},
 
@@ -182,22 +182,22 @@ TableConstants = {
 	},
 
 	GenAngerSpeed = {
-		Value = 0.10000000,
+		Value = 0.03000000,
 		Desc = "角色普通命中怒气积攒速度",
 	},
 
 	SkillAngerSpeed = {
-		Value = 0.10000000,
+		Value = 0.05000000,
 		Desc = "角色技能命中怒气积攒速度",
 	},
 
 	BeatenAngerSpeed = {
-		Value = 0.10000000,
+		Value = 0.08000000,
 		Desc = "受击怒气积攒速度",
 	},
 
 	BuffAngerSpeed = {
-		Value = 0.02000000,
+		Value = 0.01000000,
 		Desc = "角色被伤害型buff造成一次伤害，获得怒气值系数",
 	},
 
@@ -432,7 +432,7 @@ TableConstants = {
 	},
 
 	LifeRecoverTime = {
-		Value = 5,
+		Value = 3,
 		Desc = "未受伤害自动回血计时  （填写）",
 	},
 
@@ -907,7 +907,7 @@ TableConstants = {
 	},
 
 	NameMinLen = {
-		Value = 3,
+		Value = 1,
 		Desc = "玩家昵称、家族名称最小字符长度",
 	},
 
@@ -927,7 +927,7 @@ TableConstants = {
 	},
 
 	NameMinLenWord = {
-		Value = 3,
+		Value = 2,
 		Desc = "玩家昵称、家族名称最小字数长度",
 	},
 
@@ -954,6 +954,46 @@ TableConstants = {
 	FriendsAssistCD = {
 		Value = 300,
 		Desc = "好友助战CD（秒）",
+	},
+
+	RefreshTimeOnlineRewards = {
+		Value = "2:00",
+		Desc = "在线奖励刷新时间",
+	},
+
+	RefreshTimeMonthSign = {
+		Value = "00:00",
+		Desc = "月签到刷新时间",
+	},
+
+	BuyPowerNumLimit = {
+		Value = 300,
+		Desc = "当前体力值超出此值，不能购买和领取",
+	},
+
+	ReCheckCost = {
+		Value = 100,
+		Desc = "补签每次消耗货币数量",
+	},
+
+	ReCheckCostType = {
+		Value = 1,
+		Desc = "补签消耗货币类型",
+	},
+
+	NewbieQueneID = {
+		Value = 1,
+		Desc = "新手战斗所用的剧情ID",
+	},
+
+	FriendExistTime = {
+		Value = 10,
+		Desc = "好友助战持续时间（秒）",
+	},
+
+	GetGoldMax = {
+		Value = 10,
+		Desc = "点金手一次最多买多少次",
 	},
 
 }

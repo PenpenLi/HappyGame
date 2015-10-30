@@ -21,7 +21,6 @@ function RolesChangeNameDialog:ctor()
     self._pOkButton = nil                          --确定按钮
     self._pCancelButton = nil                      --取消按钮
     self._pNameText = nil                          --输入提示框
-    self._pPrice = nil                             --钻石数目
     self._pChangeType = nil
 
 end
@@ -56,9 +55,8 @@ function RolesChangeNameDialog:dispose(args)
     self._pCancelButton:setPressedActionEnabled(true)
     --self._pCancelButton:getTitleRenderer():enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
     self._pEditBoxNode = params._pEditBoxNode    --输入框的挂节点
-    self._pNameText = createEditBoxBySize(cc.size(370,43),TableConstants.NameMaxLenWord.Value)          --输入提示框
+    self._pNameText = createEditBoxBySize(cc.size(320,43),TableConstants.NameMaxLenWord.Value)          --输入提示框
     self._pEditBoxNode:addChild(self._pNameText)
-    self._pPrice = params._pPrice                --钻石数目
     -- 初始化dialog的基础组件
     self:disposeCSB()
 
@@ -113,7 +111,8 @@ function RolesChangeNameDialog:loadChangeNameUi()
         nConst = TableConstants.FamilyChangeName.Value
         nMaxLen =  TableConstants.FamilyNameMax.Value
    end
-
+   --设置改名数值
+   self._pOkButton:setTitleText(nConst)
 
     -- 确定按钮回调函数
     local function onTouchOkButton(sender, eventType)
@@ -190,8 +189,6 @@ function RolesChangeNameDialog:loadChangeNameUi()
         end
     end
     self._pCancelButton:addTouchEventListener(onTouchCancelButton)
-    
-    self._pPrice:setString(nConst)
 end
 
 

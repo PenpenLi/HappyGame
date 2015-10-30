@@ -17,7 +17,7 @@ function BattlePlayerRoleStandState:ctor()
     self._strName = "BattlePlayerRoleStandState"           -- 状态名称
     self._kTypeID = kType.kState.kBattlePlayerRole.kStand  -- 状态类型ID
     self._fWaitCounter = 0                                 -- 站立后的延时计数
-    
+        
 end
 
 -- 创建函数
@@ -29,7 +29,7 @@ end
 -- 进入函数
 function BattlePlayerRoleStandState:onEnter(args)
     if self:getMaster() then
-        mmo.DebugHelper:showJavaLog("--STATE--PLAYER--:Stand")
+        --mmo.DebugHelper:showJavaLog("--STATE--PLAYER--:Stand")
         self._fWaitCounter = 0    
         -- 刷新动作
         self:getMaster():playStandAction()
@@ -57,7 +57,7 @@ function BattlePlayerRoleStandState:update(dt)
         if self:getTalksManager():isShowingTalks() == true or self:getMapManager():isCameraMoving() == true then
             return
         end
-	
+        -- 待机等待计数器
         self._fWaitCounter = self._fWaitCounter + dt
         if self._fWaitCounter < fRoleStandWaitDelay then
             return
@@ -143,13 +143,8 @@ function BattlePlayerRoleStandState:procAutoBattle(dt)
                     end
                 end
             end
-
         end
     elseif self:getMaster()._strCharTag == "pvp" then
-        
-        -- 测试使用
-        --self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kGenAttack, true)
-
         if self:getRolesManager()._pPvpPlayerRole._refStick:getRefValue() == 0 then
             -- 先检测是否需要进行自动攻击  (先判定是否所有技能目前都处于idle状态才可以进行)
             for k,v in pairs(self:getMaster()._tSkills) do
@@ -171,6 +166,7 @@ function BattlePlayerRoleStandState:procAutoBattle(dt)
             local skillWayIdex = self:getAIManager():playerRoleDecideSkill(self:getMaster())
             local targetsInView, targetInWarning = self:getAIManager():objSearchNearestEnemysInViewAndSkillWarningRange(self:getMaster(), self:getMaster()._tSkills[skillWayIdex])
             if #targetInWarning ~= 0 then  -- 警戒范围内有目标，则直接开始战斗
+                self._pOwnerMachine:usePetCooperateSkill()  -- 发现目标时，考虑自动释放宠物共鸣技能
                 --------------------------------------------------- 自动攻击 ------------------------------------------------------------------
                 if skillWayIdex == kType.kSkill.kWayIndex.kPlayerRole.kGenAttack then  -- 需要发起普通攻击
                     if self:getMaster()._refGenAttackButton:getRefValue() == 0 then

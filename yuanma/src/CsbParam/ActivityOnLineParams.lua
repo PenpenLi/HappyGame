@@ -11,14 +11,20 @@ function ActivityOnLineParams:ctor()
     self._pTimeIng = self._pOnLineBg:getChildByName("TimeIng")
     --领取按钮
     self._pOkButton = self._pOnLineBg:getChildByName("OkButton")
+    -- 奖励背景1
+    self._pRewardBg1 = self._pOnLineBg:getChildByName("RewardBg1")
     --奖励图标1
     self._pRewardIcon1 = self._pOnLineBg:getChildByName("RewardIcon1")
     --奖励数值1
     self._pRewardNum1 = self._pOnLineBg:getChildByName("RewardNum1")
+    -- 奖励背景2
+    self._pRewardBg2 = self._pOnLineBg:getChildByName("RewardBg2")
     --奖励图标2
     self._pRewardIcon2 = self._pOnLineBg:getChildByName("RewardIcon2")
     --奖励数值2
     self._pRewardNum2 = self._pOnLineBg:getChildByName("RewardNum2")
+    -- 奖励背景3
+    self._pRewardBg3 = self._pOnLineBg:getChildByName("RewardBg3")
     --奖励图标3
     self._pRewardIcon3 = self._pOnLineBg:getChildByName("RewardIcon3")
     --奖励数值3

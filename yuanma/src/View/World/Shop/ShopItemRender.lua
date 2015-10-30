@@ -20,8 +20,19 @@ function ShopItemRender:ctor()
 	self._pGoodsNameText = nil 
 	self._pHotImgView = nil 
 	self._pHotBgImgView = nil
+	-- 商品的原价
+	self._pOriginalPriceNode = nil 
+	self._pOriginalCoinIcon = nil 
 	self._pOriginalPriceText = nil 
+	-- 商品的现价
+	self._pCurrentPriceNode = nil 
+	self._pCurrentCoinIcon = nil 
 	self._pCurrentPriceText = nil 
+	-- 商品的出售价格
+	self._pSellPriceNode = nil 
+	self._pSellCoinIcon = nil 
+	self._pSellPriceText = nil 
+
 	self._nFinaceIconImgView = nil 
 	self._pBuyButton = nil 
 	self._pBg = nil
@@ -43,17 +54,26 @@ function ShopItemRender:dispose(financeType,shopType)
 	self._kShopType = shopType
 	local params = require("ShopOneParams"):create()
 	self._pCCS = params._pCCS
+	-- 此处是个button
 	self._pBg = params._pitemCellBg
 	self._pGoodsIconImgView = params._picon01
 	self._pGoodsIconBgImgView = params._picon01P
 	self._pGoodsNameText = params._pname01
 	self._pHotImgView = params._phot01
-	self._pHotBgImgView = params._pHotBg
+	--self._pHotBgImgView = params._pHotBg
+	self._pOriginalPriceNode = params._pNodeMoney01
 	self._pOriginalPriceText = params._ptextprice01
+	self._pOriginalCoinIcon = params._pOriginalCoinIcon
+	self._pCurrentPriceNode = params._pNodeMoney02
+	self._pCurrentCoinIcon = params._pcosticon
 	self._pCurrentPriceText = params._ptextprice02
-	self._nFinaceIconImgView = params._pFinaceIcon
-	self._pBuyButton = params._pbuttonbuy01
-	self._pBg:setTouchEnabled(true)
+	self._pSellPriceNode = params._pNodeMoney03
+	self._pSellCoinIcon = params._pcosticon02
+	self._pSellPriceText = params._ptextprice03
+
+	--self._nFinaceIconImgView = params._pFinaceIcon
+	self._pBuyButton = params._pitemCellBg
+	--self._pBg:setTouchEnabled(true)
 	self._pBg:setSwallowTouches(false)
 	self:addChild(self._pCCS)
 	
@@ -93,7 +113,7 @@ function ShopItemRender:initTouches()
 		elseif eventType == ccui.TouchEventType.moved then
             self._fMoveDis = self._fMoveDis + 1    
       	elseif eventType == ccui.TouchEventType.ended then
-      		if self._fMoveDis >= 25 then
+      		if self._fMoveDis >= 4 then
       			self._fMoveDis = 0 
       			return
       		end
@@ -138,7 +158,7 @@ function ShopItemRender:updateUI()
         self._pHotImgView:loadTexture(self._pGoodsDataInfo.saleIcon..".png",ccui.TextureResType.plistType)
     else
     	self._pHotImgView:setVisible(false)
-    	self._pHotBgImgView:setVisible(false)
+    	--self._pHotBgImgView:setVisible(false)
     end
     -- 商品的品质边框
     if self._pItemInfo.dataInfo.Quality ~= nil and self._pItemInfo.dataInfo.Quality ~= 0 then 
@@ -149,17 +169,27 @@ function ShopItemRender:updateUI()
         self._pGoodsIconBgImgView:setVisible(false)
 	end
     self._pGoodsIconImgView:loadTexture(self._pItemInfo.templeteInfo.Icon..".png",ccui.TextureResType.plistType)
-	-- 商品的打折金额
-    self._pOriginalPriceText:setString(self._pGoodsDataInfo.originalPrice)
-	-- 商品的原价
-    self._pCurrentPriceText:setString(self._pGoodsDataInfo.currentPrice)
+	
+	local tFinanceInfo = FinanceManager:getInstance():getIconByFinanceType(self._kFinaneType)
+
     -- 商品按原价出售时原价不显示
     if self._pGoodsDataInfo.currentPrice == self._pGoodsDataInfo.originalPrice then 
-    	self._pOriginalPriceText:setVisible(false)
+    	--self._pOriginalPriceText:setVisible(false)
+    	self._pOriginalPriceNode:setVisible(false)
+    	self._pCurrentPriceNode:setVisible(false)
+    	self._pSellPriceNode:setVisible(true)
+    	self._pSellCoinIcon:loadTexture(tFinanceInfo.filename,tFinanceInfo.textureType)	
+	else
+		self._pOriginalPriceNode:setVisible(true)
+    	self._pCurrentPriceNode:setVisible(true)
+    	self._pSellPriceNode:setVisible(false)
+    	-- 商品的打折金额
+    	self._pOriginalPriceText:setString(self._pGoodsDataInfo.originalPrice)
+    	self._pOriginalCoinIcon:loadTexture(tFinanceInfo.filename,tFinanceInfo.textureType)
+		-- 商品的原价
+    	self._pCurrentPriceText:setString(self._pGoodsDataInfo.currentPrice)
+    	self._pCurrentCoinIcon:loadTexture(tFinanceInfo.filename,tFinanceInfo.textureType)
     end
-    local tFinanceInfo = FinanceManager:getInstance():getIconByFinanceType(self._kFinaneType)
-    -- 设置货币的图标
-    self._nFinaceIconImgView:loadTexture(tFinanceInfo.filename,tFinanceInfo.textureType)	
 end
 
 function ShopItemRender:setDataSource(pGoodsInfo)
@@ -171,8 +201,6 @@ function ShopItemRender:setDataSource(pGoodsInfo)
     	self:updateUI()
 	end
 end
-
--- 获取奖励物品的详细信息
 
 function ShopItemRender:onExitShopItemRender()
 	-- cleanup 

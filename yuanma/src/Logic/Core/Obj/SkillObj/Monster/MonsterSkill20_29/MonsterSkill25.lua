@@ -17,7 +17,7 @@ function MonsterSkill25:ctor()
     self._strName = "MonsterSkill25"                            -- 技能名称
     self._kTypeID = kType.kSkill.kID.kMonsterSkill25            -- 技能对象类型
     self._pCurState = nil                                       -- 技能当前的状态机状态
-    
+    self._posTargetsPos = nil                                   -- 目标位置
     self._nRoleAttackActionIndex = 5                            -- 角色攻击动作index
     self._fChantDelayTime = 0.7                                 -- 吟唱动作持续时间s
     
@@ -212,11 +212,11 @@ function MonsterSkill25:onEnterReleaseDo(state)
         self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self)   -- 刷新方向（考虑野怪是否有指定转向）
     end
     ]]
-    if self._pSkillInfo.EarlyWarningType == kType.kSkillEarlyWarning.kType3 then
+    if self._pSkillInfo.EarlyWarningType == kType.kSkillEarlyWarning.kType3 then  -- 大号箭头
         local offsetY = self._pSkillInfo.WarnRange*math.sin(math.rad(self:getMaster():getAngle3D()))
         local offsetX = self._pSkillInfo.WarnRange*math.cos(math.rad(self:getMaster():getAngle3D()))
         self._posTargetsPos = cc.p(self:getMaster():getPositionX()+offsetX, self:getMaster():getPositionY()+offsetY)
-    else
+    elseif self._pSkillInfo.EarlyWarningType ~= kType.kSkillEarlyWarning.kType5 then  -- 圆形特效（范围）
         local tTargets = self:getAIManager():objSearchNearestEnemysInRangeForDamage(self:getMaster(), self._pSkillInfo.WarnRange, nil, self._pSkillInfo.TargetGroupType)
         -- 记录所有目标的位置
         if table.getn(tTargets) == 0 then

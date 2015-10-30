@@ -213,7 +213,7 @@ TableStoryCopysMaps=
        ,{monsterID = 38.0, posIndexX= 19, posIndexY = 3}
      },
 }, MonsterArea4CenterPosIndex = {14.0,33}, HasCloud = 1.0, HasRain = 1.0, },
-	{ MapID = 2.0, MapsName = 'battle_map_0001', MapsPvrName = 'battle_map_001', MapEffect = {
+	{ MapID = 2.0, MapsName = 'battle_map_9005', MapsPvrName = 'battle_map_022', MapEffect = {
     {type = 2.0, name = "ParticleChangJinghuo", x = 1287, y = 661},
     {type = 2.0, name = "ParticleChangJinghuo", x = 1566, y = 669},
    {type = 2.0, name = "ParticleChangJinghuo", x = 1335, y = 223},

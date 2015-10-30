@@ -143,6 +143,7 @@ end
 -- 初始化动画和动作
 function SkillObj:initAnisAndActions()
     if self._tTempleteInfo then
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(self._tTempleteInfo.DetailInfo.PvrName)
         -- 动画对象
         self._pAni = cc.CSLoader:createNode(self._strAniName..".csb")
         self:addChild(self._pAni)

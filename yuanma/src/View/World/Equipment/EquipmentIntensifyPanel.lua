@@ -18,7 +18,8 @@ function EquipmentIntensifyPanel:ctor()
     self._strName = "EquipmentIntensifyPanel" -- 层名称
     self._pCCS  = nil
     self._pIntensifyEquBg = nil               --背景框
-    self._pEqiupCellBg = nil                 --要强化的cell背景
+    self._pEqiupCellBg = nil                  --要强化的cell背景
+    self._pEquNameText = nil                  --装备名字
     self._pStartlevel = nil                   --开始强化等级
     self._pNextlevel = nil                    --强化后等级
     self._pChangeRes = nil                    --变化后的金钱
@@ -32,8 +33,8 @@ function EquipmentIntensifyPanel:ctor()
     self._nSmallType = nil                    --要强化的装备的小type
     self._tTempOwnMetaNum = {}                --默认是0
     self._bHasTempDate = false                --是否是本地算数据
-    --self._pIntensifyAniNode = nil             --动画的node
-    --self._pIntensifyAniAction =nil            --动画对应的action
+    --self._pIntensifyAniNode = nil           --动画的node
+    --self._pIntensifyAniAction =nil          --动画对应的action
     self._pIntensifyAni = nil                 --帧动画
     self._pAniCount = 0                       --强化动画播放的总次数
     self._pAniHasPlayNum = 0                  --强化动画播放的次数 本地做记录缓存
@@ -171,11 +172,13 @@ function EquipmentIntensifyPanel:dispose(func)
     self._pEquMaxIcon = params._pEquMaxIcon                           --满级的显示提示
     self._pAutoIntensifyButton = params._pStrengthenButton2           --一键强化
     self._pNomalIntensifyButton = params._pStrengthenButton1          --普通强化
+    self._pEquNameText = params._pEquNameText                         --装备名字
     self:addChild(self._pCCS)
 
     self._tAllIntensifyMaterialArray = {params._pStrengMateria1, params._pStrengMateria2, params._pStrengMateria3}
     self._fEquCallback = func
-
+    --初始装备强化界面
+    self:initIntensifyUi()
     ------------------- 结点事件------------------------
     local function onNodeEvent(event)
         if event == "exit" then
@@ -187,7 +190,7 @@ end
 
 --初始化界面ui
 function EquipmentIntensifyPanel:initIntensifyUi()
-
+    print("cerateFyUi")
     --初始化3个材料的位置
     local nViewSize = self._pEqiupCellBg:getContentSize()
     local nSize = 100
@@ -195,7 +198,7 @@ function EquipmentIntensifyPanel:initIntensifyUi()
     --强化的装备cell
     self._pIntensifyEquCell =  require("BagItemCell"):create()
     self._pIntensifyEquCell:setTouchEnabled(false)
-    self._pIntensifyEquCell:setPosition(cc.p(nViewSize.width/2-nSize/2-8,nViewSize.height/2-55))
+    self._pIntensifyEquCell:setPosition(cc.p(0,0))
     self._pEqiupCellBg:addChild(self._pIntensifyEquCell)
 
     --材料的cell
@@ -290,12 +293,9 @@ function EquipmentIntensifyPanel:updateInstensifyDate()
         self:clearResolveUiDateInfo(true)
         --设置itemInfo
         self._pIntensifyEquCell:setItemInfo( self._pIntensifyEquInfo)
-        --设置要强化的装备cell
-        if self._pEquipCell then
-            self._pEquipCell:setItemInfo( self._pIntensifyEquInfo)
-        end
-
-
+        --设置装备的名字
+        self._pEquNameText:setString(self._pIntensifyEquInfo.templeteInfo.Name)
+        self._pEquNameText:setColor(kQualityFontColor3b[self._pIntensifyEquInfo.dataInfo.Quality])
 
         --获取人物主属性
         local pMajorAttr = self._pIntensifyEquInfo.equipment[1].majorAttr
@@ -310,17 +310,17 @@ function EquipmentIntensifyPanel:updateInstensifyDate()
         nEndValue = (nStartValue+self._pIntensifyEquInfo.dataInfo.IntensifyPreTime)
 
         --设置开始等级和主属性
-        self._pStartlevel:setString("Lv "..self._pIntensifyEquInfo.value)
+        self._pStartlevel:setString(self._pIntensifyEquInfo.value)
         self._pStartAttribute:setString(kAttributeNameTypeTitle[pMajorAttr.attrType]..": "..nStartValue)
         self._pChangeRes:setColor(cWhite)
         --设置下一集的等级和主属性
         if self._pIntensifyEquInfo.value < TableConstants.EquipMaxLevel.Value then
-            self._pNextlevel:setString("Lv "..self._pIntensifyEquInfo.value+1)
-            self._pNextAttribute:setString(kAttributeNameTypeTitle[pMajorAttr.attrType]..": "..nEndValue)
+            self._pNextlevel:setString(self._pIntensifyEquInfo.value+1)
+            self._pNextAttribute:setString(nEndValue)
             self:setHasEquipMaxLevel(false)
         else --如果已经强化最高等级
-            self._pNextlevel:setString("Lv "..self._pIntensifyEquInfo.value)
-            self._pNextAttribute:setString(kAttributeNameTypeTitle[pMajorAttr.attrType]..": "..nStartValue)
+            self._pNextlevel:setString(self._pIntensifyEquInfo.value)
+            self._pNextAttribute:setString(nStartValue)
             self._pChangeRes:setString("0")
             self:setHasEquipMaxLevel(true)
             self:setIntensifyMateHasVisible(false)
@@ -390,13 +390,7 @@ end
 
 --默认传入的装备信息
 function EquipmentIntensifyPanel:setDataSource(pItemDate,nSmallType)
-    self._pIntensifyEquInfo = pItemDate
-    self._nSmallType = nSmallType
-    --更新界面
-    self:setIntenBeforeItemList()
-    self:initIntensifyUi()
-    self:updateInstensifyDate()
-
+    self:SetRightScrollViewClickByIndex(pItemDate,nSmallType)
 end
 
 --回调函数
@@ -421,6 +415,8 @@ function EquipmentIntensifyPanel:clearResolveUiDateInfo(bBool)
     self._pStartAttribute:setVisible(bBool)
     self._pNextAttribute:setVisible(bBool)
     self._pChangeRes:setString("0")
+    self._pEquNameText:setString("装备名称")
+    self._pEquNameText:setColor(cWhite)
 
     if not bBool then
         self._pIntensifyEquInfo = nil
@@ -443,7 +439,11 @@ end
 
 --设置右侧的cell
 function EquipmentIntensifyPanel:setScrollCellState(pCell)
-    self._pEquipCell = pCell
+    --设置要强化的装备cell
+    if pCell then
+       pCell:setItemInfo( self._pIntensifyEquInfo)
+       pCell:setClickVisible(true)
+    end
 end
 --设置装备满级
 function EquipmentIntensifyPanel:setHasEquipMaxLevel(bBool)

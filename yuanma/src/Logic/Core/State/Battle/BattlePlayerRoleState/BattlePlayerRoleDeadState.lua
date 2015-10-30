@@ -84,7 +84,8 @@ function BattlePlayerRoleDeadState:onEnter(args)
         local deadOver = function()
             -- 判断是否为PVP对手，如果是，则血条消失
             if self:getMaster()._strCharTag == "pvp" then
-                cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpBG:setVisible(false)
+                cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode:setVisible(false)
+                cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode._tBoss = nil
                 cc.Director:getInstance():getScheduler():setTimeScale(1.0)   -- 如果是PVP，死亡结束后恢复正常镜头速度
                 -- 相机复原，回到正常比例
                 self:getMapManager():moveMapCameraByPos(2, 0.5, cc.p(-1,-1), 0.5, 1.0, cc.p(self:getMaster():getPositionX(),self:getMaster():getPositionY()), true)
@@ -111,9 +112,9 @@ function BattlePlayerRoleDeadState:onEnter(args)
         -- 死亡声
         AudioManager:getInstance():playEffect(self:getMaster()._pTempleteInfo.DeadVoice)
         
-        -- 显示复活弹框（竞技场和华山论剑除外）
+        -- 显示复活弹框（竞技场、华山论剑、组队（AI版）除外）
         if self:getMaster()._strCharTag == "main" then
-            if StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kPVP and StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kHuaShan then
+            if StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kPVP and StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kHuaShan and StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kTeamAIFight then
                 DialogManager:getInstance():showDialog("ReviveDialog")
             end
         end

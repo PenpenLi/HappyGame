@@ -43,6 +43,9 @@ function FamilyMemberPanel:dispose(args)
 	NetRespManager:getInstance():addEventListener(kNetCmd.kQueryFamilyMemberResp, handler(self,self.handleMsgQueryFamilyMembers22323))
 	-- 任命成员的网络回调
 	NetRespManager:getInstance():addEventListener(kNetCmd.kFamilyAppointResp, handler(self,self.handleMsgFamilyAppoint22325))
+	-- 开除成员的网络回调
+	NetRespManager:getInstance():addEventListener(kNetCmd.kDismissFamilyMemberResp, handler(self,self.handleMsgDismissFamilyMember22327))
+	
 	local function onNodeEvent(event)
 		if event == "exit" then
 			self:onExitFamilyMemberPanel()
@@ -66,7 +69,7 @@ function FamilyMemberPanel:initUI()
 end
 
 function FamilyMemberPanel:updateUI()
-	local nRenderHeight = 50
+	local nRenderHeight = 60
     self._pScrollView:removeAllChildren(true)
     local nContentWidth = self._pScrollView:getContentSize().width
 	local nContentHeight = self._pScrollView:getContentSize().height
@@ -100,21 +103,26 @@ end
 
 -- 任命家族成员的网络回调
 function FamilyMemberPanel:handleMsgFamilyAppoint22325(event)
-	local roleId = event.argsBody.roleId
-	local position = event.argsBody.position
-	
-	for i, familyMember in ipairs(self._tFamilyMember) do
-	   if familyMember.roleId == roleId then
-		  familyMember.position = position
-		  self._pScrollView:getChildren()[i]:setDataSource(i,familyMember)
-          break
-	   end
-	end
+
 	DialogManager:getInstance():closeDialogByName("FamilyTipDialog")	
 	DialogManager:getInstance():closeDialogByName("FamilyJobTipDialog")
 	
     FamilyCGMessage:queryFamilyMemberReq22322()
 end
+
+-- 开除家族成员的网络回调
+function FamilyMemberPanel:handleMsgDismissFamilyMember22327(event)
+	local roleId = event.argsBody.roleId
+	for i, familyMember in ipairs(self._tFamilyMember) do
+	   if familyMember.roleId == roleId then
+		  table.remove(self._tFamilyMember,i)
+          break
+	   end
+	end
+	self:updateUI()
+end
+
+
 
 function FamilyMemberPanel:onExitFamilyMemberPanel()
     ResPlistManager:getInstance():removeSpriteFrames("GuanLiPanel.plist")

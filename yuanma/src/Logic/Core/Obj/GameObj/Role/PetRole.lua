@@ -22,7 +22,10 @@ function PetRole:ctor()
     self._pRoleInfo = nil                           -- 宠物角色信息
     self._pTempleteInfo = nil                       -- 模板信息
     self._fAngle3D = 0                              -- 宠物角色模型的角度
+    self._pMaster = nil                             -- 宠物的主人
     self._pName = ""                                -- 头顶名签
+    self._nIndexInQueue = -1                        -- 宠物在队列中的index
+    self._pCooperateInfo = nil                      -- 宠物共鸣信息
     ----------- 人物特效相关 -----------------------------------------
     self._pHurtedEffectAnis = {}                    -- 角色受击特效动画
     self._pCriticalHitEffectAni = nil               -- 角色暴击特效动画
@@ -56,18 +59,18 @@ function PetRole:ctor()
     
 end
 
--- 创建函数
-function PetRole:create(pRoleInfo,charTag)
+-- 创建函数  (cooperateInfo 宠物共鸣信息)
+function PetRole:create(pRoleInfo,charTag,master,cooperateInfo)
     local role = PetRole.new()
-    role:dispose(pRoleInfo,charTag)
+    role:dispose(pRoleInfo,charTag,master,cooperateInfo)
     return role
 end
 
--- 处理函数
-function PetRole:dispose(pRoleInfo,charTag)    
+-- 处理函数 (cooperateInfo 宠物共鸣信息)
+function PetRole:dispose(pRoleInfo,charTag,master,cooperateInfo)    
     ------------------- 初始化 ----------------------
     -- 设置宠物角色信息
-    self:initInfo(pRoleInfo,charTag)
+    self:initInfo(pRoleInfo,charTag,master,cooperateInfo)
     
     -- 初始化动画
     self:initAni()
@@ -114,23 +117,62 @@ function PetRole:updatePetRole(dt)
 
 end
 
--- 初始化信息
-function PetRole:initInfo(pRoleInfo, charTag)
-    
+-- 初始化信息(cooperateInfo 宠物共鸣信息)
+function PetRole:initInfo(pRoleInfo, charTag, master, cooperateInfo)
     self._kQuality = pRoleInfo.step           -- 宠物品质
     self._kPetType = pRoleInfo.petId             -- 宠物类型
     self._nLevel = pRoleInfo.level            -- 宠物等级
     
-    self._pRoleInfo = TablePets[pRoleInfo.petId]
+    self._pRoleInfo = clone(TablePets[pRoleInfo.petId])
     self._pRoleInfo.step = self._kQuality
     self._pRoleInfo.type = self._kPetType
     self._pRoleInfo.level = self._nLevel
+
+    -- 考虑宠物共鸣引起的宠物属性加成
+    if cooperateInfo.Property ~= nil then
+        for kProperty, vProperty in pairs(cooperateInfo.Property) do
+            if vProperty[1] == kAttribute.kHp then  -- 生命值
+                self._pRoleInfo.Hp = self._pRoleInfo.Hp * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kAttack then  -- 攻击力
+                self._pRoleInfo.Attack = self._pRoleInfo.Attack * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kDefend then  -- 防御
+                self._pRoleInfo.Defend = self._pRoleInfo.Defend * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kCritChance then  -- 暴击几率
+                self._pRoleInfo.CriticalChance = self._pRoleInfo.CriticalChance * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kCritDmage then -- 暴击伤害
+                self._pRoleInfo.CriticalDmage = self._pRoleInfo.CriticalDmage * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kResilience then -- 韧性
+                self._pRoleInfo.Resilience = self._pRoleInfo.Resilience * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kResistance then -- 抗性
+                self._pRoleInfo.Resistance = self._pRoleInfo.Resistance * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kBlock then -- 格挡
+                self._pRoleInfo.Block = self._pRoleInfo.Block * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kPenetration then -- 穿透
+                self._pRoleInfo.Penetration = self._pRoleInfo.Penetration * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kDodgeChance then -- 闪避
+                self._pRoleInfo.DodgeChance = self._pRoleInfo.DodgeChance * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kAbilityPower then -- 属性强化
+                self._pRoleInfo.AbilityPower = self._pRoleInfo.AbilityPower * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kFireAttack then -- 火属性攻击
+                self._pRoleInfo.FireAttack = self._pRoleInfo.FireAttack * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kColdAttack then -- 冰属性攻击
+                self._pRoleInfo.ColdAttack = self._pRoleInfo.ColdAttack * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kLightningAttack then -- 雷属性攻击
+                self._pRoleInfo.LightningAttack = self._pRoleInfo.LightningAttack * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kLifePerSecond then -- 再生
+                self._pRoleInfo.LifeperSecond = self._pRoleInfo.LifeperSecond * (1 + vProperty[2])
+            elseif vProperty[1] == kAttribute.kLifeSteal then -- 吸血比率
+                self._pRoleInfo.LifeSteal = self._pRoleInfo.LifeSteal * (1 + vProperty[2])
+            end
+        end
+    end
+    self._pCooperateInfo = cooperateInfo
     
     self._strCharTag = charTag
     self._pTempleteInfo = TableTempletePets[self._pRoleInfo.TempleteID[self._kQuality]]
     self._nCurSpeed = self._pRoleInfo.Speed
-    self._nHpMax = self:getAttriValueByType(kAttribute.kHp)
-    self._nCurHp = self:getAttriValueByType(kAttribute.kHp)
+    self._nHpMax = math.ceil(self:getAttriValueByType(kAttribute.kHp))
+    self._nCurHp = self._nHpMax
     self._pCurDefLevel = self._pTempleteInfo.DefenseLevel
     self._nCurComboInterupt = self._pRoleInfo.ComboInterupt
     self._nFireAttackValue = self:getAttriValueByType(kAttribute.kFireAttack)
@@ -155,6 +197,8 @@ function PetRole:initInfo(pRoleInfo, charTag)
     
     self._fDebuffTimeRate = ( (self:getAttriValueByType(kAttribute.kResistance)*TableConstants.DebuffShortenMax.Value)/(self:getAttriValueByType(kAttribute.kResistance)+TableConstants.DebuffShortenReduce.Value) ) 
 
+    -- 关联宠物自己的主人
+    self._pMaster = master
 
 end
 
@@ -165,6 +209,7 @@ function PetRole:initAni()
 
     local fullAniName = self._strAniName..".c3b"
     local fullTextureName = self._pTempleteInfo.Texture..".pvr.ccz"
+    ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(self._pTempleteInfo.Texture)
     self._strBodyTexturePvrName = self._pTempleteInfo.Texture
     self._pAni = cc.Sprite3D:create(fullAniName)
     self._pAni:setTexture(fullTextureName)
@@ -173,13 +218,9 @@ function PetRole:initAni()
     self._pAni:setScale(self._pTempleteInfo.ScaleInGame)
     
     -- 头顶字：XX的XX
-    local masterName = ""
-    if self._strCharTag == "main" then
-        masterName = self:getRolesManager()._pMainPlayerRole._pRoleInfo.roleName
-    elseif self._strCharTag == "pvp" then
-        masterName = self:getRolesManager()._pPvpPlayerRole._pRoleInfo.roleName
-    end
-    self._pName = cc.Label:createWithTTF(masterName.."的"..self._pTempleteInfo.PetName, strCommonFontName, 15)
+    self._pName = cc.Label:createWithTTF(self._pMaster._pRoleInfo.roleName.."的"..self._pTempleteInfo.PetName, strCommonFontName, 15)
+    self._pName:setTextColor(cFontWhite)
+    self._pName:enableOutline(cFontOutline,2)
     self._pName:setPosition(cc.p(0,self:getHeight()+3))
     self:addChild(self._pName)
     if OptionManager:getInstance()._bPlayersNameShowOrNot == true then
@@ -187,7 +228,7 @@ function PetRole:initAni()
     else
         self._pName:setVisible(false)
     end
-
+    
     -- 叠色
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
         if self:getMapManager()._kCurSkyType == kType.kSky.kNightSunShine or 
@@ -417,15 +458,15 @@ function PetRole:setBattleUILayerDelegate( delegate )
     self._pBattleUIDelegate = delegate
 
     if self._strCharTag == "main" then
-        self._pBattleUIDelegate._pPetHeaderIcon:removeFromParent(true)
-        self._pBattleUIDelegate._pPetHeaderIcon = cc.Sprite:createWithSpriteFrameName(PetsManager:getInstance()._pMainPetRole._pTempleteInfo.PetIcon..".png")
-        self._pBattleUIDelegate._pPetHeaderIcon:setScale(0.8)
-        self._pBattleUIDelegate._pPetNode:addChild(self._pBattleUIDelegate._pPetHeaderIcon)
-        
-        self._pBattleUIDelegate:setPetHpMax(self._nHpMax)
-        self._pBattleUIDelegate:setPetHpCur(self._nCurHp, true)
+        local headIconName = PetsManager:getInstance()._pMainPetRole._pTempleteInfo.PetIcon..".png"
+        local hp = PetsManager:getInstance()._pMainPetRole._nHpMax
+        if self._pBattleUIDelegate then
+            self._pBattleUIDelegate._pMainPetUINode:setHeadInfo(headIconName)
+            self._pBattleUIDelegate._pMainPetUINode:setMaxHp(hp)
+            self._pBattleUIDelegate._pMainPetUINode:setCurHp(hp,true)
+        end
     end
-    
+
 end
 
 -- 获取身高
@@ -450,8 +491,8 @@ function PetRole:setHp(value,maxValue)
 
     if self == self:getPetsManager()._pMainPetRole then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setPetHpMax(self._nHpMax)
-            self._pBattleUIDelegate:setPetHpCur(self._nCurHp, true)        
+            self._pBattleUIDelegate._pMainPetUINode:setMaxHp(self._nHpMax)
+            self._pBattleUIDelegate._pMainPetUINode:setCurHp(self._nCurHp,true)       
         end
     end
 
@@ -471,7 +512,7 @@ function PetRole:addHp(value)
     -- ui更新
     if self._strCharTag == "main" then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setPetHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pMainPetUINode:setCurHp(self._nCurHp)
         end
     elseif self._strCharTag == "pvp" then
         self._pHpBar:setPercentage(self._nCurHp / self._nHpMax * 100)
@@ -508,7 +549,7 @@ function PetRole:loseHp(value, isCritical)
     -- ui更新
     if self._strCharTag == "main" then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setPetHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pMainPetUINode:setCurHp(self._nCurHp)
         end
     elseif self._strCharTag == "pvp" then
         self._pHpBar:setPercentage(self._nCurHp / self._nHpMax * 100)
@@ -993,13 +1034,7 @@ end
 
 -- 刷新头顶字
 function PetRole:refreshName()
-    local masterName = ""
-    if self._strCharTag == "main" then
-        masterName = self:getRolesManager()._pMainPlayerRole._pRoleInfo.roleName
-    elseif self._strCharTag == "pvp" then
-        masterName = self:getRolesManager()._pPvpPlayerRole._pRoleInfo.roleName
-    end
-    self._pName:setString(masterName.."的"..self._pTempleteInfo.PetName)
+    self._pName:setString(self._pMaster._pRoleInfo.roleName.."的"..self._pTempleteInfo.PetName)
 end
 
 -- 技能影响到的受击接口
@@ -1075,7 +1110,7 @@ function PetRole:beHurtedBySkill(skill, intersection)
         if skill._pSkillInfo.ElementType then 
             -- 考虑属性积蓄值的累加
             if skill:getMaster()._kGameObjType == kType.kGameObj.kRole then 
-               if skill:getMaster()._kRoleType == kType.kRole.kMonster or skill:getMaster()._kRoleType == kType.kRole.kPet then    -- 攻击方为野怪或者宠物，则只考虑技能的积蓄值计算
+               if skill:getMaster()._kRoleType == kType.kRole.kMonster or skill:getMaster()._kRoleType == kType.kRole.kPet or skill:getMaster()._kRoleType == kType.kRole.kOtherPet then    -- 攻击方为野怪或者宠物，则只考虑技能的积蓄值计算
                     if skill._pSkillInfo.ElementType[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] == kType.kSkill.kElement.kFire then
                         local saving = skill._pSkillInfo.ElementalValue[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex]*(((skill:getMaster()._nFireAttackValue*TableConstants.SkillAttrMax.Value)/(skill:getMaster()._nFireAttackValue+TableConstants.SkillAttrReduce.Value))+1)*(((skill:getMaster()._nAbilityPowerValue*TableConstants.SkillAttrApMax.Value)/(skill:getMaster()._nAbilityPowerValue+TableConstants.SkillAttrApReduce.Value))+1)
                         self._nCurFireSaving = self._nCurFireSaving + saving
@@ -1087,7 +1122,7 @@ function PetRole:beHurtedBySkill(skill, intersection)
                         self._nCurThunderSaving = self._nCurThunderSaving + saving
                     end
                     self:playHurtedEffect(skill._pSkillInfo.ElementType[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex], intersection, isCritical, isBlock)
-                elseif skill:getMaster()._kRoleType == kType.kRole.kPlayer then  -- 攻击方为玩家，则需要分为普通攻击和技能攻击的积蓄值分别计算
+                elseif skill:getMaster()._kRoleType == kType.kRole.kPlayer or skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then  -- 攻击方为玩家，则需要分为普通攻击和技能攻击的积蓄值分别计算
                     if skill == skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] then
                         -- 普通攻击（先计算出现属性火冰雷物理的概率，然后判断是否触发）
                         local fireSavingRate = 1000*((skill:getMaster()._nFireAttackValue*TableConstants.GenAttrChanceMax.Value)/(skill:getMaster()._nFireAttackValue+TableLevel[self._nLevel].Flv*TableConstants.GenAttrChanceReduce.Value))*( ((skill:getMaster()._nAbilityPowerValue*TableConstants.GenAttrChanceApMax.Value)/(skill:getMaster()._nAbilityPowerValue+TableConstants.GenAttrChanceApReduce.Value))+1 )
@@ -1198,6 +1233,14 @@ function PetRole:beHurtedBySkill(skill, intersection)
             if skill:getMaster()._strCharTag == "main" then
                 self:getBattleManager():getBattleUILayer():showHitAni() -- 显示连击
             end
+        elseif skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            local angerValue = 0    -- 怒气值
+            if skill == skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] then -- 普通攻击
+                angerValue = TableConstants.GenAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+            elseif skill ~= skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kAngerAttack] then  -- 技能攻击
+                angerValue = TableConstants.SkillAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+            end
+            skill:getMaster():addAnger(angerValue)
         end
         
         if skill:getMaster() == self:getRolesManager()._pMainPlayerRole then

@@ -57,26 +57,26 @@ function WorldPlayerRoleStateMachine:update(dt)
     end
     local pRoleX,pRoleY = self:getMaster():getPosition()
     local pNpc =  RolesManager:getInstance()._tNpcRoles
-    for k,v in pairs(pNpc)do
+    for k,v in pairs(pNpc) do
        	local pNpcX,pNpcY = v:getPosition()
-        if math.pow((pRoleY-pNpcY),2)+math.pow((pRoleX-pNpcX),2) < 150*150 then --在npc的对话范围内
-           if CDManager:getInstance():getOneCdTimeByKey(v._pRoleInfo.ID+200) == 0 and  CDManager:getInstance():getOneCdTimeByKey(cdType.kNpcWaiting)==0 then --标示没有cd
-              local pNpcInfo =  TableTempleteNpcRoles[v._pRoleInfo.ID]
-              local pIndex = mmo.HelpFunc:gGetRandNumberBetween(1,table.getn(pNpcInfo.Texts))
+        if math.pow((pRoleY - pNpcY), 2) + math.pow((pRoleX - pNpcX), 2) < 150*150 then --在npc的对话范围内
+           if CDManager:getInstance():getOneCdTimeByKey(v._pRoleInfo.ID + 200) == 0 and CDManager:getInstance():getOneCdTimeByKey(cdType.kNpcWaiting) == 0 then --标示没有cd
+              local tTempleteInfo = v._tTempleteInfo
+              local pIndex = mmo.HelpFunc:gGetRandNumberBetween(1,table.getn(tTempleteInfo.Texts))
               local nVoiceTime = 0
               local pCallBack = function(time,id)
-                    if pNpcInfo.CD-time == nVoiceTime then --音效播完了
+                    if tTempleteInfo.CD - time == nVoiceTime then --音效播完了
                       if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
                          v:closeNpcTalkPanel()
                       end
                   end
               end
               
-              CDManager:getInstance():insertCD({v._pRoleInfo.ID+200,pNpcInfo.CD,pCallBack})  
-              v:showNpcTalkPanel(pNpcInfo.Texts[pIndex])
-              local pEffect = pNpcInfo.Voice[pIndex][1]
+              CDManager:getInstance():insertCD({v._pRoleInfo.ID + 200, tTempleteInfo.CD,pCallBack})  
+              v:showNpcTalkPanel(tTempleteInfo.Texts[pIndex])
+              local pEffect = tTempleteInfo.Voice[pIndex][1]
               AudioManager:getInstance():playEffect(pEffect)
-              nVoiceTime = pNpcInfo.Voice[pIndex][2]
+              nVoiceTime = tTempleteInfo.Voice[pIndex][2]
            end
    	    end
    	

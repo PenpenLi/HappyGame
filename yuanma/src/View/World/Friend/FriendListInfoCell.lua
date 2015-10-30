@@ -181,18 +181,23 @@ function FriendListInfoCell:updateData()
         self._pParams._pZzTextTime:setString(TableConstants.FriendsAssistCD.Value - lastHelpTime.."秒") 
         local timeCallBack = function(time,id)
             if  self._pParams._pZzTextTime then 
-                self._pParams._pZzTextTime:setVisible(true)
+                --FIXED lzx
+                --self._pParams._pZzTextTime:setVisible(true)
                 self._pParams._pZzTextTime:setString(time.."秒") 
             end
             if time == 0 then
-                self._pParams._pZzTextTime:setVisible(false)
+                --FIXED lzx
+                --self._pParams._pZzTextTime:setVisible(false)
+                self._pParams._pZzTextTime:setString("0秒") 
             end
         end
         if lastHelpTime <= TableConstants.FriendsAssistCD.Value then
             CDManager:getInstance():insertCD({"friendHelpFight"..self._pDataInfo.roleId,TableConstants.FriendsAssistCD.Value - lastHelpTime,timeCallBack})
         end
     else
-        self._pParams._pZzTextTime:setVisible(false)
+        --FIXED lzx
+        --self._pParams._pZzTextTime:setVisible(false)
+        self._pParams._pZzTextTime:setString("0秒") 
     end
 end
 

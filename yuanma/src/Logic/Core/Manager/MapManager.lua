@@ -193,7 +193,7 @@ function MapManager:createMap(bDebug, bDebugBlockLayerInfo)
     self._pSplashSky:setContentSize(self._pTmxMap:getContentSize())
     self._pSplashSky:setOpacity(0)
     self._pTmxMap:addChild(self._pSplashSky,kZorder.kMax)
-    
+
     -- 保留tmx地图对象
     self._pTmxMap:retain()
     
@@ -380,7 +380,7 @@ function MapManager:createSky()
             AudioManager:getInstance():playEffect("SkyThunderSound")
         end
         self._nRainUpdateID = cc.Director:getInstance():getScheduler():scheduleScriptFunc(thunderSky, 15.0, false)
-        AudioManager:getInstance():playEffect("RainSound",true)
+        AudioManager:getInstance():playEffect("RainSound",true,nil,true)
     elseif self._kCurSkyType == kType.kSky.kDayCloudyRainy then  --[白日]多云下雨
         -- 多云
         local row = 2
@@ -416,7 +416,7 @@ function MapManager:createSky()
             AudioManager:getInstance():playEffect("SkyThunderSound")
         end
         self._nRainUpdateID = cc.Director:getInstance():getScheduler():scheduleScriptFunc(thunderSky, 15.0, false)
-        AudioManager:getInstance():playEffect("RainSound",true)
+        AudioManager:getInstance():playEffect("RainSound",true,nil,true)
     elseif self._kCurSkyType == kType.kSky.kNightSunShine then  --[深夜]晴天
         self._pTmxMap:getLayer("MapLayer1"):getTileAt(cc.p(0,self._sMapIndexSize.height-1)):setColor(cMapNight)  -- 叠色
     elseif self._kCurSkyType == kType.kSky.kNightCloudy then  --[深夜]多云
@@ -459,7 +459,7 @@ function MapManager:createSky()
             AudioManager:getInstance():playEffect("SkyThunderSound")
         end
         self._nRainUpdateID = cc.Director:getInstance():getScheduler():scheduleScriptFunc(thunderSky, 15.0, false)
-        AudioManager:getInstance():playEffect("RainSound",true)
+        AudioManager:getInstance():playEffect("RainSound",true,nil,true)
     elseif self._kCurSkyType == kType.kSky.kNightCloudyRainy then  --[深夜]多云下雨
         self._pTmxMap:getLayer("MapLayer1"):getTileAt(cc.p(0,self._sMapIndexSize.height-1)):setColor(cMapNight)  -- 叠色
         -- 多云
@@ -500,7 +500,7 @@ function MapManager:createSky()
             AudioManager:getInstance():playEffect("SkyThunderSound")
         end
         self._nRainUpdateID = cc.Director:getInstance():getScheduler():scheduleScriptFunc(thunderSky, 15.0, false)
-        AudioManager:getInstance():playEffect("RainSound",true)
+        AudioManager:getInstance():playEffect("RainSound",true,nil,true)
     end
 
 end
@@ -915,6 +915,10 @@ function MapManager:shakeMap(params, posOnMap)
         return
     elseif RolesManager:getInstance()._pPvpPlayerRole then    -- 如果pvp对手死亡，则屏蔽所有震屏
         if RolesManager:getInstance()._pPvpPlayerRole._nCurHp <= 0 then
+            return
+        end
+    elseif MonstersManager:getInstance()._pBoss then    -- 如果boss死亡，则屏蔽所有震屏
+        if MonstersManager:getInstance()._pBoss._nCurHp <= 0 then
             return
         end
     end

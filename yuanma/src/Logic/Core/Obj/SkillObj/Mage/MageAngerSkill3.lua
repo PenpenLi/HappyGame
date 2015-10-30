@@ -15,9 +15,10 @@ end)
 -- 构造函数
 function MageAngerSkill3:ctor()
     self._strName = "MageAngerSkill3"                          -- 技能名称
-    self._kTypeID = kType.kSkill.kID.kMageAngerSkill3           -- 技能对象类型
+    self._kTypeID = kType.kSkill.kID.kMageAngerSkill3          -- 技能对象类型
     self._pCurState = nil                                      -- 技能当前的状态机状态
-    
+    self._posTargetsPos = nil                                  -- 目标位置
+
     self._bStickAdd = false                                    -- 引用计数的标记
     self._bIgnoreHurtAdd = false                               -- 引用计数的标记
     
@@ -75,7 +76,11 @@ function MageAngerSkill3:onUse()
         self._fCDCounter = 0   -- CD时间清空 
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kChant)
     else  -- 如果当前技能正处于使用状态，则立即将角色切换回站立状态
-        self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+        end
     end
 end
 
@@ -167,8 +172,13 @@ function MageAngerSkill3:onEnterChantDo(state)
         
         -- 技能动作结束，人物即回到站立状态
         if self:getMaster():isUnusualState() == false then     -- 正常状态
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
         end
+        
     end
     -- 摇杆禁用
     self:getMaster()._refStick:add()

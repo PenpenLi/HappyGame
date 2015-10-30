@@ -7,8 +7,6 @@ function FriendTipsDialogParams:ctor()
     self._pBackGround = self._pCCS:getChildByName("BackGround")
     --关闭按钮
     self._pCloseButton = self._pBackGround:getChildByName("CloseButton")
-    --功能按钮1
-    self._pButton1 = self._pBackGround:getChildByName("Button1")
     --功能按钮2
     self._pButton2 = self._pBackGround:getChildByName("Button2")
     --功能按钮3

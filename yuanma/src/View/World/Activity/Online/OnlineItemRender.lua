@@ -2,7 +2,7 @@
 -- (c) copyright 2014 - 2015, www.cfanim.cn
 -- All Rights Reserved.
 --==================================================
--- filename:  ShopItemRender.lua
+-- filename:  OnlineItemRender.lua
 -- author:    wuquandong
 -- e-mail:    365667276@qq.com
 -- created:   2015/08/18
@@ -58,9 +58,9 @@ function OnlineItemRender:dispose()
 	self._pCompleteImg = params._pYlqPic
 	self._tGiftItemRenderList = 
 	{
-		{img = params._pRewardIcon1, numText = params._pRewardNum1, dataInfo = nil },
-		{img = params._pRewardIcon2, numText = params._pRewardNum2, dataInfo = nil },
-		{img = params._pRewardIcon3, numText = params._pRewardNum3, dataInfo = nil },
+		{bg = params._pRewardBg1, img = params._pRewardIcon1, numText = params._pRewardNum1, dataInfo = nil },
+		{bg = params._pRewardBg2, img = params._pRewardIcon2, numText = params._pRewardNum2, dataInfo = nil },
+		{bg = params._pRewardBg3, img = params._pRewardIcon3, numText = params._pRewardNum3, dataInfo = nil },
 	}
 	self:addChild(self._pCCS)
 
@@ -80,18 +80,20 @@ function OnlineItemRender:setData(pDataInfo)
 		return
 	end
 	self._pDataInfo = pDataInfo
+	self:initGiftItemInfo()
     self._pTimeInfoText:setString(pDataInfo.Text)
     -- 设置奖励物品的图标
     self:initTouches()
     -- 领取奖励
     local function touchEvent(sender,eventType)
-		if eventType == ccui.ccui.TouchEventType.began then
+		if eventType == ccui.TouchEventType.began then
 			AudioManager:getInstance():playEffect("ButtonClick")
-		elseif eventType == ccui.ccui.TouchEventType.ended then 
-			ActivityMessage:GainOnlineAwardReq22508(self._nIndex)
+		elseif eventType == ccui.TouchEventType.ended then 
+			ActivityMessage:GainOnlineAwardReq22504(self._nIndex)
 		end	
 	end
 	self._pGetGiftBtn:addTouchEventListener(touchEvent)
+	self:setOnlineGiftState()
 end
 
 -- 设置点击事件
@@ -99,8 +101,7 @@ function OnlineItemRender:initTouches()
 	-- 奖励物品图标点击事件
 	local function onTouchGoodsIcon(sender, eventType)
         if eventType == ccui.TouchEventType.ended then
-            local pTipDialog = nil
-            if self._pGoodsDataInfo.itemInfo.baseType ~= kItemType.kEquip then            
+            if self._tGiftItemRenderList[sender:getTag() - 10000].dataInfo.baseType ~= kItemType.kEquip then            
                 DialogManager:getInstance():showDialog("BagCallOutDialog",{self._tGiftItemRenderList[sender:getTag() - 10000].dataInfo ,nil,nil,false,false})
 			else
                 DialogManager:getInstance():showDialog("NeverGetEquipCallOutDialog",{self._tGiftItemRenderList[sender:getTag() - 10000].dataInfo})
@@ -113,16 +114,30 @@ function OnlineItemRender:initTouches()
 	for i,v in ipairs(self._tGiftItemRenderList) do
 		if v.isBaseItem == false then 
 			--　表示奖励物品是货币
-			v.img:loadTexture(v.dataInfo.filename,v.dataInfo.financeIconInfo)
+			v.img:loadTexture(v.dataInfo.filename,ccui.TextureResType.plistType)
+            v.numText:setString(v.dataInfo.value)
 		else
-			-- 表示奖励的是普通物品
-			v.img:loadTexture(v.dataInfo.templeteInfo.Icon .. ".png",ccui.TextureResType.plistType)
-			v.img:setTouchEnabled(true)
-			v.img:setTag(i + 10000)
-			v.img:addTouchEventListener(onTouchGoodsIcon)
+		    if v.dataInfo == nil then 
+		        v.img:setVisible(false)
+		        v.numText:setVisible(false)
+		        v.bg:setVisible(false)
+		    else
+    			-- 表示奖励的是普通物品
+    			v.img:loadTexture(v.dataInfo.templeteInfo.Icon .. ".png",ccui.TextureResType.plistType)
+    			v.img:setTouchEnabled(true)
+    			v.img:setTag(i + 10000)
+    			v.img:addTouchEventListener(onTouchGoodsIcon)
+                v.numText:setString(v.dataInfo.value)
+			end
 		end
-		v.numText:setString(v.dataInfo.value)
+		
 	end
+end
+
+-- 时间倒秒
+function OnlineItemRender:timeDown(nRemainSec)
+	local strTime = gTimeToStr(nRemainSec)
+	self._pTimeCountDownText:setString(strTime)
 end
 
 -- 设置在线活动的状态
@@ -143,9 +158,12 @@ function OnlineItemRender:setOnlineGiftState()
 	-- 表示活动已经可以领奖
 	if self._nIndex < self._pActivityMgr._nCurOnlineGiftIndex then 
 		self._pGetGiftBtn:setVisible(true)
+		self._pWarnImg:setVisible(true)
 	end
     -- 表示已经领奖
     if self._pActivityMgr:isOnlineGiftIsComplete(self._nIndex) == true then 
+    	self._pGetGiftBtn:setVisible(false)
+    	self._pWarnImg:setVisible(false)
     	self._pCompleteImg:setVisible(true)
     end
 
@@ -154,7 +172,7 @@ end
 -- 奖励物品的详细数据
 function OnlineItemRender:initGiftItemInfo()
 	
-	for i,pReward in ipairs(self._pItemInfo.Reward) do
+	for i,pReward in ipairs(self._pDataInfo.Reward) do
 		if pReward[1] > kFinance.kNone and pReward[1] < kFinance.kFC then 
 			-- 表示金融货币
 			self._tGiftItemRenderList[i].dataInfo = FinanceManager:getInstance():getIconByFinanceType(pReward[1])

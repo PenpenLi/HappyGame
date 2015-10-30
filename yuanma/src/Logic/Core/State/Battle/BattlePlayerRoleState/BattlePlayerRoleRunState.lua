@@ -206,8 +206,8 @@ function BattlePlayerRoleRunState:procAutoBattle(dt)
         -- PVP对手搜索视野范围（无限大）内的最近目标集合与已经冷却结束的警戒范围内的目标集合
         local skillWayIdex = self:getAIManager():playerRoleDecideSkill(self:getMaster())
         local targetsInView, targetInWarning = self:getAIManager():objSearchNearestEnemysInViewAndSkillWarningRange(self:getMaster(), self:getMaster()._tSkills[skillWayIdex])
-        
         if #targetInWarning ~= 0 then  -- 警戒范围内有目标，则直接开始战斗
+            self._pOwnerMachine:usePetCooperateSkill()  -- 发现目标时，考虑自动释放宠物共鸣技能
             --------------------------------------------------- 自动攻击 ------------------------------------------------------------------
             if skillWayIdex == kType.kSkill.kWayIndex.kPlayerRole.kGenAttack then  -- 需要发起普通攻击
                 if self:getMaster()._refGenAttackButton:getRefValue() == 0 then
@@ -222,7 +222,7 @@ function BattlePlayerRoleRunState:procAutoBattle(dt)
             end
             return
          elseif #targetsInView ~= 0 then  -- 警戒范围内没有目标，视野范围内有目标，则开始寻路
-            if self._fRunTimeCount >= 3.0 then  -- 超过3秒，重新寻路
+            if self._fRunTimeCount >= 2.0 then  -- 超过3秒，重新寻路
                 local posIndex = self:getMaster():getPositionIndex()
                 local targetPosIndex = self:getMapManager():convertPiexlToIndex(cc.p(targetsInView[1].enemy:getPositionX(), targetsInView[1].enemy:getPositionY()))
                 local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)

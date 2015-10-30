@@ -138,21 +138,40 @@ function FamilyJobTipDialog:initBtnEvent()
 		if eventType == ccui.TouchEventType.ended then
 			local familyMamager = FamilyManager:getInstance()
             local strMsg = self._tJobCheckBtn[self._nSelectIndex]:getName()
-            if familyMamager:whetherHasPermission(strMsg,self._pFamilyMember.position) == false then	
+            
+            local function appoint ()
+            	if familyMamager:whetherHasPermission(strMsg,self._pFamilyMember.position) == false then	
+				NoticeManager:getInstance():showSystemMessage("无此权限！")
 				return
-			end
-			if self._nSelectIndex <= 0 then 
-				NoticeManager:getInstance():showSystemMessage("请先选个职位")
-				return
-			end
-			if self._nSelectIndex == 2 or self._nSelectIndex == 3 then 
-				local memberNum = familyMamager:getPositionNum(self._nSelectIndex)
-				if memberNum >= self._tMemberLimit[self._nSelectIndex] then
-					NoticeManager:getInstance():showSystemMessage("该职位已满")
+				end
+				if self._nSelectIndex <= 0 then 
+					NoticeManager:getInstance():showSystemMessage("请先选个职位")
 					return
 				end
-			end
-			FamilyCGMessage:familyAppointReq22324(self._pFamilyMember.roleId,self._nSelectIndex)
+				if self._nSelectIndex == 2 or self._nSelectIndex == 3 then 
+					local memberNum = familyMamager:getPositionNum(self._nSelectIndex)
+					if memberNum >= self._tMemberLimit[self._nSelectIndex] then
+						NoticeManager:getInstance():showSystemMessage("该职位已满")
+						return
+					end
+				end
+				if self._pFamilyMember.position == self._nSelectIndex then 
+					NoticeManager:getInstance():showSystemMessage("请不要设置重复的职位。")
+					return
+				end
+				FamilyCGMessage:familyAppointReq22324(self._pFamilyMember.roleId,self._nSelectIndex)
+            end
+
+            if strMsg == kFamilyChiefType.kChief then
+            	local function okCallback()
+            		appoint()
+            	end
+            	local msg = string.format("确定要将族长转让给%s",self._pFamilyMember.roleName)
+            	showConfirmDialog(msg,okCallback)
+            else
+            	appoint()
+            end
+            
 		elseif eventType == ccui.TouchEventType.began then
 	   	    AudioManager:getInstance():playEffect("ButtonClick")
 		end

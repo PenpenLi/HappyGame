@@ -20,7 +20,7 @@ function Dialog:ctor()
     self._recBg = cc.rect(0,0,0,0)  -- 背景框所在矩形
     self._pCloseButton = nil        -- 关闭按钮
     self._pTouchListener = nil      -- 触摸监听器
-    
+    self._bIsSystemDialog = false   -- 是否为系统级的硬性弹框（不会随着切换场景而关闭）
     self._bIsNeedCache = false
 
     self._pIgnoreTouchLayer = require("NoTouchLayer"):create()   -- 加载触摸屏蔽层
@@ -406,6 +406,14 @@ function Dialog:getChatManager()
         self._pChatManager = ChatManager:getInstance()
     end
     return self._pChatManager
+end
+
+-- 获取剧情的管理器
+function Dialog:getStoryGuideManager() 
+    if self._pStoryGuideManager == nil then
+        self._pStoryGuideManager = StoryGuideManager:getInstance()
+    end
+    return self._pStoryGuideManager
 end
 --------------------------------------------------------------------------------------------------------------
 

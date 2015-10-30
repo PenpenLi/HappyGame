@@ -2,18 +2,18 @@
 -- (c) copyright 2014 - 2015, www.cfanim.cn
 -- All Rights Reserved.
 --==================================================
--- filename:  ChareDialog.lua
+-- filename:  ChargeDialog.lua
 -- author:    wuquandong
 -- e-mail:    365667276@qq.com
 -- created:   2015/08/06
 -- descrip:   充值弹框
 --===================================================
-local ChareDialog = class("ChareDialog",function() 
+local ChargeDialog = class("ChargeDialog",function() 
 	return require("Dialog"):create()
 end)
 
-function ChareDialog:ctor()
-	self._strName = "ChareDialog"
+function ChargeDialog:ctor()
+	self._strName = "ChargeDialog"
 	self._pVipFntText = nil 
 	--  eg 500/900
 	self._pLoadingText = nil
@@ -28,24 +28,24 @@ function ChareDialog:ctor()
 	self._pVipInfo = nil 
 end
 
-function ChareDialog:create(args)
-	local dialog = ChareDialog.new()
+function ChargeDialog:create(args)
+	local dialog = ChargeDialog.new()
 	dialog:dispose(args)
 	return dialog
 end
 
-function ChareDialog:dispose(args)
+function ChargeDialog:dispose(args)
     -- 注册事件回调
     NetRespManager:getInstance():addEventListener(kNetCmd.kRechargeNotice ,handler(self, self.handleRechargeNotice))
 
 	ResPlistManager:getInstance():addSpriteFrames("RechargeBG.plist")
 	ResPlistManager:getInstance():addSpriteFrames("RmbBG.plist")
 	self:initUI()
-
+	self:initTouches()
 	------------节点事件-------------------------------
 	local function onNodeEvent(event)
 		if event == "exit" then
-			self:onExitChareDialog()
+			self:onExitChargeDialog()
 		end
 	end
 	self:registerScriptHandler(onNodeEvent)
@@ -55,7 +55,7 @@ function ChareDialog:dispose(args)
 	self:UpdateVipInfo()
 end
 
-function ChareDialog:initUI()
+function ChargeDialog:initUI()
 	local params = require("RechargeBGParams"):create()
 	self._pBg = params._pBackGround
 	self._pCCS = params._pCCS
@@ -95,7 +95,36 @@ function ChareDialog:initUI()
 	self._pVipInfoBtn1:addTouchEventListener(touchEvent)
 end
 
-function ChareDialog:updateChargeItem()
+-- 初始化触摸相关
+function ChargeDialog:initTouches()
+    -- 触摸注册
+    local function onTouchBegin(touch,event)
+        local location = touch:getLocation()
+        print("begin ".."x="..location.x.."  y="..location.y)
+        --self:deleteItem(1)
+        --self:deleteAllItems()
+        return true
+    end
+    local function onTouchMoved(touch,event)
+        local location = touch:getLocation()
+        print("move ".."x="..location.x.."  y="..location.y)
+    end
+    local function onTouchEnded(touch,event)
+        local location = touch:getLocation()
+        print("end ".."x="..location.x.."  y="..location.y)
+        -- self:close()     
+    end
+
+    -- 添加监听器
+    self._pTouchListener = cc.EventListenerTouchOneByOne:create()
+    self._pTouchListener:setSwallowTouches(true)
+    self._pTouchListener:registerScriptHandler(onTouchBegin,cc.Handler.EVENT_TOUCH_BEGAN )
+    self._pTouchListener:registerScriptHandler(onTouchMoved,cc.Handler.EVENT_TOUCH_MOVED )
+    self._pTouchListener:registerScriptHandler(onTouchEnded,cc.Handler.EVENT_TOUCH_ENDED )
+    self:getEventDispatcher():addEventListenerWithSceneGraphPriority(self._pTouchListener, self)
+end
+
+function ChargeDialog:updateChargeItem()
 	local innerWidht = 0
 	local innerHeight = self._pGoodsScrollView:getInnerContainerSize().height
 	self._pGoodsScrollView:removeAllChildren(true)
@@ -110,7 +139,7 @@ function ChareDialog:updateChargeItem()
 	end
 end
 
-function ChareDialog:UpdateVipInfo()
+function ChargeDialog:UpdateVipInfo()
 	self._pVipInfo = RolesManager:getInstance()._pMainRoleInfo.vipInfo
 	self._pVipFntText:setString(self._pVipInfo.vipLevel)
 	local needReachNum = TableVIP[self._pVipInfo.vipLevel + 1].RechargeNum
@@ -126,14 +155,14 @@ function ChareDialog:UpdateVipInfo()
 	end	
 end
 
-function ChareDialog:onExitChareDialog()
+function ChargeDialog:onExitChargeDialog()
 	self:onExitDialog()
 	ResPlistManager:getInstance():removeSpriteFrames("RechargeBG.plist") 
 	ResPlistManager:getInstance():removeSpriteFrames("RmbBG.plist") 
 	NetRespManager:getInstance():removeEventListenersByHost(self)
 end
 
-function ChareDialog:closeWithAni()
+function ChargeDialog:closeWithAni()
 	self:stopAllActions()
     if self._pTouchListener then
         self._pTouchListener:setEnabled(false)
@@ -145,7 +174,7 @@ function ChareDialog:closeWithAni()
     self:removeFromParent(true)
 end
 
-function ChareDialog:handleRechargeNotice(event)
+function ChargeDialog:handleRechargeNotice(event)
 	-- 缓存上次Vip 信息
 	local pPrevVipInfo = RolesManager:getInstance()._pMainRoleInfo.vipInfo 
     RolesManager:getInstance()._pMainRoleInfo.vipInfo = event.vipInfo 
@@ -165,7 +194,7 @@ function ChareDialog:handleRechargeNotice(event)
 end
 
 --  {{100,1},{100,2}}
-function ChareDialog:playVipUpgradeAni(nPercent)
+function ChargeDialog:playVipUpgradeAni(nPercent)
     local nSize = table.getn(nPercent)
     for i=1,nSize do
         local callBack = function()
@@ -195,5 +224,5 @@ function ChareDialog:playVipUpgradeAni(nPercent)
     end
 end
 
-return ChareDialog
+return ChargeDialog
 

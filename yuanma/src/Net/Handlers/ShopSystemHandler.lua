@@ -27,6 +27,10 @@ function ShopSystemHandler:ctor()
     NetHandlersManager:registHandler(21315,self.handlerMsgBuyStrength21315)
     -- 购买战斗次数的回复
     NetHandlersManager:registHandler(21317,self.handlerMsgBuyBattle21317)
+    -- 获取摇钱树信息回复
+    NetHandlersManager:registHandler(21323,self.handlerMsgQueryGoldTreeInfo21323)
+    -- 玉璧购买铜钱回复
+    NetHandlersManager:registHandler(21325,self.handlerMsgDiamondBuyGold21325)
 end
 
 -- 创建函数
@@ -143,5 +147,29 @@ function ShopSystemHandler:handlerMsgBuyBattle21317(msg)
 		print("返回错误码：" ..msg.header.result)
 	end
 end
+
+
+-- 获取摇钱树信息回复
+function ShopSystemHandler:handlerMsgQueryGoldTreeInfo21323(msg)
+	print("ShopSystemHandler 21315")
+	if msg.header.result == 0 then 
+		local event = msg.body
+		NetRespManager:getInstance():dispatchEvent(kNetCmd.kQueryGoldTreeInfo, event)
+	else
+		print("返回错误码：" ..msg.header.result)
+	end
+end
+
+-- 玉璧购买铜钱回复
+function ShopSystemHandler:handlerMsgDiamondBuyGold21325(msg)
+	print("ShopSystemHandler 21315")
+	if msg.header.result == 0 then 
+		local event = msg.body
+		NetRespManager:getInstance():dispatchEvent(kNetCmd.kDiamondBuyGold, event)
+	else
+		print("返回错误码：" ..msg.header.result)
+	end
+end
+
 
 return ShopSystemHandler

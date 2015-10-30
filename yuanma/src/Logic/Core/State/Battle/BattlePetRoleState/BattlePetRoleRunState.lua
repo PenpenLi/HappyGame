@@ -485,12 +485,7 @@ function BattlePetRoleRunState:procRun(dt)
 
         if self._bExictlyToTarget == false then  -- 跟随主人时，距离全部走完还差3个格子时可以回到站立状态
             if self._nCurStepIndexInMoveDirections > table.getn(self._tMoveDirections) - 3 then
-                local target = nil
-                if self:getMaster()._strCharTag == "main" then
-                    target = self:getRolesManager()._pMainPlayerRole
-                elseif self:getMaster()._strCharTag == "pvp" then
-                    target = self:getRolesManager()._pPvpPlayerRole
-                end
+                local target = self:getMaster()._pMaster  -- 宠物的主人
                 local posIndex = self:getMaster():getPositionIndex()
                 local targetPosIndex = self:getMapManager():convertPiexlToIndex(cc.p(target:getPositionX(), target:getPositionY()))
                 local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)

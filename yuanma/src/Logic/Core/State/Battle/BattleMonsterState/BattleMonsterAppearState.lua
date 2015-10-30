@@ -39,12 +39,11 @@ function BattleMonsterAppearState:onEnter(args)
         self:getMaster():playMonsterDeadAttachBuffWarningEffect()
         -- 判断是否为BOSS，如果是，则出现血条
         if self:getMaster()._nMonsterType == kType.kMonster.kBOSS or self:getMaster()._nMonsterType == kType.kMonster.kThiefBOSS then
-            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpBG:setVisible(true)
+            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode:setVisible(true)
             cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer"):showBossAppearUIEffect()
-            if NewbieManager:getInstance()._bSkipGuide == false then
-                if TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.taskId == 10001 then  -- 第1次进入战斗引导
-                    NewbieManager:getInstance():showNewbieByID("Guide_1_4")
-                end
+            if NewbieManager:getInstance()._bSkipGuide == false and BattleManager:getInstance()._bIsFirstBattleOfNewbie == true then
+                NewbieManager:getInstance():showNewbieByID("Guide_1_4")
+                RolesManager:getInstance()._pMainPlayerRole:addAnger(RolesManager:getInstance()._pMainPlayerRole._nAngerMax)  -- 怒气满值
             end
             
         end

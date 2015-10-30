@@ -170,6 +170,14 @@ function CanbeDestroyedEntity:beHurtedBySkill(skill, intersection)
                 if skill:getMaster()._strCharTag == "main" then
                     self:getBattleManager():getBattleUILayer():showHitAni() -- 显示连击
                 end
+            elseif skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+                local angerValue = 0    -- 怒气值
+                if skill == skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] then -- 普通攻击
+                    angerValue = TableConstants.GenAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+                elseif skill ~= skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kAngerAttack] then  -- 技能攻击
+                    angerValue = TableConstants.SkillAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+                end
+                skill:getMaster():addAnger(angerValue)
             end
             
         end

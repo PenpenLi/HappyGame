@@ -30,7 +30,6 @@ end
 
 -- 处理函数
 function BasePanel:dispose()
-
     ------------------- 结点事件------------------------
     local function onNodeEvent(event)
         if event == "exit" then
@@ -38,7 +37,6 @@ function BasePanel:dispose()
         end
     end
     self:registerScriptHandler(onNodeEvent)
-    return
 end
 
 -- 退出函数

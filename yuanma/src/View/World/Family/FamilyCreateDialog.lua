@@ -116,7 +116,7 @@ function FamilyCreateDialog:initBtnEvent()
 				return
 			end
             local strName = self._pFamilyNameText:getText()
-            local strPurpose = self._pFamilyPurposeText:getText()
+            local strPurpose = self._pHomeZZTextShow:getString()
             for i=1, string.len(strName) do 
                 if string.byte(strName, i) == 32 then
                     NoticeManager:getInstance():showSystemMessage("昵称中不能存在空格！")

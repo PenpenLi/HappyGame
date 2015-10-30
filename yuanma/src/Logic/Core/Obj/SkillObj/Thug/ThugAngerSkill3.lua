@@ -15,12 +15,11 @@ end)
 -- 构造函数
 function ThugAngerSkill3:ctor()
     self._strName = "ThugAngerSkill3"                          -- 技能名称
-    self._kTypeID = kType.kSkill.kID.kThugAngerSkill3           -- 技能对象类型
+    self._kTypeID = kType.kSkill.kID.kThugAngerSkill3          -- 技能对象类型
     self._pCurState = nil                                      -- 技能当前的状态机状态
-    
+    self._posTargetsPos = nil                                  -- 目标位置
     self._bStickAdd = false                                    -- 引用计数的标记
     self._bIgnoreHurtAdd = false                               -- 引用计数的标记
-    
     self._nRoleAttackActionIndex = 10                          -- 角色攻击动作index
     self._fChantDelayTime = 0.45                               -- 吟唱动作持续时间s
     self._nTimes = 0                                           -- 播放的次数
@@ -76,7 +75,11 @@ function ThugAngerSkill3:onUse()
         self._fCDCounter = 0   -- CD时间清空 
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kChant)
     else  -- 如果当前技能正处于使用状态，则立即将角色切换回站立状态
-        self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+        elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+        end
     end
 end
 
@@ -169,7 +172,11 @@ function ThugAngerSkill3:onEnterChantDo(state)
         self:getMaster()._refStick:sub()
         self._bStickAdd = false
         if self:getMaster():isUnusualState() == false then     -- 正常状态
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+            elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
         end
         -- 【恢复忽略一切伤害】
         self:getMaster()._pRefRoleIgnoreHurt:sub()

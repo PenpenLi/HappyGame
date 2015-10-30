@@ -188,6 +188,9 @@ function TriggersManager:createTrigger(tInfo, rects)
         elseif type == kType.kTriggerItemType.kTalks then
             local talksID = params[index][2]
             item = require("TalksTriggerItem"):create(index, talksID)
+        elseif type == kType.kTriggerItemType.kStory then
+            local storyID = params[index][2]
+            item = require("StoryTriggerItem"):create(index, storyID)
         end
 
         item._pOwnerTrigger = pTrigger   -- 记录持有者（即Trigger）

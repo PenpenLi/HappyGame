@@ -25,6 +25,9 @@ function FriendHelpBattleCell:ctor()
 
     self._pDataInfo = nil
     self._fCallback = nil
+
+    --FIXED 是否在CD中 lzx
+    self._bInCD = false
 end
 
 -- 创建函数
@@ -109,8 +112,9 @@ function FriendHelpBattleCell:initUI()
             if self:getScale() > self._fNormalScale then
                 -- 显示邮件内容弹框
                -- DialogManager:getInstance():showDialog("FriendTipsDialog",{self._pDataInfo})
-               local beInCD = self._pParams._pZzTextTime:isVisible()
-               if beInCD then
+               --FIXED 用显示判断是否有CD不保险 lzx
+               --local beInCD = self._pParams._pZzTextTime:isVisible()
+               if self._bInCD then
                	    NoticeManager:showSystemMessage("有cd")
                	    return
                end
@@ -187,23 +191,30 @@ function FriendHelpBattleCell:updateData()
     local lastHelpTime = os.time() - self._pDataInfo.cheerTime
     --local lastHelpTime = 100
     --判断是否有cd
-    if lastHelpTime - TableConstants.FriendsAssistCD.Value < 0 then
-        self._pParams._pZzTextTime:setVisible(true)
+    if lastHelpTime - TableConstants.FriendsAssistCD.Value < 0 then        
         self._pParams._pZzTextTime:setString(TableConstants.FriendsAssistCD.Value - lastHelpTime.."秒") 
         local timeCallBack = function(time,id)
-            if  self._pParams._pZzTextTime then 
+            if  self._pParams._pZzTextTime then
+                --FIXED   lzx
                 self._pParams._pZzTextTime:setVisible(true)
-                self._pParams._pZzTextTime:setString(time.."秒") 
+                self._pParams._pZzTextTime:setString(time.."秒")
+                self._bInCD = true
             end
             if time == 0 then
-                self._pParams._pZzTextTime:setVisible(false)
+                --FIXED   lzx
+                --self._pParams._pZzTextTime:setVisible(false)
+                self._pParams._pZzTextTime:setString("0秒")
+                self._bInCD = false
             end
         end
         if lastHelpTime <= TableConstants.FriendsAssistCD.Value then
             CDManager:getInstance():insertCD({"friendHelpFight"..self._pDataInfo.roleId,TableConstants.FriendsAssistCD.Value - lastHelpTime,timeCallBack})
         end
     else
-        self._pParams._pZzTextTime:setVisible(false)
+        --FIXED   lzx
+        --self._pParams._pZzTextTime:setVisible(false)
+        self._pParams._pZzTextTime:setString("0秒")
+        self._bInCD = false
     end
 end
 

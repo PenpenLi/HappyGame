@@ -24,21 +24,23 @@ function PetItemCell:ctor()
     self._pDataInfo = nil
     self._nStep = 1
     self._nLevel = 1
+    self._bGot = false
 end
 
 -- 创建函数
-function PetItemCell:create(dataInfo)
+function PetItemCell:create(dataInfo,isGot)
     local dialog = PetItemCell.new()
-    dialog:dispose(dataInfo)
+    dialog:dispose(dataInfo,isGot)
     return dialog
 end
 
 -- 处理函数
-function PetItemCell:dispose(dataInfo)
+function PetItemCell:dispose(dataInfo,isGot)
     --注册（请求游戏副本列表）
     NetRespManager:getInstance():addEventListener(kNetCmd.kNetFeedPet, handler(self, self.handleMsgFeedPet))
 
     self._pDataInfo = dataInfo
+    self._bGot = isGot
 
     self:initUI()
 
@@ -90,13 +92,15 @@ function PetItemCell:initUI()
     --图标按钮
     local  onTouchBg = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then
-            DialogManager:showDialog("PetFoodDialog",{self._pDataInfo,true})
+            local dataInfo = PetsManager:getInstance():getPetInfoWithId(self._pDataInfo.id,
+                self._pDataInfo.step,
+                self._pDataInfo.level)
+            DialogManager:showDialog("PetDetailDialog",{self._pDataInfo,true})
             NewbieManager:showOutAndRemoveWithRunTime()
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
         end
     end
-    
     
     -- 加载csb 组件
     local params = require("OnePetParams"):create()
@@ -127,6 +131,17 @@ function PetItemCell:initUI()
             end
         end
      end)
+     
+    local onTouchMerge = function(sender, eventType)
+        if eventType == ccui.TouchEventType.ended then
+            PetCGMessage:sendMessageCompound21506(self._pDataInfo.data.PieceID)
+        elseif eventType == ccui.TouchEventType.moved then
+
+        elseif eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick")
+        end
+    end
+    self._pParams["_pJhButton"]:addTouchEventListener(onTouchMerge)
     
     self:updateData()
 end
@@ -136,45 +151,77 @@ function PetItemCell:updateData()
     	return
     end
     
-    self._pParams["_pUpUpUp"]:setVisible(PetsManager:getInstance():isPetField(self._pDataInfo.id) == true)
-    self._pParams["_pUpButton"]:setVisible(PetsManager:getInstance():isPetField(self._pDataInfo.id) == false)
-
-
-    self._pParams["_pName"]:setString(self._pDataInfo.templete.PetName)
-    self._pParams["_pName"]:setColor(kQualityFontColor3b[self._pDataInfo.step])
-    self._pParams["_pIcon"]:loadTextures(
-        self._pDataInfo.templete.PetIcon ..".png",
-        self._pDataInfo.templete.PetIcon ..".png",
-        self._pDataInfo.templete.PetIcon ..".png",
-        ccui.TextureResType.plistType)
+    if self._bGot == false then
+    	self._pParams["_pJhNode"]:setVisible(true)
+        self._pParams["_pSxNode"]:setVisible(false)
         
-    self._pParams["_pLv02"]:setString(self._pDataInfo.level)
-    
-    self._pParams["_pIconP"]:loadTexture("ccsComRes/qual_" ..self._pDataInfo.step.."_normal.png",ccui.TextureResType.plistType)
-    
-    self._pParams["_pQuality"]:setString(self._pDataInfo.step .. "阶")
-    self._pParams["_pAttack02"]:setString(math.ceil(self._pDataInfo.data.Attack + TablePetsLevel[self._pDataInfo.level].PetGrowth * self._pDataInfo.data.AttackGrowth[self._pDataInfo.step]))
-    self._pParams["_pDefend02"]:setString(math.ceil(self._pDataInfo.data.Defend + TablePetsLevel[self._pDataInfo.level].PetGrowth * self._pDataInfo.data.DefendGrowth[self._pDataInfo.step]))
-    self._pParams["_pHp02"]:setString(math.ceil(self._pDataInfo.data.Hp + TablePetsLevel[self._pDataInfo.level].PetGrowth * self._pDataInfo.data.HpGrowth[self._pDataInfo.step]))
-    self._pParams["_pLv02"]:setString(self._pDataInfo.level)
-    self._pParams["_pType"]:setString(petTypeColorDef[self._pDataInfo.data.PetFunction].name)
-    self._pParams["_pType"]:setColor(petTypeColorDef[self._pDataInfo.data.PetFunction].color)
-    
-    local levelIndex  = math.modf(self._pDataInfo.level/10) 
-    local skillArry = self._pDataInfo.data.SkillIDs[levelIndex+1]
-    for i=1,3 do
-        self._pParams["_pPetSkill0"..i]:setString(TableTempleteSkills[TablePetsSkills[skillArry[i]].TempleteID].SkillName)
-    end
-    
-    for i=1,3 do
-        local type = self._pDataInfo.data["SpecialType"..i]
-        local value = self._pDataInfo.data["SpecialValue"..i]
-        self._pParams["_pRoleAttribute0"..i.."02"]:setString(TablePetsLevel[self._pDataInfo.level].PetSpecialGrowth * value[self._pDataInfo.step] )
-        self._pParams["_pRoleAttribute0"..i.."01"]:setString(kAttributeNameTypeTitle[type])
+        self._pParams["_pName"]:setString(self._pDataInfo.templete.PetName)
+        self._pParams["_pName"]:setColor(kQualityFontColor3b[1])
+        
+        local icon = TableTempleteItems[TableItems[self._pDataInfo.data.PieceID-200000].TempleteID].Icon
+        self._pParams["_pIcon"]:loadTextures(
+            icon ..".png",
+            icon ..".png",
+            icon ..".png",
+            ccui.TextureResType.plistType)
+        self._pParams["_pIconP"]:loadTexture("ccsComRes/qual_" ..tostring(1).."_normal.png",ccui.TextureResType.plistType)
+        self._pParams["_pQuality"]:setString(0 .. "阶")
+        self._pParams["_pLv02"]:setString(0)
+        self._pParams["_pType"]:setString(petTypeColorDef[self._pDataInfo.data.PetFunction].name)
+        self._pParams["_pType"]:setColor(petTypeColorDef[self._pDataInfo.data.PetFunction].color)
+        darkNode(self._pParams["_pIcon"]:getVirtualRenderer():getSprite())
+        
+        local chipCount = BagCommonManager:getInstance():getItemNumById(self._pDataInfo.data.PieceID)
+        --进度条
+        self._pParams["_pJhBar"]:setPercent(chipCount/self._pDataInfo.data.PieceNum * 100)
+        --数值
+        self._pParams["_pJhNum"]:setString(chipCount .. "/" .. self._pDataInfo.data.PieceNum)
+    else
+        unDarkNode(self._pParams["_pIcon"]:getVirtualRenderer():getSprite())
+        self._pParams["_pJhNode"]:setVisible(false)
+        self._pParams["_pSxNode"]:setVisible(true)
+        
+        self._pParams["_pUpUpUp"]:setVisible(PetsManager:getInstance():isPetField(self._pDataInfo.id) == true)
+        self._pParams["_pUpButton"]:setVisible(PetsManager:getInstance():isPetField(self._pDataInfo.id) == false)
+
+
+        self._pParams["_pName"]:setString(self._pDataInfo.templete.PetName)
+        self._pParams["_pName"]:setColor(kQualityFontColor3b[self._pDataInfo.step])
+        self._pParams["_pIcon"]:loadTextures(
+            self._pDataInfo.templete.PetIcon ..".png",
+            self._pDataInfo.templete.PetIcon ..".png",
+            self._pDataInfo.templete.PetIcon ..".png",
+            ccui.TextureResType.plistType)
+
+        self._pParams["_pLv02"]:setString(self._pDataInfo.level)
+
+        self._pParams["_pIconP"]:loadTexture("ccsComRes/qual_" ..self._pDataInfo.step.."_normal.png",ccui.TextureResType.plistType)
+
+        self._pParams["_pQuality"]:setString(self._pDataInfo.step .. "阶")
+        self._pParams["_pAttack02"]:setString(math.ceil(self._pDataInfo.data.Attack + TablePetsLevel[self._pDataInfo.level].PetGrowth * self._pDataInfo.data.AttackGrowth[self._pDataInfo.step]))
+        self._pParams["_pDefend02"]:setString(math.ceil(self._pDataInfo.data.Defend + TablePetsLevel[self._pDataInfo.level].PetGrowth * self._pDataInfo.data.DefendGrowth[self._pDataInfo.step]))
+        self._pParams["_pHp02"]:setString(math.ceil(self._pDataInfo.data.Hp + TablePetsLevel[self._pDataInfo.level].PetGrowth * self._pDataInfo.data.HpGrowth[self._pDataInfo.step]))
+        self._pParams["_pLv02"]:setString(self._pDataInfo.level)
+        self._pParams["_pType"]:setString(petTypeColorDef[self._pDataInfo.data.PetFunction].name)
+        self._pParams["_pType"]:setColor(petTypeColorDef[self._pDataInfo.data.PetFunction].color)
+
+        local levelIndex  = math.modf(self._pDataInfo.level/10) 
+        local skillArry = self._pDataInfo.data.SkillIDs[levelIndex+1]
+        for i=1,3 do
+            self._pParams["_pPetSkill0"..i]:setString(TableTempleteSkills[TablePetsSkills[skillArry[i]].TempleteID].SkillName)
+        end
+
+        for i=1,3 do
+            local type = self._pDataInfo.data["SpecialType"..i]
+            local value = self._pDataInfo.data["SpecialValue"..i]
+            self._pParams["_pRoleAttribute0"..i.."02"]:setString(TablePetsLevel[self._pDataInfo.level].PetSpecialGrowth * value[self._pDataInfo.step] )
+            self._pParams["_pRoleAttribute0"..i.."01"]:setString(kAttributeNameTypeTitle[type])
+        end
     end
 end
 
-function PetItemCell:setInfo(info)
+function PetItemCell:setInfo(info,beGot)
+    self._bGot = beGot
 	self._pDataInfo = info
 	
 	self:updateData()

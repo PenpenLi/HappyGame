@@ -26,7 +26,7 @@ end
 function OtherPlayersHandler:handleMsgOtherPlayerInfo20015(msg)
     if msg.header.result == 0 then 
         local event = msg["body"]
-        RolesManager:getInstance()._tOtherPlayerRolesInfos = event.roleInfos
+        RolesManager:getInstance()._tOtherPlayerRolesInfosOnWorldMap = event.roleInfos
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kOtherPlayerInfos, event)
     else
         local strError = "返回错误码："..msg.header.result

@@ -8,6 +8,12 @@
 -- created:   2015/1/5
 -- descrip:   装备相关的管理器
 --===================================================
+
+local tMountingBtnTexture = {{"EqiupRightDialogRes/shenshang01.png","EqiupRightDialogRes/shenshang02.png"},{"EqiupRightDialogRes/beibao01.png","EqiupRightDialogRes/beibao02.png"},{"EqiupRightDialogRes/baoshi01.png","EqiupRightDialogRes/baoshi02.png"}}
+local tTabTextureTexture =  {{"EqiupRightDialogRes/fenjie01.png","EqiupRightDialogRes/qianghua01.png","EqiupRightDialogRes/xiangqian01.png","EqiupRightDialogRes/hecheng01.png","EqiupRightDialogRes/duanzao01.png"},
+                             {"EqiupRightDialogRes/fenjie02.png","EqiupRightDialogRes/qianghua02.png","EqiupRightDialogRes/xiangqian02.png","EqiupRightDialogRes/hecheng02.png","EqiupRightDialogRes/duanzao02.png"}}
+
+
 local EquipmentDialog = class("EquipmentDialog",function ()
     return require("Dialog"):create()
 end
@@ -26,7 +32,6 @@ function EquipmentDialog:ctor()
     self._ntempItemDate = nil                        --有选中状态的时候，物品详细信息
     self._tTabUiArray = {}                           --各个界面的Ui
     self._tScrollViewAni = {}                        --宝石特效的ani
-    self._nScrollViewClickIndex = nil                --ScrollView点击的item Index
     self._pEqResolveInfoView = nil                   --装备分解界面
     self._pEqIntensifyInfoView = nil                 --装备强化界面
     self._pGemSynthesisInfoView = nil                --宝石合成界面
@@ -38,9 +43,10 @@ function EquipmentDialog:ctor()
     self._pHangingPoint = nil                        --左侧的挂载点
     self._pMoneyNumberLbl = nil                      --玩家钻石标签
     self._pMoneyIconBg = nil                         --钻石的背景图标
-    self._pTabTextureAdd = {}                        --图片正常状态
-    
+    self._pGoldAddBtn = nil                          --金币增加的btn
+    self._pShopAddBtn = nil                          --钻石增加的btn
     self._pWarningSprite = {}
+    self._pEquResolveBtnIndex  = 1                   --装备分解按钮点击的状态
 
 end
 
@@ -76,26 +82,7 @@ function EquipmentDialog:dispose(args)
     ResPlistManager:getInstance():addSpriteFrames("EqiupRightDialog.plist")
     --锻造
     ResPlistManager:getInstance():addSpriteFrames("ForgeEquipEffect.plist")
-    -- 加载dialog组件
-    local params = require("EqiupRightDialogParams"):create()
-    self._pCCS = params._pCCS
-    self._pBg = params._pBackGround
-    self._pHangingPoint = params._pHangingPoint
-    self._sBgContSize =self._pBg:getContentSize()
-    self._pCloseButton = params._pCloseButton
-    self._pRightScrollView = params._pRightScrollView
-    self._pGemMountingButtonArrayNode = params._pThreePoint
-    self._pGemMountingButtonArrayNode:setVisible(false)
-    self._pMoneyNumberLbl = params._pMoneyNumber
-    self._pMoneyIconBg = params._pMoneyBg
-    -- 玩家钻石信息默认不显示
-    self:setDiamondVisible(false)
-    -- 玩家的钻石数量
-    local diamondNum = FinanceManager:getInstance()._tCurrency[kFinance.kDiamond]
-    self._pMoneyNumberLbl:setString(diamondNum)
-    -- 初始化dialog的基础组件
-    self:disposeCSB()
-
+    
     --判断是否是通过点击某个tip进来的
     if args[1] ~=nil then
         self._nClickTabType = args[1]
@@ -105,49 +92,17 @@ function EquipmentDialog:dispose(args)
     if args[3] then
         self._kItemSrcType = args[3]
     end
-    --tab的图片地址
-    self._pTabTextureAdd = {{"fenjie01.png","qianghua01.png","xiangqian01.png","hecheng01.png","duanzao01.png"},{"fenjie02.png","qianghua02.png","xiangqian02.png","hecheng02.png","duanzao02.png"}}
-    --强化 镶嵌 分解 合成 洗练 传承
-    self._tTabButtonArray = {params._pTabButton1 ,params._pTabButton2 ,params._pTabButton3 ,params._pTabButton4 ,params._pTabButton7,params._pTabButton5 ,params._pTabButton6}
-   
-    for i=1 ,table.getn(self._tTabButtonArray) do
-        self._pWarningSprite[i] = cc.Sprite:createWithSpriteFrameName("MainIcon/mail03.png")
-        self._pWarningSprite[i]:setPosition(85,85)
-        self._pWarningSprite[i]:setScale(0.2)
-        self._pWarningSprite[i]:setVisible(false)
-        self._pWarningSprite[i]:setAnchorPoint(cc.p(0.5, 0.5))
-        self._tTabButtonArray[i]:addChild(self._pWarningSprite[i])
 
-        -- 上下移动动画效果
-        local actionMoveBy = cc.ScaleTo:create(0.5,0.5,0.5) -- cc.MoveBy:create(0.3,self._moveToPoint)
-        local actionMoveToBack = cc.ScaleTo:create(0.5,0.6,0.6)
-        local seq1 = cc.Sequence:create(actionMoveBy, actionMoveToBack)
-        self._pWarningSprite[i]:stopAllActions()
-        self._pWarningSprite[i]:runAction(cc.RepeatForever:create(seq1))
-    end
-    
-    if table.getn(BagCommonManager:getInstance()._tCanInlayEquips) > 0 then
-        self._pWarningSprite[3]:setVisible(true)
-    end
-    
-    if table.getn(BagCommonManager:getInstance()._tCanIntensifyEquips) > 0 then
-        self._pWarningSprite[2]:setVisible(true)
-    end
-
-    -- 判断是否有可合成的宝石
-    self._pWarningSprite[4]:setVisible(BagCommonManager:getInstance():isCanGemSynthesis())
-    
-    --镶嵌界面的  身上，背包内，宝石
-    self._tGemMountingButtonArray = {params._pBagTabButton1 ,params._pBagTabButton2 ,params._pBagTabButton3}
-    
-    -- 初始化列表管理
-    self._pListController = require("ListController"):create(self,self._pRightScrollView,listLayoutType.LayoutType_rows,100,100)
-    self._pListController:setVertiaclDis(6)
-    self._pListController:setHorizontalDis(3)
-    
-    self:initTabButtonUi()                       --初始化左侧的button点击事件
-    self:initAllEquipArrayUI()                   --加載右侧所有的界面ui
-    self:selectOneUiByType(self._nClickTabType)  --选择要加载的某个界面通过界面类型
+    --初始化ui
+    self:initEquipUi()
+    --初始化界面数据
+    self:initEquipDate()
+    --初始化左侧的button点击事件
+    self:initEquipBtn()           
+    --加載右侧所有的界面ui            
+    self:initAllEquipArrayUI()       
+    --选择要加载的某个界面通过界面类型            
+    self:selectOneUiByType(self._nClickTabType)  
 
     -- 触摸注册
     local function onTouchBegin(touch,event)
@@ -187,6 +142,67 @@ function EquipmentDialog:dispose(args)
 
 end
 
+function EquipmentDialog:initEquipUi()
+    -- 加载dialog组件
+    local params = require("EqiupRightDialogParams"):create()
+    self._pCCS = params._pCCS
+    self._pBg = params._pBackGround
+    self._pHangingPoint = params._pHangingPoint
+    self._sBgContSize =self._pBg:getContentSize()
+    self._pCloseButton = params._pCloseButton
+    self._pRightScrollView = params._pRightScrollView
+    self._pGemMountingButtonArrayNode = params._pThreePoint
+    self._pGemMountingButtonArrayNode:setVisible(false)
+    self._pMoneyNumberLbl = params._pMoneyNumber
+    self._pMoneyIconBg = params._pMoneyBg
+    self._pGoldAddBtn = params._pGoldAdd   
+    self._pShopAddBtn = params._pMoneyAdd     
+      --强化 镶嵌 分解 合成 洗练 传承
+    self._tTabButtonArray = {params._pTabButton1 ,params._pTabButton2 ,params._pTabButton3 ,params._pTabButton4 ,params._pTabButton7,params._pTabButton5 ,params._pTabButton6}
+    --镶嵌界面的  身上，背包内，宝石
+    self._tGemMountingButtonArray = {params._pBagTabButton1 ,params._pBagTabButton2 ,params._pBagTabButton3}
+    self:disposeCSB()
+
+end
+
+function EquipmentDialog:initEquipDate()
+    -- 玩家的钻石数量
+    self:updateDiamonNum()
+    --初始化红点
+    for i=1 ,table.getn(self._tTabButtonArray) do
+        self._pWarningSprite[i] = cc.Sprite:createWithSpriteFrameName("MainIcon/mail03.png")
+        self._pWarningSprite[i]:setPosition(85,85)
+        self._pWarningSprite[i]:setScale(0.2)
+        self._pWarningSprite[i]:setVisible(false)
+        self._pWarningSprite[i]:setAnchorPoint(cc.p(0.5, 0.5))
+        self._tTabButtonArray[i]:addChild(self._pWarningSprite[i])
+
+        -- 上下移动动画效果
+        local actionMoveBy = cc.ScaleTo:create(0.5,0.5,0.5) -- cc.MoveBy:create(0.3,self._moveToPoint)
+        local actionMoveToBack = cc.ScaleTo:create(0.5,0.6,0.6)
+        local seq1 = cc.Sequence:create(actionMoveBy, actionMoveToBack)
+        self._pWarningSprite[i]:stopAllActions()
+        self._pWarningSprite[i]:runAction(cc.RepeatForever:create(seq1))
+    end
+    
+    if table.getn(BagCommonManager:getInstance()._tCanInlayEquips) > 0 then
+        self._pWarningSprite[3]:setVisible(true)
+    end
+    
+    if table.getn(BagCommonManager:getInstance()._tCanIntensifyEquips) > 0 then
+        self._pWarningSprite[2]:setVisible(true)
+    end
+
+    -- 判断是否有可合成的宝石
+    self._pWarningSprite[4]:setVisible(BagCommonManager:getInstance():isCanGemSynthesis())
+
+    -- 初始化列表管理
+    self._pListController = require("ListController"):create(self,self._pRightScrollView,listLayoutType.LayoutType_rows,90,90)
+    self._pListController:setVertiaclDis(9)
+    self._pListController:setHorizontalDis(9)
+end
+
+
 function EquipmentDialog:handleEquipWarning(event)
     if table.getn(BagCommonManager:getInstance()._tCanInlayEquips) > 0 then
         self._pWarningSprite[3]:setVisible(true)
@@ -207,7 +223,6 @@ end
 function EquipmentDialog:updateScrollViewItemDate(event)
 
     if self._nClickTabType == EquipmentTabType.EquipmentTabTypeResolve then --如果是在分解界面
-        self._ntempItemDate = nil --假如点击某个装备弹出的界面，当发分解协议之后需要把这个装备信息赋值为空
         if self._pEqResolveInfoView._bHasHaveStone then --如果分解的装备里面有宝石
             NoticeManager:getInstance():showSystemMessage("装备上的宝石已卸下存入背包内")
         end
@@ -233,8 +248,8 @@ end
 -- 合成背包里装备宝石回调函数
 function EquipmentDialog:handleMsgGemSynthesis20117(event)
     -- 更新镶嵌面板数据
-    self._ntempItemDate = BagCommonManager:getInstance():getItemInfoByIndex(event.index)
-    self._pGemInlayInfoView:setDataSource(self._ntempItemDate,kCalloutSrcType.kCalloutSrcBagCommon)
+    local pItemDate = BagCommonManager:getInstance():getItemInfoByIndex(event.index)
+    self._pGemInlayInfoView:setDataSource(pItemDate,kCalloutSrcType.kCalloutSrcBagCommon)
     -- 更新玩家的钻石数量
     self:updateDiamonNum()
     -- 刷新物品列表
@@ -244,8 +259,8 @@ end
 -- 合成身上装备宝石信息回调函数
 function EquipmentDialog:handleMsgGemSynthesis20119(event)
     -- 更新镶嵌面板数据
-    self._ntempItemDate = RolesManager:getInstance():selectHasEquipmentByType(event.loction)
-    self._pGemInlayInfoView:setDataSource(self._ntempItemDate,kCalloutSrcType.kCalloutSrcEquip)
+    local pItemDate = RolesManager:getInstance():selectHasEquipmentByType(event.loction)
+    self._pGemInlayInfoView:setDataSource(pItemDate,kCalloutSrcType.kCalloutSrcEquip)
     -- 更新玩家的钻石数量
     self:updateDiamonNum()
     -- 刷新物品列表
@@ -255,8 +270,8 @@ end
 -- 镶嵌背包装备回调函数
 function EquipmentDialog:handleMsgInlayBagEquip20121(event)
     -- 更新镶嵌面板数据
-    self._ntempItemDate = BagCommonManager:getInstance():getItemInfoByIndex(event.index)
-    self._pGemInlayInfoView:setDataSource(self._ntempItemDate,kCalloutSrcType.kCalloutSrcBagCommon,event.stoneId)
+    local pItemDate = BagCommonManager:getInstance():getItemInfoByIndex(event.index)
+    self._pGemInlayInfoView:setDataSource(pItemDate,kCalloutSrcType.kCalloutSrcBagCommon,event.stoneId)
     -- 更新玩家的钻石数量
     self:updateDiamonNum()
     -- 刷新物品列表
@@ -266,8 +281,8 @@ end
 -- 镶嵌身上装备的回调函数
 function EquipmentDialog:handleMsgInlayRoleEquip20123(event)
     -- 更新镶嵌面板数据
-    self._ntempItemDate = RolesManager:getInstance():selectHasEquipmentByType(event.loction)
-    self._pGemInlayInfoView:setDataSource(self._ntempItemDate,kCalloutSrcType.kCalloutSrcEquip,event.stoneId)
+    local pItemDate = RolesManager:getInstance():selectHasEquipmentByType(event.loction)
+    self._pGemInlayInfoView:setDataSource(pItemDate,kCalloutSrcType.kCalloutSrcEquip,event.stoneId)
     -- 更新玩家的钻石数量
     self:updateDiamonNum()
     -- 刷新物品列表
@@ -321,11 +336,11 @@ function EquipmentDialog:respNetReconnected(event)
 end
 
 --初始化右侧的button点击事件
-function EquipmentDialog:initTabButtonUi()
+function EquipmentDialog:initEquipBtn()
     -- 标签选择按钮的回调
     local onTypeSelectButton = function( sender, eventType )
         if eventType == ccui.TouchEventType.ended then
-            self:setDiamondVisible(false)
+            --self:setDiamondVisible(false)
             local nTag = sender:getTag()
             -- 获得玩家等级
             local nRoleLevel = RolesManager:getInstance()._pMainRoleInfo.level
@@ -345,7 +360,7 @@ function EquipmentDialog:initTabButtonUi()
                     NoticeManager:getInstance():showSystemMessage("宝石镶嵌功能"..TableNewFunction[16].Level.."级开放")
                     return
                 end
-                self:setDiamondVisible(true)
+                --self:setDiamondVisible(true)
                 -- 更新玩家的钻石数量
                 self:updateDiamonNum()
             elseif nTag == EquipmentTabType.EquipmentTabTypeGemCompound then --宝石合成
@@ -353,7 +368,7 @@ function EquipmentDialog:initTabButtonUi()
                     NoticeManager:getInstance():showSystemMessage("宝石合成功能"..TableNewFunction[17].Level.."级开放")
                     return
                 end
-                self:setDiamondVisible(true)
+                --self:setDiamondVisible(true)
                 -- 更新玩家的钻石数量
                 self:updateDiamonNum()
             elseif (nTag == EquipmentTabType.EquipmentTabTypeRefine) or (nTag == EquipmentTabType.EquipmentTabTypeInherit) then --宝石合成
@@ -367,13 +382,10 @@ function EquipmentDialog:initTabButtonUi()
               end
             
             end
-
-            self._tTabButtonArray[self._nClickTabType]:loadTextures("EqiupRightDialogRes/"..self._pTabTextureAdd[1][self._nClickTabType],"EqiupRightDialogRes/"..self._pTabTextureAdd[2][self._nClickTabType],"EqiupRightDialogRes/"..self._pTabTextureAdd[1][self._nClickTabType],ccui.TextureResType.plistType)
             self._nClickTabType = nTag
-            self._tTabButtonArray[self._nClickTabType]:loadTextures("EqiupRightDialogRes/"..self._pTabTextureAdd[2][self._nClickTabType],"EqiupRightDialogRes/"..self._pTabTextureAdd[2][self._nClickTabType],"EqiupRightDialogRes/"..self._pTabTextureAdd[2][self._nClickTabType],ccui.TextureResType.plistType)
-
-            self._ntempItemDate = nil   --如果从新点击分解 强化等按钮的，把默认传过来的itemInfo设置为空
-            self._nScrollViewClickIndex = nil
+            self:updateEquipmentTabClickStateByIndex(nTag)
+            self._pEquResolveBtnIndex = 1
+            self._pEqResolveInfoView._nColorResBtnIndex = 1
             self._tTabUiArray[self._nClickTabType ]:clearResolveUiDateInfo() --清理界面的缓存有需要的可以在自己的panel里面添加一下
 
             self:updateGemMountingButtonArrayTexture(kCalloutSrcType.kCalloutSrcEquip) -- --如果是有小标签（身上，装备，宝石）默认选择身上
@@ -383,15 +395,16 @@ function EquipmentDialog:initTabButtonUi()
             AudioManager:getInstance():playEffect("ButtonClick")
         end
     end
-    -- end 标签选择按钮的回调
-
+    -- 标签选择按钮的回调
     for i = 1,#self._tTabButtonArray do
         self._tTabButtonArray[i]:setTag(i)
         self._tTabButtonArray[i]:addTouchEventListener(onTypeSelectButton)
         if self._nClickTabType == i then --当前button是选中的button
-            self._tTabButtonArray[i]:loadTextures("EqiupRightDialogRes/"..self._pTabTextureAdd[2][i],"EqiupRightDialogRes/"..self._pTabTextureAdd[2][i],nil,ccui.TextureResType.plistType)
+           self:updateEquipmentTabClickStateByIndex(i)
         end
     end
+
+  
 
     local onGemMountingButtonTouch = function ( sender,eventType )
         if eventType == ccui.TouchEventType.ended then
@@ -402,54 +415,74 @@ function EquipmentDialog:initTabButtonUi()
         end
     end
     --宝石镶嵌界面的button
-    for i = 1,#self._tGemMountingButtonArray do
-        self._tGemMountingButtonArray[i]:setTag(i)
-        self._tGemMountingButtonArray[i]:addTouchEventListener(onGemMountingButtonTouch)
-        --self._tGemMountingButtonArray[i]:getTitleRenderer():enableOutline(cc.c4b(0, 0, 0, 255), 2)
-        --self._tGemMountingButtonArray[i]:getTitleRenderer():enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
-        if self._kItemSrcType == i then --当前button是选中的button
-            self._tGemMountingButtonArray[i]:loadTextures("EqiupRightDialogRes/EqiupRightButton02.png","EqiupRightDialogRes/EqiupRightButton02.png",nil,ccui.TextureResType.plistType)
+    for k,v in pairs(self._tGemMountingButtonArray)do
+        v:setTag(k)
+        v:loadTextures(tMountingBtnTexture[k][1],tMountingBtnTexture[k][2],nil,ccui.TextureResType.plistType)
+        v:addTouchEventListener(onGemMountingButtonTouch)
+        
+        if self._kItemSrcType == k then --当前button是选中的button
+           v:loadTextures(tMountingBtnTexture[k][2],tMountingBtnTexture[k][2],nil,ccui.TextureResType.plistType)
         end
     end
 
+    --添加钻石和金币的按钮
+   local addExpendCallBack = function ( sender,eventType )
+       if eventType == ccui.TouchEventType.ended then
+
+            local pTag = sender:getTag()
+            print("Tag.."..pTag)
+            if pTag == kFinance.kCoin then  --添加金钱
+               DialogManager:getInstance():showDialog("CashTreeDialog")
+            elseif pTag == kFinance.kDiamond then --添加钻石
+              ShopSystemCGMessage:queryChargeListReq20506()
+            end
+
+        elseif eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick")
+        end      
+   end
+
+    self._pGoldAddBtn:addTouchEventListener(addExpendCallBack)
+    self._pGoldAddBtn:setZoomScale(nButtonZoomScale)
+    self._pGoldAddBtn:setPressedActionEnabled(true)
+    self._pGoldAddBtn:setTag(kFinance.kCoin)
+    self._pShopAddBtn:addTouchEventListener(addExpendCallBack)
+    self._pShopAddBtn:setZoomScale(nButtonZoomScale)
+    self._pShopAddBtn:setPressedActionEnabled(true)
+    self._pShopAddBtn:setTag(kFinance.kDiamond)
 end
 
 -- 宝石镶嵌界面小标签的选中状态（身上,背包,宝石）
 function EquipmentDialog:updateGemMountingButtonArrayTexture(nIndex)
-    for k,v in pairs(self._tGemMountingButtonArray) do
-        self._tGemMountingButtonArray[k]:loadTextures("EqiupRightDialogRes/EqiupRightButton01.png","EqiupRightDialogRes/EqiupRightButton02.png",nil,ccui.TextureResType.plistType)
+    -- local tMountingBtnTexture = {{"EqiupRightDialogRes/shenshang01.png","EqiupRightDialogRes/shenshang02.png"},{"EqiupRightDialogRes/beibao01.png","EqiupRightDialogRes/beibao02.png"},{"EqiupRightDialogRes/baoshi01.png","EqiupRightDialogRes/baoshi01.png"}}
+     for k,v in pairs(self._tGemMountingButtonArray) do
+        if nIndex == k then
+           v:loadTextures(tMountingBtnTexture[k][2],tMountingBtnTexture[k][2],nil,ccui.TextureResType.plistType)
+        else
+           v:loadTextures(tMountingBtnTexture[k][1],tMountingBtnTexture[k][2],nil,ccui.TextureResType.plistType)
+        end
      end
-    self._kItemSrcType = nIndex
-    self._tGemMountingButtonArray[self._kItemSrcType]:loadTextures("EqiupRightDialogRes/EqiupRightButton02.png","EqiupRightDialogRes/EqiupRightButton02.png",nil,ccui.TextureResType.plistType)
+     self._kItemSrcType = nIndex   
 end
+
+--更新装备tab大标签的选中状态
+function EquipmentDialog:updateEquipmentTabClickStateByIndex(nIndex)
+    for k,v in pairs(self._tTabButtonArray) do
+        if k == nIndex then
+            v:loadTextures(tTabTextureTexture[2][k],tTabTextureTexture[2][k],tTabTextureTexture[2][k],ccui.TextureResType.plistType)
+        else
+            v:loadTextures(tTabTextureTexture[1][k],tTabTextureTexture[2][k],tTabTextureTexture[1][k],ccui.TextureResType.plistType)
+        end
+
+    end
+end
+
 
 --初始化各个界面UI
 function EquipmentDialog:initAllEquipArrayUI()
-    -- 
-    local fEquipCallBack = function(tResolveEquDate)
-        -- body
-        if tResolveEquDate and self.pScrollViewDate then
-            --去掉ScrollView的灰色
-            local bHasCanResolveEqu = false
-            for i,v1 in pairs(self.pScrollViewDate) do
-                for k ,v2 in pairs(tResolveEquDate) do
-                    if v1 == v2 then --如果这个装备在分解材料里面，则变成灰色
-                        bHasCanResolveEqu = true
-                        break
-                    end
-                end
-                self:setScrollViewItemHasSelectByIndex(i,bHasCanResolveEqu)
-                bHasCanResolveEqu = false
-            end
-        else
-            --如果此处没有数据则进行特殊处理
-            if self._nClickTabType == EquipmentTabType.EquipmentTabTypeIntensify then --强化 then
-                if self._pEqIntensifyInfoView._nSmallType == self._kItemSrcType then  --如果强化的是当前页面里面的装备。需要刷新界面
-                    --self:selectOneUiByType(self._nClickTabType)
-                    self:setScrollViewDataSource(self._nClickTabType)
-            end
-            end
-        end
+    local fEquipCallBack = function()
+       --更新装备的信息
+       self:updateScrollViewItemClickState()
     end
 
     --所有panel下必须有SetRightScrollViewClickByIndex方法。当点击右侧的ScrollView时传入index
@@ -465,11 +498,16 @@ function EquipmentDialog:initAllEquipArrayUI()
         self:selectOneUiByType(self._nClickTabType)
     end
 
+    local fResColorBtnCallBack = function(nTag)
+         self._pEquResolveBtnIndex = nTag
+         print("Click Tag is "..nTag)
+         self:selectOneUiByType(self._nClickTabType)
+    end
 
     --local pPostion = cc.p(self._sBgContSize.width*0.378,self._sBgContSize.height*0.517)
     local pPostion = cc.p(0,0)
     --装备分解
-    self._pEqResolveInfoView = require("EquipmentResolvePanel"):create(fEquipCallBack)
+    self._pEqResolveInfoView = require("EquipmentResolvePanel"):create(fEquipCallBack,fResColorBtnCallBack)
     self._pEqResolveInfoView:setPosition(pPostion)
     self._pEqResolveInfoView:setTouchLayerEnabled(setUiTouchEnabled)
     self._pHangingPoint:addChild(self._pEqResolveInfoView)
@@ -522,17 +560,7 @@ function EquipmentDialog:setScrollViewItemHasSelectByIndex(nIndex,bBool,cell)
     if not pItemCell then
         return
     end
-    if bBool then
-        pItemCell._pIconBtn:setColor(cc.c3b(136,136,136))
-        if pItemCell._pEquipQualityBg then
-            pItemCell._pEquipQualityBg:setColor(cc.c3b(136,136,136))
-        end
-    else
-        pItemCell._pIconBtn:setColor(cWhite)
-        if pItemCell._pEquipQualityBg then
-            pItemCell._pEquipQualityBg:setColor(cWhite)
-        end
-    end
+   pItemCell:setClickVisible(bBool)
 end
 
 --选择要进入的tab指针
@@ -544,33 +572,19 @@ function EquipmentDialog:selectOneUiByType(nType)
         end
     end
 
-    self._pGemMountingButtonArrayNode:setVisible(false)
+    --设置ScrollView的数据
+    self:setScrollViewDataSource(nType) 
+    --设置身上，背包，宝石按钮的状态
+    self:setMountingBtnState()
    
     --ScrollView Item点击事件
     local  onTouchButton = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then --如果是强化界面是单选需要先把上一个赋值为高亮
-            if self._nClickTabType == EquipmentTabType.EquipmentTabTypeIntensify            --强化
-                or self._nClickTabType == EquipmentTabType.EquipmentTabGemTypeGemInlay      --宝石镶嵌
-                or self._nClickTabType == EquipmentTabType.EquipmentTabTypeGemCompound      --宝石合成
-                or self._nClickTabType == EquipmentTabType.EquipmentTabTypeEquFoundry then --宝石合成
-                    if self._nScrollViewClickIndex then
-                        self:setScrollViewItemHasSelectByIndex(self._nScrollViewClickIndex,false)
-                    end
-            end
-            self._nScrollViewClickIndex = sender:getTag()
-            self:setScrollViewItemHasSelectByIndex(self._nScrollViewClickIndex,true)
-            --  如果点击是镶嵌标签下的宝石则不需要选中状态
-            if self._nClickTabType == EquipmentTabType.EquipmentTabGemTypeGemInlay and self._kItemSrcType == kCalloutSrcType.kCalloutSrcGem then
-                self:setScrollViewItemHasSelectByIndex(self._nScrollViewClickIndex,false)
-            end
-            
-            --如果是装备强化界面需要单独处理需要把装备cell传下去
-            if self._nClickTabType == EquipmentTabType.EquipmentTabTypeIntensify then --强化
-                local cell = self._pListController:cellWithIndex(self._nScrollViewClickIndex)
-                self._tTabUiArray[self._nClickTabType]:setScrollCellState(cell)
-            end
+           local nTag = sender:getTag()
             -- 物品列表选中改变事件
-            self._tTabUiArray[self._nClickTabType]:SetRightScrollViewClickByIndex(self.pScrollViewDate[self._nScrollViewClickIndex],self._kItemSrcType)  
+            self._tTabUiArray[self._nClickTabType]:SetRightScrollViewClickByIndex(self.pScrollViewDate[nTag],self._kItemSrcType)  
+            --更新装备的状态
+            self:updateScrollViewItemClickState()
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
         end
@@ -586,34 +600,14 @@ function EquipmentDialog:selectOneUiByType(nType)
             cell._pIconBtn:addTouchEventListener(onTouchButton)
         end
         cell:setItemInfo(pInfo)
-         
-        if (self.pScrollViewDate [index] == self._ntempItemDate) and self._ntempItemDate then --如果是点击某个装备进来的，需要默认显示
-            self._nScrollViewClickIndex = index
-        end
-        --如果是镶嵌和强化界面需要检测一下中间数据
-        if self.pScrollViewDate ~= nil and self.pScrollViewDate[index] ~= nil then
-            self:setScrollViewItemHasSelectByIndex(index,false,cell)
-            local tTempInfoArray = self._tTabUiArray[nType]:getItemInfo()
-            for k = 1 ,#tTempInfoArray do
-                if self.pScrollViewDate[index].position == tTempInfoArray[k].position and self.pScrollViewDate[index].id == tTempInfoArray[k].id   then
-                    self:setScrollViewItemHasSelectByIndex(index,true,cell)
-                   if nType == EquipmentTabType.EquipmentTabTypeIntensify then --强化
-                      self._tTabUiArray[nType]:setScrollCellState(cell)
-                   end                            
-                end
-            end
-        end
-
         return cell
     end
 
-    --设置ScrollView的数据
-    self:setScrollViewDataSource(nType) 
     --获取size的大小
     local nDateNum = table.getn(self.pScrollViewDate)
     local nRow  = math.ceil(nDateNum/4)
     nDateNum = 4*nRow
-    local nDefNum = 20                                  --默认创建的背景个数 需要填满一屏 4*5 20个
+    local nDefNum = 24                                  --默认创建的背景个数 需要填满一屏 4*6 24个
     nDefNum = nDefNum > nDateNum and nDefNum or nDateNum
 
     self._pListController._pNumOfCellDelegateFunc = function ()
@@ -621,7 +615,9 @@ function EquipmentDialog:selectOneUiByType(nType)
     end
     
     self._pListController:setDataSource(self.pScrollViewDate)
-    
+    --更新装备的状态
+    self:updateScrollViewItemClickState()
+    --删除宝石的特效
     self:deleteGemCanSynthesisAni()
     if nType == EquipmentTabType.EquipmentTabTypeGemCompound then --宝石合成
         -- 显示宝石可合成的特效
@@ -633,30 +629,20 @@ end
 function EquipmentDialog:setScrollViewDataSource(nType)
     self.pScrollViewDate = {} --ScrollView数据
     if nType == EquipmentTabType.EquipmentTabTypeResolve then --分解
-        self.pScrollViewDate = BagCommonManager:getInstance()._tArrayAllResolveEqu[4]
+        self.pScrollViewDate = BagCommonManager:getInstance()._tArrayAllResolveEqu[self._pEquResolveBtnIndex]
     elseif nType == EquipmentTabType.EquipmentTabTypeIntensify then --强化
-        self._pGemMountingButtonArrayNode:setVisible(true)--设置镶嵌界面的三个button显示
-        self._tGemMountingButtonArray[kCalloutSrcType.kCalloutSrcGem]:setVisible(false)
-
         if self._kItemSrcType == kCalloutSrcType.kCalloutSrcEquip then --身上的装备数据
             self.pScrollViewDate =  self:getWearEquInfo()
         elseif self._kItemSrcType == kCalloutSrcType.kCalloutSrcBagCommon then --背包里面的装备数据
             self.pScrollViewDate = BagCommonManager:getInstance()._tEquipArry
         end
     elseif nType == EquipmentTabType.EquipmentTabGemTypeGemInlay then --宝石镶嵌
-        self._pGemMountingButtonArrayNode:setVisible(true)--设置镶嵌界面的三个button显示
-        self._tGemMountingButtonArray[kCalloutSrcType.kCalloutSrcEquip]:setVisible(true)
-        self._tGemMountingButtonArray[kCalloutSrcType.kCalloutSrcGem]:setVisible(true)
         -- 如果点击的是身上的装备
         if self._kItemSrcType == kCalloutSrcType.kCalloutSrcEquip then
-            self:updateGemMountingButtonArrayTexture(1)
             self.pScrollViewDate = BagCommonManager:getInstance():getHasGemInlaidHoleEquipArry(BagCommonManager:getInstance():getWearEquInfo())
         elseif self._kItemSrcType == kCalloutSrcType.kCalloutSrcBagCommon then --如果点击的是背包里的装备
-            self:updateGemMountingButtonArrayTexture(2)
             self.pScrollViewDate =  BagCommonManager:getInstance():getHasGemInlaidHoleEquipArry(BagCommonManager:getInstance()._tEquipArry)
         elseif self._kItemSrcType == kCalloutSrcType.kCalloutSrcGem then --如果点击的是宝石
-            -- 默认显示身上的标签(数据默认为第一个装备)
-            self:updateGemMountingButtonArrayTexture(3)
             self.pScrollViewDate =  BagCommonManager:getInstance()._tGemArry
         end
     elseif nType ==EquipmentTabType.EquipmentTabTypeGemCompound then --宝石合成
@@ -669,6 +655,51 @@ function EquipmentDialog:setScrollViewDataSource(nType)
 
     end
 end
+
+--设置ScrollView的item状态(是否勾选)
+function EquipmentDialog:updateScrollViewItemClickState()
+  --  如果点击是镶嵌标签下的宝石则不需要选中状态
+    if self._nClickTabType == EquipmentTabType.EquipmentTabGemTypeGemInlay and self._kItemSrcType == kCalloutSrcType.kCalloutSrcGem then
+      return
+    end
+    if self.pScrollViewDate == nil or table.getn(self.pScrollViewDate) == 0 then
+       return
+    end
+
+    for k,v in pairs( self.pScrollViewDate) do
+      local pItemCell = self._pListController:cellWithIndex(k)
+      if pItemCell then
+          pItemCell:setClickVisible(false)
+          local tTempInfoArray = self._tTabUiArray[self._nClickTabType]:getItemInfo()
+          for kt,vt in pairs(tTempInfoArray) do
+              if v.position == vt.position and v.id == vt.id   then --代表是一件装备
+                 pItemCell:setClickVisible(true)
+                 if self._nClickTabType == EquipmentTabType.EquipmentTabTypeIntensify then --强化
+                    self._tTabUiArray[self._nClickTabType]:setScrollCellState(pItemCell)
+                 end
+                 break
+              end
+          end
+      end
+    end
+
+end
+
+
+--设置身上，背包，宝石三个按钮的状态
+function EquipmentDialog:setMountingBtnState()
+   self._pGemMountingButtonArrayNode:setVisible(false)
+   if self._nClickTabType == EquipmentTabType.EquipmentTabTypeIntensify then --强化
+        self._pGemMountingButtonArrayNode:setVisible(true)--设置镶嵌界面的三个button显示
+        self._tGemMountingButtonArray[kCalloutSrcType.kCalloutSrcGem]:setVisible(false)
+        self:updateGemMountingButtonArrayTexture(self._kItemSrcType)
+    elseif self._nClickTabType == EquipmentTabType.EquipmentTabGemTypeGemInlay then --强化
+       self._pGemMountingButtonArrayNode:setVisible(true)--设置镶嵌界面的三个button显示
+       self._tGemMountingButtonArray[kCalloutSrcType.kCalloutSrcGem]:setVisible(true)
+       self:updateGemMountingButtonArrayTexture(self._kItemSrcType)
+    end
+end
+
 
 -- 添加宝石可合成的特效
 function EquipmentDialog:showGemCanSynthesisAni()

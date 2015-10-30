@@ -35,7 +35,7 @@ function DialogTriggerItem:work()
         -- if DialogManager:getInstance():getDialogByName(self._fDialogName) == nil then
         if DialogManager:getInstance():getDialogByName("AlertDialog") == nil then
             -- DialogManager:getInstance():showDialogByName(self._fDialogName)
-            showAlertDialog("触发对话框！！！")
+            DialogManager:getInstance():showAlertDialog("触发对话框！！！")
             self._pOwnerTrigger._bOpened = false    -- 触发器重新复位，使下一次可以继续使用
             self._pOwnerTrigger._bWorking = false
             self:getTriggersManager():refreshDebugLayer()

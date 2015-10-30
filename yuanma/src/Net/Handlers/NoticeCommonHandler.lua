@@ -31,6 +31,9 @@ function NoticeCommonHandler:ctor()
     -- 强制退服通知（停服）
     NetHandlersManager:registHandler(29529, self.handleStopServiceNotice29529)
 
+    -- 家族职位变化的通知
+    NetHandlersManager:registHandler(29533, self.handleChangePositionNotice29533)
+
 end
 
 -- 创建函数
@@ -132,7 +135,7 @@ function NoticeCommonHandler:handleSameLoginNotice29527(msg)
             LayerManager:getInstance():gotoRunningSenceLayer(LOGIN_SENCE_LAYER)
             cc.Director:getInstance():getRunningScene()._bSkipHeartBeat = true
         end
-        showAlertDialog("您的账号已在另一台设备登陆！", okCallBack)
+        showSystemAlertDialog("您的账号已在另一台设备登陆！", okCallBack)
         cc.Director:getInstance():getRunningScene()._bForceQuit = true
     else
         local strError = "返回错误码："..msg.header.result
@@ -147,12 +150,24 @@ function NoticeCommonHandler:handleStopServiceNotice29529(msg)
             LayerManager:getInstance():gotoRunningSenceLayer(LOGIN_SENCE_LAYER)
             cc.Director:getInstance():getRunningScene()._bSkipHeartBeat = true
         end
-        showAlertDialog("服务器开始维护中！", okCallBack)
+        showSystemAlertDialog("服务器开始维护中！", okCallBack)
         cc.Director:getInstance():getRunningScene()._bForceQuit = true
     else
         local strError = "返回错误码："..msg.header.result
     end
     
+end
+
+-- 职位变化的通知
+function NoticeCommonHandler:handleChangePositionNotice29533(msg)
+    if msg.header.result == 0 then 
+        print("您的职位已经变化为"..msg.body.position)
+        FamilyManager:getInstance()._position = msg.body.position
+        -- 请求家族成员列表
+        FamilyCGMessage:queryFamilyMemberReq22322()
+    else
+        local strError = "返回错误码："..msg.header.result
+    end
 end
 
 return NoticeCommonHandler

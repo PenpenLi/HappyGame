@@ -116,35 +116,15 @@ function PetDialog:initUI()
     self.params._pScrollView:setTouchEnabled(true)
     self.params._pScrollView:setBounceEnabled(true)
     self.params._pScrollView:setClippingEnabled(true)
-    
-    self._pTabBtn[1] = params._pTeamButton
-    self._pTabBtn[2] = params._pJigsawButton
-    
-    self._pTabBtn[1]:setTag(1)
-    self._pTabBtn[2]:setTag(2)
-    self:tabSelectAction(1)
-    
-    local function tabButton(sender, eventType)
-        if eventType == ccui.TouchEventType.ended then
-            local tag = sender:getTag()
-            self:tabSelectAction(tag)
-            NewbieManager:showOutAndRemoveWithRunTime()
-        elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
-        end
-    end
-    
+   
     self.params["_pShopButton"]:addTouchEventListener(function(sender, eventType) 
         if eventType == ccui.TouchEventType.ended then
-            DialogManager:getInstance():showDialog("ShopDialog",{kShopType.kDiamondShop})
+            --DialogManager:getInstance():showDialog("ShopDialog",{kShopType.kDiamondShop})
+            DialogManager:getInstance():showDialog("PetCooperateDialog",{})
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
         end
     end)
-    
-    
-    self._pTabBtn[1]:addTouchEventListener(tabButton)
-    self._pTabBtn[2]:addTouchEventListener(tabButton)
     
     for i=1,3 do
         self.params["_ppetbutton0"..i]:setTag(i)
@@ -163,120 +143,6 @@ function PetDialog:initUI()
     self:disposeCSB()
     
     self:updateTeamDatas()
-end
-
-function PetDialog:tabSelectAction(type)
-    self._pTabBtn[1]:loadTextures(
-        type == 1 and "PetRes/cwjm2.png" or "PetRes/cwjm1.png",
-        "PetRes/cwjm2.png",
-        "PetRes/cwjm1.png",
-        ccui.TextureResType.plistType)
-
-    self._pTabBtn[2]:loadTextures(
-        type == 2 and "PetRes/cwjm4.png" or "PetRes/cwjm3.png",
-        "PetRes/cwjm4.png",
-        "PetRes/cwjm3.png",
-        ccui.TextureResType.plistType)
-        
-    if self._nTabType == type then
-    	return
-    end
-
-    self._nTabType = type
-	local action = {
-	   [PetTabTypes.PetTeam] = function()
-            self:updateTeamDatas()
-	   end,
-	   [PetTabTypes.PetJigsaw] = function()
-            self:updateJigsawDatas()
-       end,
-	}
-	
-	action[type]()
-end
-
-function PetDialog:updateJigsawDatas()
-    self.params._pScrollView:removeAllChildren()
-    self._pItems = {}
-    
-    self.params._pScrollView:jumpToTop()
-
-    local bigCount,rowCount = 0
-    bigCount = table.getn(TablePets)
-    local result1,result2 = math.modf(bigCount/2)
-    if result2 > 0 then
-        rowCount = result1 + 1
-    else
-        rowCount = result1
-    end
-
-    local nUpAndDownDis = 4                             --装备上下与框的间隔
-    local nLeftAndReightDis = 0                         --装备左右与框的间隔
-    local nSize = 90
-    local nViewWidth  = self.params._pScrollView:getContentSize().width
-    local nViewHeight = self.params._pScrollView:getContentSize().height
-    local scrollViewHeight =((nUpAndDownDis+220)*(rowCount) > nViewHeight) and (nUpAndDownDis+220)*(rowCount)   or nViewHeight
-    self.params._pScrollView:setInnerContainerSize(cc.size(nViewWidth,scrollViewHeight))
-    --self.params._pScrollView:setBackGroundColorType(1)
-
-    for i = 1,bigCount do
-        -- 按照宠物索引 取宠物数据
-        local info = nil
-        info = PetsManager:getInstance():getPetChipDataWithId(i)
-    
-        local cell = self._pItems[i]
-        if not self._pItems[i] then
-            cell = require("PetJigsaw"):create()
-        end
-
-        local t1,t2 = math.modf((i-1)/2)
-        t2 = t2*2
-        cell:setPosition(173 + t2*(345+nLeftAndReightDis), 75 + scrollViewHeight-(220+nUpAndDownDis)*t1-230 +45 )
-        cell:setAnchorPoint(cc.p(0,0))
-        self.params._pScrollView:addChild(cell)
-        self._pItems[i] = cell
-
-        --local info = nil
-        -- 按照背包索引 取物品数据
-        --info = BagCommonManager:getInstance():getItemInfoByIndex(i,self._tType)
-
-        cell:setInfo(info)
-    end
-    
-    for i=1,3 do
-        self.params["_ppetbutton0"..i]:setVisible(false)
-        self.params["_pIcon0"..i]:setVisible(true)
-        self.params["_pIcon0"..i]:loadTexture(
-            "ccsComRes/BagItem.png",
-            ccui.TextureResType.plistType)
-        self.params["_picontext0"..i]:setVisible(false)
-        self.params["_pIconP0"..i]:setVisible(false)
-        self.params["_pIcon0"..i]:setTouchEnabled(false)
-    end
-
-    for i=1,3 do
-        
-        local info = BagCommonManager:getInstance():getItemRealInfo(200036 - 1 + i,kItemType.kFeed)
-
-        self.params["_pIcon0"..i]:loadTexture(
-            info.templeteInfo.Icon..".png",
-            ccui.TextureResType.plistType)
-        self.params["_pIcon0"..i]:setVisible(true)
-        self.params["_picontext0"..i]:setVisible(true)
-        self.params["_picontext0"..i]:setString(info.value)
-
-        -- 图标弹tips
-        local function touchEvent(sender,eventType)
-            if eventType == ccui.TouchEventType.ended then
-                DialogManager:getInstance():showDialog("BagCallOutDialog",{info,nil,nil,false})
-            elseif eventType == ccui.TouchEventType.began then
-                AudioManager:getInstance():playEffect("ButtonClick")
-            end
-        end
-
-        self.params["_pIcon0"..i]:setTouchEnabled(true)
-        self.params["_pIcon0"..i]:addTouchEventListener(touchEvent)
-    end
 end
 
 function PetDialog:updateTeamDatas()
@@ -313,7 +179,7 @@ function PetDialog:updateTeamDatas()
         if info ~= nil then
             local cell = self._pItems[i]
             if not self._pItems[i] then
-                cell = require("PetItemCell"):create(info)
+                cell = require("PetItemCell"):create(info,true)
             end
 
             local t1,t2 = math.modf((i-1)/2)
@@ -324,15 +190,21 @@ function PetDialog:updateTeamDatas()
             self._pItems[i] = cell
         end
     end
+    local index = table.getn(PetsManager:getInstance()._tMainPetsInfos) + 1
+    for  i = 1 , table.getn(TablePets) do
+        local isGot = PetsManager:getInstance():isPetGot(i)
     
-    for  i = table.getn(PetsManager:getInstance()._tMainPetsInfos) + 1 , table.getn(TablePets) do
-        local cell = require("NoPetCell"):create()
-        
-        local t1,t2 = math.modf((i-1)/2)
-        t2 = t2*2
-        cell:setPosition(173 + t2*(345+nLeftAndReightDis), 75 + scrollViewHeight-(220+nUpAndDownDis)*t1-230 +45 )
-        cell:setAnchorPoint(cc.p(0,0))
-        self.params._pScrollView:addChild(cell)
+        if isGot == false then
+            local info = PetsManager:getInstance():getPetChipDataWithId(i)
+            local cell = require("PetItemCell"):create(info,false)
+
+            local t1,t2 = math.modf((index-1)/2)
+            t2 = t2*2
+            cell:setPosition(173 + t2*(345+nLeftAndReightDis), 75 + scrollViewHeight-(220+nUpAndDownDis)*t1-230 +45 )
+            cell:setAnchorPoint(cc.p(0,0))
+            self.params._pScrollView:addChild(cell)
+            index = index + 1
+        end
     end
     
     local RoleIcons = {"headers/Header_zs.png" , "headers/Header_fs.png" , "headers/Header_ck.png"}
@@ -424,7 +296,7 @@ end
 
 -- 处理合成
 function PetDialog:handleMsgCompoundPet(event)
-    --self:updateJigsawDatas()
+    self:updateTeamDatas()
     
     local info = nil
     local petId = nil
@@ -450,20 +322,12 @@ end
 
 -- 处理进阶
 function PetDialog:handleMsgAdvancePet(event)
-    self:updateJigsawDatas()
+    self:updateTeamDatas()
 end 
 
 -- 处理喂食
 function PetDialog:handleMsgFeedPet(event)
-    local action = {
-        [PetTabTypes.PetTeam] = function()
-            self:updateTeamDatas()
-        end,
-        [PetTabTypes.PetJigsaw] = function()
-            self:updateJigsawDatas()
-        end,
-    }
-    action[self._nTabType]()
+    self:updateTeamDatas()
 end
 
 function PetDialog:showNewPet(dataInfo)

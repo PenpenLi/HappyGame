@@ -73,24 +73,7 @@ function FriendTipsDialog:initUI()
     self._pCCS = params._pCCS
     self._pBg = params._pBackGround
     self._pCloseButton = params._pCloseButton
-    
-    if FriendManager:getInstance()._nMountFriendSkill ~= nil and FriendManager:getInstance()._nMountFriendSkill.roleId == self._pData.roleId then
-        self.params._pButton1:setTitleText("取消配置")
-    end
-    
-    self.params._pButton1:addTouchEventListener(function(sender, eventType)
-        if eventType == ccui.TouchEventType.ended then
-            if FriendManager:getInstance()._nMountFriendSkill ~= nil and FriendManager:getInstance()._nMountFriendSkill.roleId == self._pData.roleId then
-                FriendCGMessage:sendMessageMountFriendSkill22022(0)
-            else
-                FriendCGMessage:sendMessageMountFriendSkill22022(self._pData.roleId)
-            end
-            self:close()
-        elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
-        end
-    end)
-    
+      
     self.params._pButton2:addTouchEventListener(function(sender, eventType)
         if eventType == ccui.TouchEventType.ended then
             showConfirmDialog("是否删除好友" ..self._pData.roleName .."?",function()

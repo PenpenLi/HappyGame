@@ -244,10 +244,12 @@ function EmailDialog:handleMsgGetGoodsSuccess(event)
         local indexOfList = EmailManager:getInstance():getIndexOfListByIndex(v)
         if indexOfList ~= 0 then
             local tGoods = self:getEmailManager()._tEmailInfos[indexOfList].goods
-            self:getGetGoodsItemInfo(tInfo,tGoods)
-            self:getEmailManager():getGoodsInEmail(indexOfList)
-            self._tItems[indexOfList]:refreshGoodsFlagVisible()
-            self._tItems[indexOfList]:setIsRead(true)
+            if tGoods then 
+                self:getGetGoodsItemInfo(tInfo,tGoods)
+                self:getEmailManager():getGoodsInEmail(indexOfList)
+                self._tItems[indexOfList]:refreshGoodsFlagVisible()
+                self._tItems[indexOfList]:setIsRead(true)
+            end
         end
     end
     local hasNewEmail = EmailManager:getInstance():hasNewEmail()

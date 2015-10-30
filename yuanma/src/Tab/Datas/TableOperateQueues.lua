@@ -7,7 +7,7 @@ TableOperateQueues=
 	{ ID = 2.0, Queue = {{id = 3.0, args = {copyType = 10, params = {1, 10001}}}}, },
 	{ ID = 3.0, Queue = {{id = 3.0, args = {copyType = 10, params = {1}}}}, },
 	{ ID = 4.0, Queue = {{id = 3.0, args = {copyType = 4}}}, },
-	{ ID = 5.0, Queue = {{id = 4.0, args = {sysType = 2}}}, },
+	{ ID = 5.0, Queue = {{id=2.0,args = {npcID = 1}},{id = 4.0, args = {sysType = 2}}}, },
 	{ ID = 6.0, Queue = {{id = 4.0, args = {sysType = 3}}}, },
 	{ ID = 7.0, Queue = {{id = 4.0, args = {sysType = 4}}}, },
 	{ ID = 8.0, Queue = {{id = 4.0, args = {sysType = 4}}}, },

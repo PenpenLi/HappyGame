@@ -70,14 +70,16 @@ end
 
 -- 技能使用接口
 function WarriorAngerSkill1:onUse() 
-    -- test
-    -- cc.Director:getInstance():getScheduler():setTimeScale(0.3)
     -- 立即手动切换到吟唱状态
     if self._pCurState._kTypeID == kType.kState.kBattleSkill.kIdle then
         self._fCDCounter = 0   -- CD时间清空 
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kChant)
     else  -- 如果当前技能正处于使用状态，则立即将角色切换回站立状态
-        self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+        elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+        end
     end
 end
 
@@ -162,8 +164,6 @@ function WarriorAngerSkill1:onEnterChantDo(state)
     --print("WarriorAngerSkill1:onEnterChantDo()")
     self._pCurState = state
 
-    local info = self._pSkillInfo
-
     -- 播放人物动作
     self:getMaster():playAttackAction(self._nRoleAttackActionIndex)
     
@@ -184,7 +184,11 @@ function WarriorAngerSkill1:onEnterChantDo(state)
         self:getMaster()._refStick:sub()
         self._bStickAdd = false
         if self:getMaster():isUnusualState() == false then     -- 正常状态
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+            elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
         end
     end
     -- 摇杆禁用

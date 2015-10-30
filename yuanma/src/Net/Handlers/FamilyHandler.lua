@@ -108,9 +108,11 @@ function FamilyHandler:handleMsgQueryFamily(msg)
             NetRespManager:getInstance():dispatchEvent(kNetCmd.kFindFamilyResp,event)
 		else
 			NoticeManager:getInstance():showSystemMessage("不存在此家族")
+            NetRespManager:getInstance():dispatchEvent(kNetCmd.kFindFamilyResp,"failed")
 		end
 	else
 		print("返回错误码:"..msg.header.result)
+        NetRespManager:getInstance():dispatchEvent(kNetCmd.kFindFamilyResp,"failed")
 	end
 end
 
@@ -137,6 +139,7 @@ function FamilyHandler:handleMsgApplyFamily(msg)
 		local event = {
 			familyId = msg.body.argsBody.familyId
 		}
+        NoticeManager:getInstance():showSystemMessage("家族申请成功。")
 		NetRespManager:getInstance():dispatchEvent(kNetCmd.kApplyFamilyResp,event)
 	else
 		print("返回错误码:"..msg.header.result)

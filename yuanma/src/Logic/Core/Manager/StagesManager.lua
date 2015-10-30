@@ -38,6 +38,7 @@ function StagesManager:clearCache()
         [kType.kCopy.kPVP] = TablePVPCopysMaps,             -- 排行榜副本地图表
         [kType.kCopy.kHuaShan] = TableHuaShanCopysMaps,     -- 华山论剑副本地图表
         [kType.kCopy.kStory] = TableStoryCopysMaps,         -- 剧情副本地图表
+        [kType.kCopy.kTeamAIFight] = TableTeamAIFightCopysMaps, -- 组队副本（AI版）地图表
     }
     self._tCopysDataTable =                                 -- 所有副本数据表
     {
@@ -51,6 +52,7 @@ function StagesManager:clearCache()
 --        [kType.kCopy.kPVP] = TablePVPCopys,             -- 排行榜副本数据表
 --     [kType.kCopy.kHuaShan] = TableHuaShanCopys,          -- 华山论剑副本数据表
        [kType.kCopy.kStory] = TableStoryCopys,              -- 剧情副本数据表
+       [kType.kCopy.kTeamAIFight] = TableTeamAIFightCopys,  -- 组队副本（AI版）数据表
     }
     self._nBattleId = 0                                     -- 当前副本中的服务器关卡编号（与服务器通信）
     self._nIdentity = 0                                     -- 副本标示id，用于做验证 
@@ -76,10 +78,11 @@ function StagesManager:getCurStageDataInfo()
         [kType.kCopy.kChallenge] = 400,             -- 挑战副本数据表
         [kType.kCopy.kTower] = 500,                 -- 爬塔副本数据表
         [kType.kCopy.kMapBoss] = 600,               -- 地图boss副本数据表
-        --     [kType.kCopy.kMidNight] = TableMidNightCopys,   -- 午夜惊魂副本数据表
-        --     [kType.kCopy.kPVP] = TablePVPCopys,             -- 排行榜副本数据表
-        --     [kType.kCopy.kHuaShan] = TableHuaShanCopys,     -- 华山论剑副本数据表
+        --     [kType.kCopy.kMidNight] = ...,       -- 午夜惊魂副本数据表
+        --     [kType.kCopy.kPVP] = ...,            -- 排行榜副本数据表
+        --     [kType.kCopy.kHuaShan] = ...,        -- 华山论剑副本数据表
         [kType.kCopy.kStory] = 10000,               -- 剧情副本数据表
+        [kType.kCopy.kTeamAIFight] = 11000,         -- 组队副本数据表（AI版）
     }
     return self._tCopysDataTable[self._nCurCopyType][self._nCurStageID-tOffect[self._nCurCopyType]]
 end

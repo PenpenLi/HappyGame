@@ -17,6 +17,7 @@ function PetSkill22:ctor()
     self._strName = "PetSkill22"                            -- 技能名称
     self._kTypeID = kType.kSkill.kID.kPetSkill22            -- 技能对象类型
     self._pCurState = nil                                   -- 技能当前的状态机状态
+    self._posTargetsPos = nil                               -- 目标位置
     self._nRoleAttackActionIndex = 4                        -- 角色攻击动作index
     self._fChantDelayTime = 1.0                            -- 吟唱动作持续时间s
     
@@ -151,7 +152,11 @@ function PetSkill22:onEnterChantDo(state)
     local roleActOver = function()        
         -- 技能动作结束，人物不为特殊状态时即回到站立状态
         if self:getMaster():isUnusualState() == false then     -- 正常状态
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePetRole):setCurStateByTypeID(kType.kState.kBattlePetRole.kStand)
+            if self:getMaster()._kRoleType == kType.kRole.kPet then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePetRole):setCurStateByTypeID(kType.kState.kBattlePetRole.kStand)               
+            elseif self:getMaster()._kRoleType == kType.kRole.kOtherPet then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole):setCurStateByTypeID(kType.kState.kBattleOtherPetRole.kStand)
+            end
         end
     end
     local duration = self:getMaster():getAttackActionTime(self._nRoleAttackActionIndex)

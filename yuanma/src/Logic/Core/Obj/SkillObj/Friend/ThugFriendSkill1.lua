@@ -17,6 +17,7 @@ function ThugFriendSkill1:ctor()
     self._strName = "ThugFriendSkill1"                               -- 技能名称
     self._kTypeID = kType.kSkill.kID.kThugFriendSkill1               -- 技能对象类型
     self._pCurState = nil                                               -- 技能当前的状态机状态
+    self._posTargetsPos = nil                                           -- 目标位置
     self._nRoleAttackActionIndex = 7                                    -- 角色攻击动作index
     self._fChantDelayTime = 0.45                                        -- 吟唱动作持续时间s
 

@@ -77,7 +77,11 @@ function ThugSkill7:onUse()
         self._fCDCounter = 0   -- CD时间清空 
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kChant)
     else  -- 如果当前技能正处于使用状态，则立即将角色切换回站立状态
-        self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+        elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+        end
     end
 end
 
@@ -109,7 +113,11 @@ function ThugSkill7:procActionsFrameEvents()
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kIdle)
         self:getMaster():setVisible(true)
         if self:getMaster():isUnusualState() == false then     -- 正常状态
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+            elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
         end
     end
     self._strFrameEventName = ""
@@ -235,6 +243,10 @@ function ThugSkill7:onEnterProcessDo(state)
 
     -- 给技能指定施展时的zorder
     self._nSettledZorder = kZorder.kMaxSkill
+
+    -- 设置特效位置
+    local posX, posY = self:getMaster():getPosition()
+    self:setPosition(posX, posY + self:getMaster():getHeight()/2)
     
     -- 技能施展音效
     AudioManager:getInstance():playEffect(self._tTempleteInfo.SkillProcessSound)
@@ -275,8 +287,7 @@ end
 
 -- 技能释放状态onUpdate时技能操作
 function ThugSkill7:onUpdateReleaseDo(dt)
-    local posX, posY = self:getMaster():getPosition()
-    self:setPosition(posX, posY + self:getMaster():getHeight()/2)
+
 end
 
 -- 技能结束时的复位操作

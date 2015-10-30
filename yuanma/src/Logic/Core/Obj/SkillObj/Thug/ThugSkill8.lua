@@ -78,7 +78,11 @@ function ThugSkill8:onUse()
         self._fCDCounter = 0   -- CD时间清空 
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kChant)
     else  -- 如果当前技能正处于使用状态，则立即将角色切换回站立状态
-        self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+        elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+        end
     end
 end
 
@@ -195,7 +199,11 @@ function ThugSkill8:onEnterChantDo(state)
         self:getMaster():setVisible(false)  -- 角色隐藏
         
         if self:getMaster():isUnusualState() == false then     -- 正常状态
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)-- 切换到站立
+            if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+            elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
         end
         
         self:setVisible(true)

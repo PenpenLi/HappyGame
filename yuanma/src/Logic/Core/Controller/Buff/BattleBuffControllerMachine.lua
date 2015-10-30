@@ -102,7 +102,7 @@ function BattleBuffControllerMachine:addController(pController)
        pController._kTypeID == kType.kController.kBuff.kBattleAttriDownBuff or
        pController._kTypeID == kType.kController.kBuff.kBattleSpeedDownBuff or 
        pController._kTypeID == kType.kController.kBuff.kBattleSunderArmorBuff then
-        if self._pMaster._kRoleType == kType.kRole.kPlayer then
+        if self._pMaster._kRoleType == kType.kRole.kPlayer or self._pMaster._kRoleType == kType.kRole.kOtherPlayer then
             self._pMaster:addPassiveByTypeID(kType.kController.kPassive.kBattleDoWhenGetDebuffPassive)
         end
     end
@@ -111,12 +111,12 @@ function BattleBuffControllerMachine:addController(pController)
     local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
     if pUILayer then
         if self._pMaster == self:getRolesManager()._pMainPlayerRole then
-            pUILayer._pPlayerBuffIconsNode:addBuffByType(pController._kTypeID)
+            pUILayer._pMainPlayerUINode._pBuffIconsNode:addBuffByType(pController._kTypeID)
         end
         if self._pMaster == self:getRolesManager()._pPvpPlayerRole then
-            pUILayer._pBossBuffIconsNode:addBuffByType(pController._kTypeID)
+            pUILayer._pBossHpNode._pBossBuffIconsNode:addBuffByType(pController._kTypeID)
         elseif self._pMaster == self:getMonstersManager()._pBoss then
-            pUILayer._pBossBuffIconsNode:addBuffByType(pController._kTypeID)
+            pUILayer._pBossHpNode._pBossBuffIconsNode:addBuffByType(pController._kTypeID)
         end
     end
     table.insert(self._tControllers, pController)
@@ -135,16 +135,16 @@ function BattleBuffControllerMachine:removeControllerByIndex(idx)
     -- 刷新buff显示队列
     if self._pMaster == self:getRolesManager()._pMainPlayerRole then
         if self:isBuffExist(type) == false then
-            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pPlayerBuffIconsNode:removeBuffByType(pController._kTypeID)
+            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pMainPlayerUINode._pBuffIconsNode:removeBuffByType(pController._kTypeID)
         end
     end
     if self._pMaster == self:getRolesManager()._pPvpPlayerRole then
         if self:isBuffExist(type) == false then
-            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossBuffIconsNode:removeBuffByType(pController._kTypeID)
+            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode._pBossBuffIconsNode:removeBuffByType(pController._kTypeID)
         end
     elseif self._pMaster == self:getMonstersManager()._pBoss then
         if self:isBuffExist(type) == false then
-            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossBuffIconsNode:removeBuffByType(pController._kTypeID)
+            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode._pBossBuffIconsNode:removeBuffByType(pController._kTypeID)
         end
     end
 
@@ -195,7 +195,18 @@ function BattleBuffControllerMachine:refreshToStandExcept(buff)
                 self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster)._pCurState._kTypeID ~= kType.kState.kBattleMonster.kBeaten then
                 self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kStand)
             end
+        elseif self._pMaster._kRoleType == kType.kRole.kOtherPlayer then
+            if self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole)._pCurState._kTypeID ~= kType.kState.kBattleOtherPlayerRole.kDead and
+                self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole)._pCurState._kTypeID ~= kType.kState.kBattleOtherPlayerRole.kBeaten then
+                self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
+        elseif self._pMaster._kRoleType == kType.kRole.kOtherPet then
+            if self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole)._pCurState._kTypeID ~= kType.kState.kBattleOtherPetRole.kDead and
+                self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole)._pCurState._kTypeID ~= kType.kState.kBattleOtherPetRole.kBeaten then
+                self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole):setCurStateByTypeID(kType.kState.kBattleOtherPetRole.kStand)
+            end
         end
+
     end
     
     return
@@ -213,6 +224,10 @@ function BattleBuffControllerMachine:refreshToFrozen()
         self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePetRole):setCurStateByTypeID(kType.kState.kBattlePetRole.kFrozen)
     elseif self._pMaster._kRoleType == kType.kRole.kMonster then
         self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kFrozen)
+    elseif self._pMaster._kRoleType == kType.kRole.kOtherPlayer then
+        self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kFrozen)
+    elseif self._pMaster._kRoleType == kType.kRole.kOtherPet then
+        self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole):setCurStateByTypeID(kType.kState.kBattleOtherPetRole.kFrozen)
     end
 
     return
@@ -230,6 +245,10 @@ function BattleBuffControllerMachine:refreshToDizzy()
         self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePetRole):setCurStateByTypeID(kType.kState.kBattlePetRole.kDizzy)
     elseif self._pMaster._kRoleType == kType.kRole.kMonster then
         self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kDizzy)
+    elseif self._pMaster._kRoleType == kType.kRole.kOtherPlayer then
+        self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kDizzy)
+    elseif self._pMaster._kRoleType == kType.kRole.kOtherPet then
+        self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPetRole):setCurStateByTypeID(kType.kState.kBattleOtherPetRole.kDizzy)
     end
 
     return
@@ -347,9 +366,18 @@ end
 -- 立刻移除所有buffs
 function BattleBuffControllerMachine:removeAllBuffsRightNow()
     for k, v in pairs(self._tControllers) do
-        v:onExit()
+        v:cancel()
     end
-    self._tControllers = {}
+    -- 刷新buff显示队列
+    if self._pMaster == self:getRolesManager()._pMainPlayerRole then
+        cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pMainPlayerUINode._pBuffIconsNode:clearAllBuffAndTempDate()
+    end
+    if self._pMaster == self:getRolesManager()._pPvpPlayerRole then
+        cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode._pBossBuffIconsNode:clearAllBuffAndTempDate()
+    elseif self._pMaster == self:getMonstersManager()._pBoss then
+        cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode._pBossBuffIconsNode:clearAllBuffAndTempDate()
+    end
+
     return
 end
 

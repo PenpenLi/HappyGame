@@ -232,8 +232,8 @@ function PvperDetialDialog:initUI()
         print("touch end a ".."x="..location.x.."  y="..location.y)
 
         local actionOverCallBack = function()  --动画播放完毕的回调 播放默认待机动作
-            local pStandAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.StandActFrameRegion[1],self._tTempletetInfo.StandActFrameRegion[2])
-            pStandAnimate:setSpeed(self._tTempletetInfo.StandActFrameRegion[3])
+            local pStandAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.ReadyFightActFrameRegion[1],self._tTempletetInfo.ReadyFightActFrameRegion[2])
+            pStandAnimate:setSpeed(self._tTempletetInfo.ReadyFightActFrameRegion[3])
             self._pRolePlayer:runAction(cc.RepeatForever:create(pStandAnimate))
         end
 
@@ -374,10 +374,14 @@ function PvperDetialDialog:createRoleModel(equipemts,fashionOptions,roleCareer)
     self:updateRoleFashionHaloModel(pFashionHaloAni,pFashionHaloTure,nScale) --更换光环
     self:setMaterialInfo(equipemts) --设置材质信息
     self._pRolePlayer:stopAllActions()
+     if self._pRoleAnimation then
+        --self._pRoleAnimation:release();
+        self._pRoleAnimation = nil 
+    end
     self._pRoleAnimation = cc.Animation3D:create(pRoleModelAni..".c3b")
     local actionOverCallBack = function ()
-        local pRunActAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.StandActFrameRegion[1],self._tTempletetInfo.StandActFrameRegion[2])
-        pRunActAnimate:setSpeed(self._tTempletetInfo.StandActFrameRegion[3])
+        local pRunActAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.ReadyFightActFrameRegion[1],self._tTempletetInfo.ReadyFightActFrameRegion[2])
+        pRunActAnimate:setSpeed(self._tTempletetInfo.ReadyFightActFrameRegion[3])
         self._pRolePlayer:runAction(cc.RepeatForever:create(pRunActAnimate))
     end
      self:setModelScaleByInfo(pModelScale)
@@ -488,7 +492,7 @@ function PvperDetialDialog:initSkillRenders(mountSkills)
 			--skillRender:setVisible(false)
 		else
 			--skillRender:setVisible(true)
-            local skillInfo = SkillsManager:getInstance():getSkillIconByID(self._tPvperFightInfo.roleCareer,mountSkills[i].id,mountSkills[i].level)
+            local skillInfo = SkillsManager:getInstance():getCareerSkillInfo(self._tPvperFightInfo.roleCareer,mountSkills[i].id,mountSkills[i].level)
 			skillInfoArry[i] = skillInfo
 			-- 技能名称
 			skillRender:getChildByName("SkillName"):setString(skillInfo.SkillName)
@@ -570,8 +574,8 @@ function PvperDetialDialog:onExitPvperDetailDialog ()
     ResPlistManager:getInstance():removeSpriteFrames("warrior_skill_icon.plist")
     ResPlistManager:getInstance():removeSpriteFrames("mage_skill_icon.plist")
 
-    RolesManager:getInstance():setForceMinPositionZ(false)
-    PetsManager:getInstance():setForceMinPositionZ(false)
+    --RolesManager:getInstance():setForceMinPositionZ(false)
+    --PetsManager:getInstance():setForceMinPositionZ(false)
     
 end
 

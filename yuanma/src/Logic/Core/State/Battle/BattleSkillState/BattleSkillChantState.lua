@@ -29,15 +29,7 @@ function BattleSkillChantState:onEnter(args)
     --print(self._strName.." is onEnter!")
 
     -- 开始吟唱，技能开始
-    if self:getMaster() then
-        if self:getMaster():getMaster()._kRoleType == kType.kRole.kPlayer then
-            -- mmo.DebugHelper:showJavaLog("--STATE--PLAYER_SKILL--:Chant "..self:getMaster()._strName)
-        elseif self:getMaster():getMaster()._kRoleType == kType.kRole.kMonster then
-            -- mmo.DebugHelper:showJavaLog("--STATE--MONSTER_SKILL--:Chant "..self:getMaster()._strName)
-        elseif self:getMaster():getMaster()._kRoleType == kType.kRole.kPet then
-            -- mmo.DebugHelper:showJavaLog("--STATE--PET_SKILL--:Chant "..self:getMaster()._strName)
-        end
-        
+    if self:getMaster() then        
         self:getMaster():onEnterChantDo(self)
     end
     return

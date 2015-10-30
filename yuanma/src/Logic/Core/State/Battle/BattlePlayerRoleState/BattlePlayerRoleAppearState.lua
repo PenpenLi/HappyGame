@@ -38,6 +38,9 @@ function BattlePlayerRoleAppearState:onEnter(args)
         self:getMaster():checkCover()
         -- 添加动作回调
         local appearOver = function()
+            if self:getMaster()._strCharTag == "pvp" then
+                cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pBossHpNode:setVisible(true)
+            end
             self._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
         end
         local duration = self:getMaster():getAppearActionTime()

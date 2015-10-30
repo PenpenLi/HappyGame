@@ -380,7 +380,7 @@ function ArenaDialog:setRankList(tPlayer)
 		pRender._pText3:setString(roleArenaInfo.level)
 		-- 职业
 		pRender._pText4:setString(kRoleCareerTitle[roleArenaInfo.roleCareer])
-		pRender._pText4:setColor(kRoleCareerFontColor[roleArenaInfo.roleCareer])
+		--pRender._pText4:setColor(kRoleCareerFontColor[roleArenaInfo.roleCareer])
 		-- 战斗力
 		pRender._pText5:setString(roleArenaInfo.fightingPower)
         -- 九宫格图片获得实际尺寸的方法
@@ -500,6 +500,9 @@ function ArenaDialog:entryBattleCopy()
         args._nMainPlayerRoleCurHp = nil      -- 从副本进入时，这里为无效值
         args._nMainPlayerRoleCurAnger = nil   -- 从副本进入时，这里为无效值
         args._nMainPetRoleCurHp = nil         -- 从副本进入时，这里为无效值
+	    args._tOtherPlayerRolesCurHp = {}      -- 从副本进入时，这里为无效值
+	    args._tOtherPlayerRolesCurAnger = {}   -- 从副本进入时，这里为无效值
+	    args._tOtherPetRolesCurHp = {}         -- 从副本进入时，这里为无效值
         args._nCurCopyType = kCopy.kPVP
         args._nCurStageID = self._pSelectedCopysDataInfo.ID
         args._nCurStageMapID = self._pSelectedCopysDataInfo.MapID
@@ -529,7 +532,15 @@ function ArenaDialog:entryBattleCopy()
         for i,v in ipairs(self._pPvPRoleInfo.pets) do
         	args._tPvpPetRoleInfosInQueue[i] = v.petInfo
         end
-       
+        args._tPvpPetCooperates = {}
+        -- 其他玩家信息
+	    args._tOtherPlayerRolesInfosOnBattleMap = {}
+	    args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+	    args._tOtherPlayerRolesMountActvSkillsInfos = {}
+	    args._tOtherPlayerRolesPasvSkillsInfos = {}
+	    args._tOtherPetCooperates = {}
+	    args._bIsFirstBattleOfNewbie = false
+
         --关闭当前打开的Dialog
         self:getGameScene():closeDialogByNameWithNoAni("ArenaDialog")
         --切换战斗场景

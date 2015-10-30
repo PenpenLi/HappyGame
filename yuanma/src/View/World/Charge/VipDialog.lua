@@ -41,7 +41,7 @@ function VipDialog:dispose()
 	ResPlistManager:getInstance():addSpriteFrames("VipExplain.plist")
 	NetRespManager:getInstance():addEventListener(kNetCmd.kGainVipBox, handler(self,self.handlerMsgGainVipBox20509))
 	self:initUI()
-
+	self:initTouches()
 	----------------节点事件-----------------------------------------------
 	local function onNodeEvent()
 		if event == "exit" then 
@@ -102,6 +102,36 @@ function VipDialog:initUI()
 	self._pChargeBtn:addTouchEventListener(touchEvent)
 	self:initPageInfoData()
 	self:UpdateVipInfo()
+end
+
+
+-- 初始化触摸相关
+function VipDialog:initTouches()
+    -- 触摸注册
+    local function onTouchBegin(touch,event)
+        local location = touch:getLocation()
+        print("begin ".."x="..location.x.."  y="..location.y)
+        --self:deleteItem(1)
+        --self:deleteAllItems()
+        return true
+    end
+    local function onTouchMoved(touch,event)
+        local location = touch:getLocation()
+        print("move ".."x="..location.x.."  y="..location.y)
+    end
+    local function onTouchEnded(touch,event)
+        local location = touch:getLocation()
+        print("end ".."x="..location.x.."  y="..location.y)
+        -- self:close()     
+    end
+
+    -- 添加监听器
+    self._pTouchListener = cc.EventListenerTouchOneByOne:create()
+    self._pTouchListener:setSwallowTouches(true)
+    self._pTouchListener:registerScriptHandler(onTouchBegin,cc.Handler.EVENT_TOUCH_BEGAN )
+    self._pTouchListener:registerScriptHandler(onTouchMoved,cc.Handler.EVENT_TOUCH_MOVED )
+    self._pTouchListener:registerScriptHandler(onTouchEnded,cc.Handler.EVENT_TOUCH_ENDED )
+    self:getEventDispatcher():addEventListenerWithSceneGraphPriority(self._pTouchListener, self)
 end
 
 function VipDialog:initPageInfoData()

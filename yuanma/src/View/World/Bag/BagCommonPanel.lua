@@ -182,9 +182,9 @@ function BagCommonPanel:dispose()
     self:addChild(self._pCCS)
     
     -- 初始化列表管理
-    self._pListController = require("ListController"):create(self,self._pScrollItemsView,listLayoutType.LayoutType_rows,100,100)
-    self._pListController:setVertiaclDis(6)
-    self._pListController:setHorizontalDis(3)
+    self._pListController = require("ListController"):create(self,self._pScrollItemsView,listLayoutType.LayoutType_rows,90,90)
+    self._pListController:setVertiaclDis(9)
+    self._pListController:setHorizontalDis(9)
 
     self._pMoneyNum = params._pMoneyNum
     self._pRmbNum = params._pRmbNum

@@ -26,7 +26,7 @@ end
 
 -- 为0的时候要进行的操作（需要重载）
 function RoleGenAttackButtonRef:doWhenIsZero()
-   if self._pMaster._strCharTag == "main" then
+   if self._pMaster._kRoleType == kType.kRole.kPlayer and self._pMaster._strCharTag == "main" then
         -- print("普通攻击按钮恢复使用！")
         local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
         if pUILayer then
@@ -39,7 +39,7 @@ end
 
 -- 不为0的时候要进行的操作（需要重载）
 function RoleGenAttackButtonRef:doWhenIsNotZero()
-    if self._pMaster._strCharTag == "main" then
+    if self._pMaster._kRoleType == kType.kRole.kPlayer and self._pMaster._strCharTag == "main" then
         --  print("普通攻击按钮禁用！")
         local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
         if pUILayer then

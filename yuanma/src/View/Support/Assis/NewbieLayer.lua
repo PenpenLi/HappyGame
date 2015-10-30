@@ -16,11 +16,9 @@ end)
 function NewbieLayer:ctor()
     self._strName = "NewbieLayer"        -- 层名称
     self._pTouchListener = nil           -- 触摸监听器
-    self._pLayerBg = nil                 -- 黑色半透明背景
     self._bEatTouch = true               -- 吃掉触摸
-    self._pClippingNode = nil            -- 剪切node
-    self._pStencil = nil                 -- Stencil
-    self._pArrow = nil                   -- 提示箭头
+    self._pFlag = nil                    -- 动画
+    self._pTestTouchRect = nil           -- 测试触摸区域
     self._pWordsFrame = nil              -- 九宫格文字背景框
     self._pTextArea = nil                -- 文本label
     self._pParicle = nil                 -- 粒子对象
@@ -31,7 +29,8 @@ function NewbieLayer:ctor()
     
     self._bIsRunTime = false             -- 是否为即时操作（即时操作：点击到指定区域后即可跳至下一步，非即时操作：点击到指定区域后需要等到网络回应后才能跳至下一步）
     self._pos = nil                      -- 可点击的位置
-    self._kDirection = nil               -- 箭头提示方向
+    self._width = 0                      -- 可点击的宽度
+    self._height = 0                     -- 可点击的高度
     self._posText = nil                  -- 文字位置
     self._sTextFrame = nil               -- 文字的尺寸
     self._strText = nil                  -- 文字内容
@@ -42,15 +41,15 @@ function NewbieLayer:ctor()
     NetRespManager:dispatchEvent(kNetCmd.kWorldLayerTouch,{true})
 end
 
--- 创建函数， 参数：pos有效触摸区域的位置 ,direction提示箭头的方向,posText文字区域左下角的位置,strText文字的内容
-function NewbieLayer:create(isRunTime,adaptation,pos,direction,posText,sizeTextFrame,strText)
+-- 创建函数， 参数：pos有效触摸区域的位置 ,posText文字区域左下角的位置,strText文字的内容
+function NewbieLayer:create(isRunTime,adaptation,pos,posText,sizeTextFrame,strText)
     local layer = NewbieLayer.new()
-    layer:dispose(isRunTime,adaptation,pos,direction,posText,sizeTextFrame,strText)
+    layer:dispose(isRunTime,adaptation,pos,posText,sizeTextFrame,strText)
     return layer
 end
 
 -- 创建函数
-function NewbieLayer:dispose(isRunTime,adaptation,pos,direction,posText,sizeTextFrame,strText)
+function NewbieLayer:dispose(isRunTime,adaptation,pos,posText,sizeTextFrame,strText)
     self._bIsRunTime = isRunTime
     
     if adaptation == 1 then -- 屏幕中心
@@ -65,68 +64,29 @@ function NewbieLayer:dispose(isRunTime,adaptation,pos,direction,posText,sizeText
         self._pos = cc.p(mmo.VisibleRect:rightBottom().x + pos.x, mmo.VisibleRect:rightBottom().y + pos.y)
     end
     
-    self._kDirection = direction
     self._posText = cc.p(mmo.VisibleRect:width()/2 + posText.x, mmo.VisibleRect:height()/2 + posText.y)
     self._sTextFrame = sizeTextFrame
     self._strText = strText
 
-    -- 初始化控件参数
-    self._pClippingNode = cc.ClippingNode:create()
-    self:addChild(self._pClippingNode)
-    
-    --添加了一个背景层  
-    self._pLayerBg = cc.LayerColor:create(cc.c4b(0,0,0,0))
-    self._pClippingNode:addChild(self._pLayerBg)
-
     -- 添加遮罩
-    self._pStencil = cc.Sprite:createWithSpriteFrameName("ccsComRes/BagItem.png")
-    self._pStencil:setAnchorPoint(cc.p(0.5,0.5))
-    self._pStencil:setPosition(self._pos)
- 
-    -- 设置
-    self._pClippingNode:setStencil(self._pStencil)
-    self._pClippingNode:setInverted(true)
-    self._pClippingNode:setAlphaThreshold(0.05)
-    
-    -- 提示箭头
-    self._pArrow = cc.Sprite:createWithSpriteFrameName("ccsComRes/talksArrow.png")
-    self._pArrow:setAnchorPoint(cc.p(0.5,0))
-    self._pClippingNode:addChild(self._pArrow)
-    
-    -- 设置箭头方向
-    if self._kDirection == kDirection.kUp then
-        self._pArrow:setRotation(180)
-        self._pArrow:setPosition(cc.p(self._pos.x, self._pos.y-self._pStencil:getBoundingBox().height/2))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(0, -50)), cc.MoveBy:create(0.5,cc.p(0, 50)))))
-    elseif self._kDirection == kDirection.kDown then
-        self._pArrow:setRotation(0)
-        self._pArrow:setPosition(cc.p(self._pos.x, self._pos.y+self._pStencil:getBoundingBox().height/2))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(0, 50)), cc.MoveBy:create(0.5,cc.p(0, -50)))))
-    elseif self._kDirection == kDirection.kLeft then
-        self._pArrow:setRotation(90)
-        self._pArrow:setPosition(cc.p(self._pos.x+self._pStencil:getBoundingBox().width/2, self._pos.y))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(50, 0)), cc.MoveBy:create(0.5,cc.p(-50, 0)))))
-    elseif self._kDirection == kDirection.kRight then
-        self._pArrow:setRotation(270)
-        self._pArrow:setPosition(cc.p(self._pos.x-self._pStencil:getBoundingBox().width/2, self._pos.y))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(-50, 0)), cc.MoveBy:create(0.5,cc.p(50, 0)))))
-    elseif self._kDirection == kDirection.kLeftUp then
-        self._pArrow:setRotation(135)
-        self._pArrow:setPosition(cc.p(self._pos.x+self._pStencil:getBoundingBox().width/3, self._pos.y-self._pStencil:getBoundingBox().height/3))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(50*1.414, -50*1.414)), cc.MoveBy:create(0.5,cc.p(-50*1.414, 50*1.414)))))
-    elseif self._kDirection == kDirection.kLeftDown then
-        self._pArrow:setRotation(45)
-        self._pArrow:setPosition(cc.p(self._pos.x+self._pStencil:getBoundingBox().width/3, self._pos.y+self._pStencil:getBoundingBox().height/3))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(50*1.414, 50*1.414)), cc.MoveBy:create(0.5,cc.p(-50*1.414, -50*1.414)))))
-    elseif self._kDirection == kDirection.kRightUp then
-        self._pArrow:setRotation(215)
-        self._pArrow:setPosition(cc.p(self._pos.x-self._pStencil:getBoundingBox().width/3, self._pos.y-self._pStencil:getBoundingBox().height/3))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(-50*1.414, -50*1.414)), cc.MoveBy:create(0.5,cc.p(50*1.414, 50*1.414)))))
-    elseif self._kDirection == kDirection.kRightDown then
-        self._pArrow:setRotation(315)
-        self._pArrow:setPosition(cc.p(self._pos.x-self._pStencil:getBoundingBox().width/3, self._pos.y+self._pStencil:getBoundingBox().height/3))
-        self._pArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.MoveBy:create(0.5,cc.p(-50*1.414, 50*1.414)), cc.MoveBy:create(0.5,cc.p(50*1.414, -50*1.414)))))
-    end
+    ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr("GuideHelpEffect")
+    self._pFlag = cc.CSLoader:createNode("GuideHelpEffect.csb")
+    local action = cc.CSLoader:createTimeline("GuideHelpEffect.csb")
+    action:gotoFrameAndPlay(0, action:getDuration(), true)   
+    self._pFlag:stopAllActions()
+    self._pFlag:runAction(action)
+    self._pFlag:setPosition(self._pos)
+    self:addChild(self._pFlag)
+
+    -- 可触摸区域的宽高参数
+    self._width = NewbieManager:getInstance()._pCurInfo.TouchWidth
+    self._height = NewbieManager:getInstance()._pCurInfo.TouchHeight
+    self._pTestTouchRect = cc.Sprite:createWithSpriteFrameName("test.png")
+    self._pTestTouchRect:setOpacity(120)
+    self._pTestTouchRect:setScaleX(self._width/self._pTestTouchRect:getContentSize().width)
+    self._pTestTouchRect:setScaleY(self._height/self._pTestTouchRect:getContentSize().height)
+    self._pTestTouchRect:setPosition(self._pos)
+    self:addChild(self._pTestTouchRect)
     
     -- 初始化文字背景框
     self._pWordsFrame = ccui.Scale9Sprite:createWithSpriteFrameName("ccsComRes/dhjm2.png",cc.rect(50, 20, 60, 20))
@@ -134,15 +94,15 @@ function NewbieLayer:dispose(isRunTime,adaptation,pos,direction,posText,sizeText
     self._pWordsFrame:setAnchorPoint(cc.p(0,0))
     self._pWordsFrame:setPosition(cc.p(self._posText.x + 100, self._posText.y))
     self._pWordsFrame:setOpacity(0)
-    self._pClippingNode:addChild(self._pWordsFrame)
+    self:addChild(self._pWordsFrame)
 
     -- 初始化文本区域
     self._pTextArea = cc.Label:createWithTTF(self._strText, strCommonFontName, 30, cc.size(self._pWordsFrame:getContentSize().width - 60, self._pWordsFrame:getContentSize().height - 60), cc.TEXT_ALIGNMENT_LEFT)
-    self._pTextArea:setPosition(cc.p(60/2, 60/2))
     self._pTextArea:setAnchorPoint(cc.p(0, 0))
     self._pTextArea:disableEffect()
     self._pTextArea:setOpacity(0)
-    self._pTextArea:setColor(cBlack)
+    self._pTextArea:setTextColor(cFontBrown)
+    self._pTextArea:setPosition(cc.p(60/2, 60/2))
     self._pWordsFrame:addChild(self._pTextArea)
     
     -- 3D人物  
@@ -170,9 +130,6 @@ function NewbieLayer:dispose(isRunTime,adaptation,pos,direction,posText,sizeText
     self:showIn()
     
     -- 判断可见性
-    if NewbieManager:getInstance()._pCurInfo.IsArrowVisible == 0 then
-        self._pArrow:setVisible(false)
-    end
     if NewbieManager:getInstance()._pCurInfo.IsTextVisible == 0 then
         self._pTextArea:setVisible(false)
         self._pWordsFrame:setVisible(false)
@@ -180,14 +137,16 @@ function NewbieLayer:dispose(isRunTime,adaptation,pos,direction,posText,sizeText
     if NewbieManager:getInstance()._pCurInfo.IsPeopleVisible == 0 then
         self._pAni:setVisible(false)
     end
-    if NewbieManager:getInstance()._pCurInfo.IsStencilVisible == 0 then
-        self._pStencil:setVisible(false)
+    if NewbieManager:getInstance()._pCurInfo.IsFlagVisible == 0 then
+        self._pFlag:setVisible(false)
     end
-    
+    if NewbieManager:getInstance()._pCurInfo.IsTouchRectVisible == 0 then
+        self._pTestTouchRect:setVisible(false)
+    end
+
     -- 遮罩的scale大小
-    self._pStencil:setScaleX(NewbieManager:getInstance()._pCurInfo.TouchScaleX)
-    self._pStencil:setScaleY(NewbieManager:getInstance()._pCurInfo.TouchScaleY)
-    self._pStencil:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.ScaleBy:create(0.5,1/1.2),cc.ScaleBy:create(0.5,1.2))))
+    self._pFlag:setScale(NewbieManager:getInstance()._pCurInfo.TouchScale)
+    self._pFlag:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.ScaleBy:create(0.5,1/1.2),cc.ScaleBy:create(0.5,1.2))))
     
     MonstersManager:getInstance():setForceMinPositionZ(true,-10000)
     RolesManager:getInstance():setForceMinPositionZ(true,-10000)
@@ -235,7 +194,7 @@ function NewbieLayer:dispose(isRunTime,adaptation,pos,direction,posText,sizeText
             self._pTouchListener:setSwallowTouches(true)  -- 禁止触摸事件向下传递
             return true
         end
-        if cc.rectContainsPoint(cc.rect(self._pos.x - self._pStencil:getBoundingBox().width/2, self._pos.y - self._pStencil:getBoundingBox().height/2, self._pStencil:getBoundingBox().width, self._pStencil:getBoundingBox().height*2), location) == true then
+        if cc.rectContainsPoint(cc.rect(self._pos.x - self._width/2, self._pos.y - self._height/2, self._width, self._height), location) == true then
             print("点击生效!!!")
             self._pTouchListener:setSwallowTouches(false)  -- 触摸事件向下传递
             return true
@@ -258,7 +217,7 @@ function NewbieLayer:dispose(isRunTime,adaptation,pos,direction,posText,sizeText
             self._bSkip = false
             return
         end
-        if cc.rectContainsPoint(cc.rect(self._pos.x - self._pStencil:getBoundingBox().width/2, self._pos.y - self._pStencil:getBoundingBox().height/2, self._pStencil:getBoundingBox().width, self._pStencil:getBoundingBox().height*2), location) == true then
+        if cc.rectContainsPoint(cc.rect(self._pos.x - self._width/2, self._pos.y - self._height/2, self._width, self._height), location) == true then
             -- 显示结束，并且换到下一个界面(即时操作，直接响应即可)
             if self._bIsRunTime == 1 then
                 if NewbieManager:getInstance()._pCurInfo.WaitDelay == 0 then
@@ -327,16 +286,10 @@ function NewbieLayer:showIn()
         self._bEatTouch = false
         NetRespManager:dispatchEvent(kNetCmd.kWorldLayerTouch,{false})
     end
-    -- 背景渐黑
-    self._pLayerBg:runAction(cc.Sequence:create(cc.FadeTo:create(0.2,120),cc.CallFunc:create(showOver)))
-    --self._pLayerBg:runAction(cc.Sequence:create(cc.FadeTo:create(0.2,0),cc.CallFunc:create(showOver)))
-    -- 箭头出场动画
-    self._pArrow:setScale(2.0)
-    self._pArrow:setOpacity(0)
-    self._pArrow:runAction(cc.Spawn:create(cc.EaseSineInOut:create(cc.ScaleTo:create(0.1,1.0)),cc.FadeIn:create(1.0)))
     -- 文字框的出场动画
     self._pWordsFrame:runAction(cc.Spawn:create(cc.FadeIn:create(0.2),cc.EaseSineInOut:create(cc.MoveBy:create(0.2,cc.p(-100,0)))))
     self._pTextArea:runAction(cc.FadeIn:create(0.2))
+    self:runAction(cc.Sequence:create(cc.DelayTime:create(0.2),cc.CallFunc:create(showOver)))
     -- 人物现身
     self:playAppearAction()
     
@@ -348,13 +301,9 @@ function NewbieLayer:showOutAndRemove()
     self:stopAllActions()
     -- 停止粒子
     self._pParicle:stopSystem()
-    -- 背景渐亮
-    self._pLayerBg:runAction(cc.FadeTo:create(0.1,0))
-    -- 箭头离场动画
-    self._pArrow:runAction(cc.FadeOut:create(0.1))
-    -- self._pStencil 离场动画
-    self._pStencil:stopAllActions()
-    self._pStencil:runAction(cc.EaseSineInOut:create(cc.ScaleTo:create(0.1,0)))
+    -- self._pFlag 离场动画
+    self._pFlag:stopAllActions()
+    self._pFlag:runAction(cc.EaseSineInOut:create(cc.ScaleTo:create(0.1,0)))
     -- 文字框的离场动画
     self._pWordsFrame:runAction(cc.Spawn:create(cc.FadeOut:create(0.1),cc.EaseSineInOut:create(cc.MoveBy:create(0.1,cc.p(100,0)))))
     self._pTextArea:runAction(cc.FadeOut:create(0.1))
@@ -393,10 +342,11 @@ end
 
 -- 判断指定的点是否在可点击区域
 function NewbieLayer:isPointInTouchArea(pos)
-	if cc.rectContainsPoint(cc.rect(self._pos.x - self._pStencil:getBoundingBox().width/2, self._pos.y - self._pStencil:getBoundingBox().height/2, self._pStencil:getBoundingBox().width, self._pStencil:getBoundingBox().height*2), pos) == true then
+	if cc.rectContainsPoint(cc.rect(self._pos.x - self._width/2, self._pos.y - self._height/2, self._width, self._height), pos) == true then
 	   return true
 	end
 	return false
+
 end
 
 return NewbieLayer

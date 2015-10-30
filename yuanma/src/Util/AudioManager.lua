@@ -25,6 +25,7 @@ end
 function AudioManager:clearCache()  
     self._sCurMusicName = nil
     self._pStringFormat = ""
+    self._sCurEffectName = ""
     if isIOSMobilePlatform() then               -- ios直接打开url
         self._pStringFormat = ".mp3"
     elseif isAndroidMobilePlatform() then        -- android开始下载渠道最新apk
@@ -35,19 +36,21 @@ end
 -- 重新播放关闭的音乐
 function AudioManager:replayMusic()
     if self._sCurMusicName ~= nil and OptionManager:getInstance()._bOpenMusic == true then
-        AudioEngine.playMusic(self._sCurMusicName.. self._pStringFormat,true)
+        print("Std：replayMusic"..self._sCurMusicName)
+        AudioEngine.playMusic(self._sCurMusicName..".mp3",true)
 	end
 end
 --播放背景音乐的接口 背景音乐统一用mp3
 function AudioManager:playMusic(name,loop)
-      if OptionManager:getInstance()._bOpenMusic == false then
-        if loop ~= nil and loop == true then
-            self._sCurMusicName = name
-        end
+    if loop ~= nil and loop == true and  StoryGuideManager:getInstance()._bIsStory == false then
+        self._sCurMusicName = name
+    end
+    if OptionManager:getInstance()._bOpenMusic == false then
         return
     end
 
     if name ~= "none" and name ~= "" then
+        print("Std：play"..name.."音乐")
         AudioEngine.playMusic(name..".mp3" ,loop)
     end
 end
@@ -58,15 +61,37 @@ function AudioManager:stopMusic()
     AudioEngine.stopMusic()
 end
 
+-- 重新播放关闭的音乐
+function AudioManager:replayEffect()
+    if self._sCurEffectName ~= nil and OptionManager:getInstance()._bOpenMusic == true then
+        print("replayEffect"..self._sCurEffectName)
+        AudioEngine.playEffect(self._sCurEffectName..self._pStringFormat,true)
+    end
+end
+
 -- 播放音效
-function AudioManager:playEffect(name,loop)
+function AudioManager:playEffect(name,loop,bBool,bHasCache)
+    --代表需要缓存的音效，如果因为部分原因停止可以replay
+    if bHasCache == true then
+        self._sCurEffectName = name
+        print("nameis"..name)
+    end
+
     if OptionManager:getInstance()._bOpenSoundEffect == false then
     	return
     end
-
+   
     if name ~= "none" and name ~= "" then
-        return AudioEngine.playEffect(name..self._pStringFormat,loop)
+        if StoryGuideManager:getInstance()._bIsStory == false then  --如果没有开启剧情
+          return AudioEngine.playEffect(name..self._pStringFormat,loop)
+        else
+            if bBool then --如果是在剧情副本，只有bBool是true的时候才播放，记录说明是剧情引导的音效
+                print("播放"..name.."音效")
+               return AudioEngine.playEffect(name..self._pStringFormat,loop)
+            end
+        end
     end
+    return nil
 end
 
 -- 停止音效
@@ -75,7 +100,7 @@ function AudioManager:stopEffect(id)
         return
     end
 
-    if id ~= -1 then
+    if id and id ~= -1 then
         AudioEngine.stopEffect(id)
     end
 end

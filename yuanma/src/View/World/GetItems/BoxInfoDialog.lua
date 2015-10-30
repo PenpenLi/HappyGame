@@ -156,8 +156,8 @@ function BoxInfoDialog:loadScrollViewDate()
         pName:setTextColor(cc.c4b(255, 255, 255, 255))
         pName:setHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT)
         pName:setPosition(cc.p(nX+nSize/2,nY+nSize))
-        pName:enableOutline(cc.c4b(0, 0, 0, 255), 2)
-        pName:enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
+        --pName:enableOutline(cc.c4b(0, 0, 0, 255), 2)
+        --pName:enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
         self._pItemScrollView:addChild(pName,1)
         
 

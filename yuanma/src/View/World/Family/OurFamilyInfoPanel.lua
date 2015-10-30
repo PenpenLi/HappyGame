@@ -134,6 +134,8 @@ function OurFamilyInfoPanel:initButtonFun()
      if eventType == ccui.TouchEventType.ended then
         if FamilyManager:getInstance():whetherHasPermission(kFamilyChiefType.kChangeName) then --是否有权限修改工会名字
            DialogManager:getInstance():showDialog("RolesChangeNameDialog",{kChangeNameType.kChangeFamilyName})
+        else
+           NoticeManager:getInstance():showSystemMessage("无此权限") 
         end
     elseif eventType == ccui.TouchEventType.began then
         AudioManager:getInstance():playEffect("ButtonClick")

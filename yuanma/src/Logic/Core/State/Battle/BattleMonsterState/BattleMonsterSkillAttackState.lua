@@ -24,6 +24,7 @@ function BattleMonsterSkillAttackState:ctor()
     self._fEarlyWarningTime = 0                               -- 预警时间标准
     self._fEarlyWarningCount = 0                              -- 预警时间计数
     self._kEarlyWarningType = kType.kSkillEarlyWarning.kNone  -- 预警类型
+    self._posEarlyWarning = nil                               -- 预警位置（用于type5：圆形特效（范围））
 
 end
 
@@ -44,6 +45,7 @@ function BattleMonsterSkillAttackState:onEnter(args)
         self._fEarlyWarningTime = 0
         self._fEarlyWarningCount = 0
         self._kEarlyWarningType = kType.kSkillEarlyWarning.kNone
+        self._posEarlyWarning = nil
         
         -- 从确定好的技能链中第一个技能开始使用 
         self._nCurSkillIndexInChain = 0
@@ -74,6 +76,7 @@ function BattleMonsterSkillAttackState:onExit()
     self._fEarlyWarningTime = 0
     self._fEarlyWarningCount = 0
     self._kEarlyWarningType = kType.kSkillEarlyWarning.kNone
+    self._posEarlyWarning = nil
 
     return
 end
@@ -101,7 +104,10 @@ function BattleMonsterSkillAttackState:update(dt)
                     end
                     -- 刷新方向
                     if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
-                        self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self._pCurSkill)
+                        local target = self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self._pCurSkill)
+                        if target then
+                            self._posEarlyWarning = cc.p(target:getPositionX(),target:getPositionY())
+                        end
                     end
                 else
                     -- 当前技能链中的技能已经全部释放完，人物状态机切入待机状态
@@ -110,7 +116,7 @@ function BattleMonsterSkillAttackState:update(dt)
             else
                 -- 计算时间
                 self._fEarlyWarningCount = self._fEarlyWarningCount + dt
-                if self._pTarget and self._pTarget._nCurHp <= 0 then  -- 目标已经死亡，则取消记录
+                if self._pTarget and self._pTarget._nCurHp and self._pTarget._nCurHp <= 0 then  -- 目标已经死亡，则取消记录
                     self._pTarget = nil
                 end
                 if self._pTarget then
@@ -128,10 +134,13 @@ function BattleMonsterSkillAttackState:update(dt)
                 if self._fEarlyWarningCount >= self._fEarlyWarningTime then 
                     self:getMaster()._pEarlyWarningEffectAnis[self._kEarlyWarningType]:setVisible(false)
                     -- 刷新方向（考虑野怪是否有指定转向）
-                    if self._kEarlyWarningType ~= kType.kSkillEarlyWarning.kType3 then  -- 只要不为大箭头方向的技能，野怪均可以自动刷新方向
+                    if self._kEarlyWarningType ~= kType.kSkillEarlyWarning.kType3 and self._kEarlyWarningType ~= kType.kSkillEarlyWarning.kType5 then  -- 只要不为大号箭头的预警和圆形特效(范围)的预警，野怪均可以自动刷新方向
                         if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
                             self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self._pCurSkill)
                         end
+                    end
+                    if self._kEarlyWarningType == kType.kSkillEarlyWarning.kType5 then  -- 记录预警5播放时的目标位置
+                        self._pCurSkill._posTargetsPos = self._posEarlyWarning
                     end
                     self._pCurSkill:onUse()
                     -- 将当前技能的防御等级赋给当前的防御等级
@@ -143,6 +152,7 @@ function BattleMonsterSkillAttackState:update(dt)
                     self._fEarlyWarningCount = 0
                     self._kEarlyWarningType = kType.kSkillEarlyWarning.kNone
                     self._pCurSkill = nil
+                    self._posEarlyWarning = nil
                 end
 
             end

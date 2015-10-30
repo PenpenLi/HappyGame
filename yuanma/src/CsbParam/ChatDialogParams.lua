@@ -63,6 +63,9 @@ function ChatDialogParams:ctor()
     self._pSend = self._pTextBg:getChildByName("Send")
     --组队界面下方文字提示
     self._pTeamNotice = self._pBackGround:getChildByName("TeamNotice")
+    self._pTeamNotice:setTextColor(cFontDarkRed)
+
+
     --表情按钮
     self._pExpression = self._pTextBg:getChildByName("Expression")
     --语音按钮

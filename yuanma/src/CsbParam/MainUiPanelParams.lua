@@ -4,16 +4,14 @@ function MainUiPanelParams:ctor()
     self._pCCS = cc.CSLoader:createNode("MainUiPanel.csb")
     --头像节点
     self._pHeadPoint = self._pCCS:getChildByName("HeadPoint")
-    --设置按钮
-    self._pSetButton = self._pHeadPoint:getChildByName("SetButton")
     --头像底框
     self._pHeadIconFrame = self._pHeadPoint:getChildByName("HeadIconFrame")
     --角色头像按钮
     self._pJsButton = self._pHeadIconFrame:getChildByName("JsButton")
     --vip图标
-    self._pVipImage = self._pHeadIconFrame:getChildByName("VipImage")
+    self._pVipImage = self._pHeadPoint:getChildByName("VipImage")
     -- vip 等级文字
-    self._pVipLevelText = self._pVipImage:getChildByName("BitmapFontLabel_2")
+    self._pBitmapFontLabel_2 = self._pVipImage:getChildByName("BitmapFontLabel_2")
     --等级文字
     self._pLvText = self._pHeadPoint:getChildByName("LvText")
     --昵称文字

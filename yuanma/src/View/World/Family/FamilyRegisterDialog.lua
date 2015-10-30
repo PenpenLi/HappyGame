@@ -72,6 +72,8 @@ function FamilyRegisterDialog:dispose()
 	NetRespManager:getInstance():addEventListener(kNetCmd.kApplyFamilyResp, handler(self,self.handleMsgApplyFamily22309))
     --服务器主动推的家族变化信息
     NetRespManager:getInstance():addEventListener(kNetCmd.kEnteryFamilyResp ,handler(self, self.enteryFamilyResp))
+    -- 断线重连的网路回调
+	NetRespManager:getInstance():addEventListener(kNetCmd.kNetReconnected ,handler(self, self.respNetReconnected)) 
 
 	local function onNodeEvent(event)
 		if event == "exit" then
@@ -115,9 +117,9 @@ function FamilyRegisterDialog:initUI()
 	self._pBg = params._pBackGround
 	self._pCloseButton = params._pCloseButton
     self._pFamilyScrollView = params._pLeftScrollView
-	self._pQueryFamilyNameText = params._pPutInText
 	self._pQueryFamilyBtn = params._pLookUpButton
 	self._pFamilyPurposeText = params._pText_7
+	self._pPutInTextNode = params._pPutInTextNode
 	self._pFamilyPurposeText:setString("")
 	self._pApplyFamilyBtn = params._pButton2
 	self._pCreateFamilyBtn = params._pButton3
@@ -126,6 +128,8 @@ function FamilyRegisterDialog:initUI()
 	self._pNextPageBtn = params._pNextButton
 	self._pPageText = params._pPageText
 	self:disposeCSB()
+	self._pQueryFamilyNameText = createEditBoxBySize(cc.size(300,50),TableConstants.NameMaxLenWord.Value)
+	params._pPutInTextNode:addChild(self._pQueryFamilyNameText)
 end
 
 --注册界面按钮的点击事件
@@ -135,11 +139,12 @@ function FamilyRegisterDialog:initBtnEvent()
 			if sender:getName() == "create" then 
 				DialogManager:getInstance():showDialog("FamilyCreateDialog")	
 			elseif sender:getName() == "query" then 
-				if self._pQueryFamilyNameText:getString() == "" then 
+				if self._pQueryFamilyNameText:getText() == "" then 
 					NoticeManager:getInstance():showSystemMessage("请输入要查找的家族名称")
 					return
 				end
-				FamilyCGMessage:findFamilyReq22304(self._pQueryFamilyNameText:getString())
+				FamilyCGMessage:findFamilyReq22304(self._pQueryFamilyNameText:getText())
+				sender:setTouchEnabled(false)
 			elseif sender:getName() == "apply" then 
 				if not self._pCurFamilyUnit then 
 					NoticeManager:getInstance():showSystemMessage("先选择家族")
@@ -180,7 +185,7 @@ function FamilyRegisterDialog:initBtnEvent()
 end
 
 function FamilyRegisterDialog:updateUI()
-	local nRenderHeight = 50
+	local nRenderHeight = 60
 	local nContentWidth = self._pFamilyScrollView:getInnerContainerSize().width
     local nContentHeight = self._pFamilyScrollView:getInnerContainerSize().height
     self._pFamilyScrollView:removeAllChildren(true)
@@ -219,14 +224,24 @@ end
 
 -- 查找家族网络回调
 function FamilyRegisterDialog:handleMsgQueryFamily22305(event)
+	self._pQueryFamilyBtn:setTouchEnabled(true)
 	if FamilyManager:getInstance()._position > 0 then 
 		return
+	end
+	if event == "failed" then 
+		return 
 	end
 	local familyUnit = event.familyInfo[1]
 	local isApply = event.isApply
     if familyUnit then 
 		DialogManager:getInstance():showDialog("FamilyInfoDialog",{familyUnit,isApply}) 
 	end
+end
+
+-- 断线重连的网络回调
+function FamilyRegisterDialog:respNetReconnected(event)
+	-- 查询家族的按钮恢复点击
+	self._pQueryFamilyBtn:setTouchEnabled(true)
 end
 
 -- 申请家族网络回调

@@ -146,4 +146,8 @@ int register_all_mmo_api(lua_State* tolua_S);
 
 
 
+
+
+
+
 #endif // __mmo_api_h__

@@ -13,6 +13,8 @@
 #include "xnet_server.h"
 #include "VisibleRect.h"
 #include "DebugHelper.h"
+#include "ensRippleNode.h"
+#include "ensNormalMappedNode.h"
 
 #if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
 #include "platform/android/jni/JniHelper.h"
@@ -1011,6 +1013,7 @@ void HelpFunc::share(const char *title, const char *content, const char *imagePa
 
 	#endif
 }
+
 void HelpFunc::createWebView(Node *pNode,std::string sUrl)
 {
 	  #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID || CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
@@ -1031,4 +1034,39 @@ void HelpFunc::createWebView(Node *pNode,std::string sUrl)
 			});
 			pNode->addChild(webView);
 	  #endif
+}
+
+Node* HelpFunc::createRippleNode(std::string spriteFrameName)
+{
+	auto m_rippleSprite = new ens::CrippleSprite();
+	m_rippleSprite->autorelease();
+	m_rippleSprite->init(spriteFrameName,8);
+	m_rippleSprite->scheduleUpdate();
+	return m_rippleSprite;
+}
+
+void HelpFunc::doRippleNodeTouch(Node * rippleNode, Point pos, float depth, float r)
+{
+	((ens::CrippleSprite*)rippleNode)->doTouch(pos, depth, r);
+}
+
+Node* HelpFunc::createLightNode( std::string spriteFileName )
+{
+	//lightNode
+	auto lightNode = new ens::normalMapped::ClightSprite();
+	lightNode->autorelease();
+	lightNode->init(spriteFileName);
+	lightNode->setZ(50);
+	return lightNode;
+}
+
+Node* HelpFunc::createNormalMappedNode( Node* lightNode, std::string spriteFileName1, std::string spriteFileName2, std::string spriteLightFileName, int KBump )
+{
+	//normlMappedSprite
+	auto normalMappedNode = new ens::CnormalMappedSprite();
+	normalMappedNode->autorelease();
+	normalMappedNode->init(spriteFileName1,spriteFileName2,spriteLightFileName);
+	normalMappedNode->setLightSprite((ens::normalMapped::ClightSprite*)lightNode);
+	normalMappedNode->setKBump(KBump);
+	return normalMappedNode;
 }

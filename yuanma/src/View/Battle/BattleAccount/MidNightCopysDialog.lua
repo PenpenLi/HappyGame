@@ -546,6 +546,9 @@ function MidNightCopysDialog:entryBattleCopy()
         args._nMainPlayerRoleCurHp = nil      -- 从副本进入时，这里为无效值
         args._nMainPlayerRoleCurAnger = nil   -- 从副本进入时，这里为无效值
         args._nMainPetRoleCurHp = nil         -- 从副本进入时，这里为无效值
+        args._tOtherPlayerRolesCurHp = {}      -- 从副本进入时，这里为无效值
+        args._tOtherPlayerRolesCurAnger = {}   -- 从副本进入时，这里为无效值
+        args._tOtherPetRolesCurHp = {}         -- 从副本进入时，这里为无效值
         args._nCurCopyType =self._pSelectedCopysDataInfo.CopysType
         args._nCurStageID = self._pSelectedCopysDataInfo.ID
         args._nCurStageMapID = self._pSelectedCopysDataInfo.MapID
@@ -560,6 +563,13 @@ function MidNightCopysDialog:entryBattleCopy()
         args._tPvpRoleMountActvSkills = {}
         args._tPvpPasvSkills = {}
         args._tPvpPetRoleInfosInQueue = {}
+        args._tPvpPetCooperates = {}
+        args._tOtherPlayerRolesInfosOnBattleMap = {}
+        args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+        args._tOtherPlayerRolesMountActvSkillsInfos = {}
+        args._tOtherPlayerRolesPasvSkillsInfos = {}
+        args._tOtherPetCooperates = {}
+        args._bIsFirstBattleOfNewbie = false
 
         --切换战斗场景
         BattleManager:getInstance()._bIsTransforingFromEndBattle = true

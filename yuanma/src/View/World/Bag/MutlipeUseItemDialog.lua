@@ -21,6 +21,14 @@ function MutlipeUseItemDialog:ctor()
     self._pAddButton = nil
     self._pNumPutInText = nil
     self._pOkButton = nil
+    self._pTotalPriceTitle = nil 
+    self._pTotalPriceNnm = nil
+    self._pTotalPriceBg = nil 
+    self._pCoinIcon = nil 
+    self._pNumPutTitle = nil 
+    self._pItemIcon = nil 
+    self._pItemFrameIcon = nil 
+    -------------------------------------------------------------------
     self._nNum = 1                                -- 当前使用物品的数量
     self._nLimitNum = 99                          -- 最大限制的数量
     self._kPurpose = 1                            -- 用途类型
@@ -28,8 +36,35 @@ function MutlipeUseItemDialog:ctor()
     self._pGoodsInfo = nil                        -- 商品信息
     self._kFinaneType = nil                       -- 消耗货币的类型
     self._kShopType = 0                           -- 商城的类型
-    self._pSchedulerEntry = nil 
-    
+    self._pSchedulerEntry = nil
+    -- 根据不同的用途执行不同的初始化方法 
+    self._initFuncByPurposeType = 
+    {
+        [1] = function() 
+            self._pTotalPriceBg:setVisible(false)     -- 总价的背景图
+            self._pTotalPriceTitle:setVisible(false)  -- 总价标题
+            self._pTotalPriceNnm:setVisible(false)    -- 总价
+            self._pCoinIcon:setVisible(false)
+            self._pNumPutTitle:setString("使用数量")
+            self._pOkButton:setTitleText("使用")
+            self:setItemShowInfo(self._pItemInfo)
+        end,
+        [2] = function() 
+            self._pNumPutTitle:setString("购买数量")
+            self._pOkButton:setTitleText("购买")
+            local pItemInfo = GetCompleteItemInfo(self._pGoodsInfo.itemInfo)
+            self:setItemShowInfo(pItemInfo)
+            local tFinanceInfo = FinanceManager:getInstance():getIconByFinanceType(self._kFinaneType)
+            self._pCoinIcon:loadTexture(tFinanceInfo.filename,tFinanceInfo.textureType)    
+        end,
+        [3] = function()
+            self._pNumPutTitle:setString("出售数量")
+            self._pOkButton:setTitleText("出售")
+            self:setItemShowInfo(self._pItemInfo)
+            local tFinanceInfo = FinanceManager:getInstance():getIconByFinanceType(self._kFinaneType)
+            self._pCoinIcon:loadTexture(tFinanceInfo.filename,tFinanceInfo.textureType)    
+        end
+    }
 end
 
 -- 创建函数
@@ -53,27 +88,37 @@ function MutlipeUseItemDialog:dispose(args)
     self._kFinaneType = args[3]
     self._kShopType = args[4]
     -- 加载公司合图资源
-    ResPlistManager:getInstance():addSpriteFrames("NumPutInDialog.plist")
+    ResPlistManager:getInstance():addSpriteFrames("ShopSure.plist")
 
-    -- 加载dialog组件
-    local params = require("NumPutINDialogParams"):create()
+    -- 加载dialog组件       ShopSureParams
+    local params = require("ShopSureParams"):create()
     self._pCCS = params._pCCS
-    self._pBg = params._pNumBg	-- 背景图
-    self._pCloseButton = params._pCloseButton	-- 关闭按钮
-    self._pLowButton = params._pLowButton	-- 减少按钮
-    self._pAddButton = params._pAddButton	-- 增加按钮
-    self._pNumPutInText = params._pNumPutInText	-- 输入框
-    self._pOkButton = params._pOkButton	-- 确定按钮
-    
+    self._pBg = params._pShopSureBG	-- 背景图
+    self._pCloseButton = params._pNoButton	-- 关闭按钮
+    self._pLowButton = params._pDownButton	-- 减少按钮
+    self._pAddButton = params._pUpButton	-- 增加按钮
+    self._pNumPutInText = params._pMoneyText01	-- 输入框
+    self._pOkButton = params._pYesButton	-- 确定按钮
+    self._pTotalPriceBg = params._pbg01     -- 总价的背景图
+    self._pNumPutTitle = params._pText01    -- 物品数量的标题
+    self._pTotalPriceTitle = params._pText02 -- 总价标题
+    self._pTotalPriceNnm = params._pMoneyText02 -- 总价
+    self._pCoinIcon = params._pMoneyIcon     -- 货币的图标
+    self._pItemIcon = params._pIcon -- 物品的图标
+    self._pItemFrameIcon = params._pIconP   -- 物品的边框
     -- 初始化dialog的基础组件
     self:disposeCSB()
-    
+    -- 根据用途做特殊的处理
+    if self._initFuncByPurposeType[self._kPurpose] then 
+        self._initFuncByPurposeType[self._kPurpose]()
+    end
+
     local price = self._kPurpose == 2 and self._pGoodsInfo.currentPrice or  self._pItemInfo.dataInfo.Price
     -- 设置数字标签的字体颜色
     local needPirce = price * self._nNum
     self:setNumFontColor(needPirce)
-    
-        -------------------- 定时器事件---------------------------
+ 
+    -------------------- 定时器事件---------------------------
   
     -- 用于调节单位时间数字变化量
     local stepNum = 0
@@ -108,10 +153,10 @@ function MutlipeUseItemDialog:dispose(args)
             local str = string.format("%d",self._nNum)
             self._pNumPutInText:setString(str)
             local price = self._kPurpose == 2 and self._pGoodsInfo.currentPrice or  self._pItemInfo.dataInfo.Price
-            -- 设置数字标签的字体颜色
-            needPirce = price * self._nNum
-            self:setNumFontColor(needPirce)
-        end       
+        end 
+        -- 设置数字标签的字体颜色
+        needPirce = price * self._nNum
+        self:setNumFontColor(needPirce)      
     end
 
     local function stepLow(dt)
@@ -181,7 +226,7 @@ function MutlipeUseItemDialog:dispose(args)
                     -- 批量出售
                     local nItemName = self._pItemInfo.templeteInfo.Name
                     local nItemPrice =  self._pItemInfo.dataInfo.Price*self._nNum
-                    showConfirmDialog("是否确定出售 "..self._nNum.."个"..nItemName.." 出售后不可回收\n\n您将获得"..nItemPrice.."金币",function()
+                    showConfirmDialog("是否确定出售 "..self._nNum.."个"..nItemName.." 出售后不可回收,您将获得"..nItemPrice.."金币",function()
                         EquipmentCGMessage:sendMessageSellItem20128(self._pItemInfo.position,self._nNum)
                         if self._nNum == self._pItemInfo.value then
                             BagCommonManager:getInstance():setSellOutPosition(self._pItemInfo.position)
@@ -249,14 +294,27 @@ end
 
 -- 设置个数标签的字体颜色
 function MutlipeUseItemDialog:setNumFontColor(needPirce)
+    self._pTotalPriceNnm:setString(needPirce)
     if not self:getFinaneInfo().value or self._kPurpose ~= 2 then 
         return 
     end
     if needPirce > self:getFinaneInfo().value then
-        self._pNumPutInText:setColor(cRed)
+        self._pTotalPriceNnm:setTextColor(cFontRed)
     else
-        self._pNumPutInText:setColor(cWhite)
+        self._pTotalPriceNnm:setTextColor(cFontWhite)
     end
+end
+
+-- 设置物品的显示信息
+function MutlipeUseItemDialog:setItemShowInfo(pItemInfo)
+    -- 商品的品质边框
+    if pItemInfo.dataInfo.Quality ~= nil and pItemInfo.dataInfo.Quality ~= 0 then 
+        local quality = pItemInfo.dataInfo.Quality
+        self._pItemFrameIcon:loadTexture("ccsComRes/qual_" ..quality.."_normal.png",ccui.TextureResType.plistType)
+    else
+        self._pItemFrameIcon:setVisible(false)
+    end
+    self._pItemIcon:loadTexture(pItemInfo.templeteInfo.Icon..".png",ccui.TextureResType.plistType)
 end
 
 -- 退出函数

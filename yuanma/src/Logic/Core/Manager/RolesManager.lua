@@ -34,8 +34,12 @@ function RolesManager:clearCache()
     self._pPvpPlayerRole = nil                          -- pvp对手玩家对象
     self._posPvpPlayerRoleStartPosIndex = cc.p(-1,-1)   -- pvp对手玩家起始位置
     self._pPvpRoleInfo = nil                            -- pvp对手玩家信息
+    self._tPvpPetCooperates = {}                        -- pvp对手玩家激活的宠物共鸣队列(严格说：只可能有一项，因为不可能允许战斗中有多个宠物共鸣技能)
     ----------------------------- 其他在线玩家 ------------------------------------
     self._tOtherPlayerRoles = {}                        -- 其他玩家集合
+    self._tOtherPlayerRolesCurHp = {}                   -- 其他玩家的备份血量(切换场景时会被重置) 必要的时候这里会有数据，在主角初始化的时候如果这里有值则以这里的数值为主（比如从战斗地图切换到另一张战斗地图，血值需要共享上一张战斗的值）
+    self._tOtherPlayerRolesCurAnger = {}                -- 其他玩家的备份怒气值(切换场景时会被重置) 必要的时候这里会有数据，在主角初始化的时候如果这里有值则以这里的数值为主（比如从战斗地图切换到另一张战斗地图，血值需要共享上一张战斗的值）
+    self._tOtherPetCooperates = {}                      -- 其他玩家激活的宠物共鸣队列(严格说：只可能有一项，因为不可能允许战斗中有多个宠物共鸣技能)
     ----------------------------- NPC角色 ------------------------------------
     self._tNpcRoles = {}                                -- NPC集合
     ----------------------------- 援助好友 --------------------------------------------
@@ -48,14 +52,20 @@ function RolesManager:clearCache()
         self._pMainRoleInfo = nil
     end
     self._posMainRoleLastPosIndexOnWorldMap = nil       -- 主角玩家在家园地图上的最后位置（记录，方便再次回到家园时的位置复原）
+    self._pMainRoleInfoBakOfNewbie = nil                -- 主角玩家在第一场新手战斗后需要恢复的真实信息
+    self._tMainPetCooperates = {}                       -- 主角激活的宠物共鸣队列(严格说：只可能有一项，因为不可能允许战斗中有多个宠物共鸣技能)
+    self._tMainPetCooperatePropties = {}                -- 主角宠物共鸣激活的属性加成队列(严格说：只可能有一项，因为不可能允许战斗中有多个宠物共鸣技能)    
     ----------------------------- 其他在线玩家 ------------------------------------
-    self._tOtherPlayerRolesInfos = {}                   -- 其他玩家信息集合
-    
+    self._tOtherPlayerRolesInfosOnWorldMap = {}         -- 家园地图中其他玩家信息集合
+    self._tOtherPlayerRolesInfosOnBattleMap = {}        -- 战斗地图中其他玩家信息集合（每次进战斗的数据对接时需要强制刷新该值）   
     
 end
 
 -- 循环处理
 function RolesManager:update(dt)
+    -- 移除逻辑遍历
+    self:updateRemove(dt)
+
     -- 战斗结果已经得出，则逻辑可以屏蔽，避免结算时影响体验
     if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle then
         if BattleManager:getInstance()._kBattleResult ~= kType.kBattleResult.kBattling then
@@ -163,104 +173,145 @@ function RolesManager:createOtherPlayerRoleOnMap()
     -- 清空复位宠物相关的记录
     PetsManager:getInstance()._tOtherPetRolesMasters = {}
     PetsManager:getInstance()._tOtherPetRolesInfos = {}
-    for kInfo, vInfo in pairs(self._tOtherPlayerRolesInfos) do 
-        -- 创建角色
-        local role = require("OtherPlayerRole"):create(vInfo)
-        -- 获取角色的位置
-        local posIndex = MapManager:getInstance()._tOthersPlots[getRandomNumBetween(1,table.getn(MapManager:getInstance()._tOthersPlots))]
-        -- 添加角色到地图
-        role:setPositionByIndex(posIndex)
-        role:setPositionZ(posIndex.y*(MapManager:getInstance()._f3DZ))
-        MapManager:getInstance()._pTmxMap:addChild(role, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - role:getPositionY())    
-        table.insert(self._tOtherPlayerRoles,role)
-        -- 记录当前角色为宠物的主人
-        if table.getn(vInfo.pets) ~= 0 then
-            table.insert(PetsManager:getInstance()._tOtherPetRolesMasters, role)
-            table.insert(PetsManager:getInstance()._tOtherPetRolesInfos, vInfo.pets)        -- 记录宠物的信息
+
+    if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kWorld then
+        -- 创建地图上的其他玩家
+        for kInfo, vInfo in pairs(self._tOtherPlayerRolesInfosOnWorldMap) do 
+            -- 创建角色
+            local role = require("OtherPlayerRole"):create(vInfo,"main")
+            -- 获取角色的位置
+            local posIndex = MapManager:getInstance()._tOthersPlots[getRandomNumBetween(1,table.getn(MapManager:getInstance()._tOthersPlots))]
+            -- 添加角色到地图
+            role:setPositionByIndex(posIndex)
+            role:setPositionZ(posIndex.y*(MapManager:getInstance()._f3DZ))
+            MapManager:getInstance()._pTmxMap:addChild(role, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - role:getPositionY())    
+            table.insert(self._tOtherPlayerRoles,role)
+            -- 记录当前角色为宠物的主人
+            if vInfo.pets and table.getn(vInfo.pets) ~= 0 then
+                table.insert(PetsManager:getInstance()._tOtherPetRolesMasters, role)
+                table.insert(PetsManager:getInstance()._tOtherPetRolesInfos, vInfo.pets)        -- 记录宠物的信息
+            end
         end
+
+    elseif LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle then
+        -- 创建地图上的其他玩家
+        for kInfo, vInfo in pairs(self._tOtherPlayerRolesInfosOnBattleMap) do 
+            -- 创建角色
+            local role = require("OtherPlayerRole"):create(vInfo,"main")
+
+            -- 如果当前血值和怒气值有固定好的数值，则以这些指定数值为准（比如从战斗地图切换到另一张战斗地图，相应的数值需要共享上一张战斗的值）
+            if self._tOtherPlayerRolesCurHp[kInfo] then
+                role._nCurHp = self._tOtherPlayerRolesCurHp[kInfo]
+            end
+            if self._tOtherPlayerRolesCurAnger[kInfo] then
+                role._nCurAnger = self._tOtherPlayerRolesCurAnger[kInfo]
+            end
+            
+            -- 获取角色的位置
+            local posIndex = AIManager:getInstance():objBlinkToRandomPosAccordingToTargetObj(role,self._pMainPlayerRole,1,3)
+            -- 添加角色到地图
+            role:setPositionByIndex(posIndex)
+            role:setPositionZ(posIndex.y*(MapManager:getInstance()._f3DZ))
+            MapManager:getInstance()._pTmxMap:addChild(role, kZorder.kMinRole + MapManager:getInstance()._sMapRectPixelSize.height - role:getPositionY())    
+            table.insert(self._tOtherPlayerRoles,role)
+            -- 记录当前角色为宠物的主人
+            if vInfo.pets and table.getn(vInfo.pets) ~= 0 then
+                table.insert(PetsManager:getInstance()._tOtherPetRolesMasters, role)
+                table.insert(PetsManager:getInstance()._tOtherPetRolesInfos, vInfo.pets)        -- 记录宠物的信息
+            end
+        end
+
     end
-    
+
 end
 
 -- 移除所有 其他玩家角色
-function RolesManager:removeAllOtherPlayerRolesOnMap()
+function RolesManager:removeAllOtherPlayerRolesOnWorldMap()
     for kRole, vRole in pairs(self._tOtherPlayerRoles) do
         vRole:removeFromParent(true)
     end
     self._tOtherPlayerRoles = {}
-    self._tOtherPlayerRolesInfos = {}
+    self._tOtherPlayerRolesInfosOnWorldMap = {}
 end
 
-function RolesManager:createNpcRolesOnMap()
-    local pTmxMap = MapManager:getInstance()._pTmxMap
-    local pNpcsLayer = pTmxMap:getObjectGroup("NpcsLayer")
-    local pBottomLayer = pTmxMap:getObjectGroup("NpcsBottomLayer")
-    local pBodyLayer = pTmxMap:getObjectGroup("NpcsBodyLayer")
-
-    -- 获取地图上的npc对象（包括碰撞矩形等等）
-    local index = 1
-    local name = tostring(index)
-    local map = pNpcsLayer:getObject(name)
-    while map ~= nil and map["x"] ~= nil do
-        local posObj = cc.p(map["x"], map["y"])
-        local recBottom = cc.rect(0,0,0,0)
-        local recBody = cc.rect(0,0,0,0)
-        
-        -- 创建npc
-        local bottom = pBottomLayer:getObject(name)
-        if bottom ~= nil and bottom["x"] ~= nil then
-            recBottom = cc.rect(bottom["x"], bottom["y"], bottom["width"], bottom["height"])
+function RolesManager:createNpcRolesOnWorldMap()
+    -- 创建家园中的NPC
+    for kNpcInfo,vNpcInfo in pairs(TableNpcRolesOnWorldMap) do 
+        if vNpcInfo.NpcType == 1 or vNpcInfo.NpcType == 3 then  -- 功能型NPC和活动NPC(必创建)
+            -- 创建Npc角色
+            self:createNpcRole(vNpcInfo)
         end
-        local body = pBodyLayer:getObject(name)
-        if body ~= nil and body["x"] ~= nil then
-            recBody = cc.rect(body["x"], body["y"], body["width"], body["height"])
-        end
-
-        local tAttrisInfo = TableNpcRoles[tonumber(map["ID"])]
-        local nID = index
-
-        -- 创建Npc角色
-        self:createNpcRole(tAttrisInfo, posObj, recBottom, recBody, nID)
-
-        index = index + 1
-        name = tostring(index)
-        map = pNpcsLayer:getObject(name)
     end
 
     return
 end
 
-function RolesManager:createNpcRole(tAttrisInfo, pos, recBottom, recBody, id)
+function RolesManager:createNpcRolesOnBattleMap()
+    return
+end
+
+function RolesManager:createNpcRole(tAttrisInfo)
     local pNpcRole = nil
     -- 创建角色
-    pNpcRole = require("NpcRole"):create(tAttrisInfo, recBottom, recBody)
-    pNpcRole._nID = id
+    pNpcRole = require("NpcRole"):create(tAttrisInfo)
     -- NPC角色位置
-    pNpcRole:setPosition(recBottom.x + recBottom.width/2, pos.y)
-    pNpcRole:setPositionZ(pNpcRole:getPositionIndex().y*(MapManager:getInstance()._f3DZ))
+    pNpcRole:setPositionByIndex(cc.p(tAttrisInfo.Pos.x, tAttrisInfo.Pos.y))
+    pNpcRole:setPositionZ(tAttrisInfo.Pos.y*(MapManager:getInstance()._f3DZ))
     -- 添加NPC角色到地图
     MapManager:getInstance()._pTmxMap:addChild(pNpcRole,kZorder.kNpcRole)
     -- 添加到集合
     table.insert(self._tNpcRoles, pNpcRole)
+    -- 刷新相机
+    pNpcRole:refreshCamera()
     return pNpcRole
+end
+
+-- 根据taskID是否完成的情况，来创建剧情NPC角色到家园地图
+function RolesManager:createNpcRoleOnWorldMapByFinishedTaskID(taskID)
+    -- 创建家园中的NPC
+    for kNpcInfo,vNpcInfo in pairs(TableNpcRolesOnWorldMap) do 
+        if vNpcInfo.NpcType == 2 and vNpcInfo.TaskIDToVisible == taskID then  -- 剧情NPC(必创建)
+            -- 创建Npc角色
+            self:createNpcRole(vNpcInfo)
+        end
+    end
+
 end
 
 function RolesManager:createFriendRoleOnMap()
     -- 创建好友（根据角色信息创建）到地图 
     if FriendManager:getInstance():getFriendSkillId() ~= -1 then
-        self._pFriendRole = require("FriendRole"):create(FriendManager:getInstance()._nMountFriendSkill)
+        self._pFriendRole = require("FriendRole"):create(FriendManager:getInstance()._nMountFriendSkill,"main")
         MapManager:getInstance()._pTmxMap:addChild(self._pFriendRole, kZorder.kMinRole)  
     end
 end
 
-function RolesManager:getNpcRoleByID(id)
-    local pNpcRole = nil
-    for k,v in pairs(self._tNpcRoles) do
-        if v._nID == id then -- 存在
-            pNpcRole = v
+-- 移除逻辑遍历
+function RolesManager:updateRemove(dt)
+    -- 其他玩家移除遍历
+    for k,v in pairs(self._tOtherPlayerRoles) do
+        if v._bActive == false then
+            v:removeFromParent(true)
+            table.remove(self._tOtherPlayerRoles,k)
+            break
         end
     end
-    return pNpcRole
+    -- NPC玩家移除遍历
+    for k,v in pairs(self._tNpcRoles) do
+        if v._bActive == false then  -- 若已失效，则立即移除并删除
+            v:removeFromParent(true)
+            table.remove(self._tNpcRoles,k)
+            break
+        end
+    end
+    -- 好友移除遍历
+    if self._pFriendRole and self._pFriendRole:isVisible() == true then
+        if self._pFriendRole._bActive == false then -- 若已失效，则立即移除并删除
+            self._pFriendRole:removeFromParent(true)
+            self._pFriendRole = nil
+        end
+    end
+    return
 end
 
 function RolesManager:updateMainPlayerRole(dt)
@@ -284,39 +335,30 @@ function RolesManager:updatePvpPlayerRole(dt)
 end
 
 function RolesManager:updateOtherPlayerRoles(dt)
-    -- 其他玩家
-    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
-        for k,v in pairs(self._tOtherPlayerRoles) do
-            if v._bActive == true then
-                v:updatePlayerRole(dt)
-            end
+    -- 其他玩家正常遍历
+    for k,v in pairs(self._tOtherPlayerRoles) do
+        if v._bActive == true then
+            v:updatePlayerRole(dt)
         end
     end
     return
 end
 
 function RolesManager:updateNpcRoles(dt)
-    -- NPC玩家
+    -- NPC玩家正常遍历
     for k,v in pairs(self._tNpcRoles) do
         if v._bActive == true then
             v:updateNpcRole(dt)
-        else  -- 若已失效，则立即移除并删除
-            v:removeFromParent(true)
-            table.remove(self._tNpcRoles,k)
-            break
         end
     end
     return
 end
 
 function RolesManager:updateFriendRole(dt)
-    -- 好友
+    -- 好友正常遍历
     if self._pFriendRole and self._pFriendRole:isVisible() == true then
         if self._pFriendRole._bActive == true then
             self._pFriendRole:updateFriendRole(dt)
-        else  -- 若已失效，则立即移除并删除
-            self._pFriendRole:removeFromParent(true)
-            self._pFriendRole = nil
         end
     end
     return
@@ -409,14 +451,13 @@ end
 
 -- 处理战斗结果
 function RolesManager:disposeWhenBattleResult()
+    -- 主角玩家
     if self._pMainPlayerRole ~= nil then
-        if self._pMainPlayerRole._bActive == true then
-        
+        if self._pMainPlayerRole._bActive == true then        
             if self._pMainPlayerRole:isUnusualState() == false then     -- 正常状态
                 self._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand, true)
                 --print("人物回到站立！")
             end
-            
             self._pMainPlayerRole._refGenAttackButton:add()
             for k, v in pairs(self._pMainPlayerRole._tRefSkillButtons) do 
                 v:add()
@@ -424,6 +465,22 @@ function RolesManager:disposeWhenBattleResult()
             self._pMainPlayerRole._refStick:add()
         end
     end
+--[[
+    -- 其他玩家角色
+    local tOtherPlayersArray = self._tOtherPlayerRoles
+    for i=1,#tOtherPlayersArray do
+        if tOtherPlayersArray[i]._bActive == true then        
+            if tOtherPlayersArray[i]:isUnusualState() == false then     -- 正常状态
+                tOtherPlayersArray[i]:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand, true)
+            end
+            tOtherPlayersArray[i]._refGenAttackButton:add()
+            for k, v in pairs(tOtherPlayersArray[i]._tRefSkillButtons) do 
+                v:add()
+            end
+            tOtherPlayersArray[i]._refStick:add()
+        end
+    end
+]]
 end
 
 -- 判断指定矩形是否与当前主角玩家的bottom发生碰撞

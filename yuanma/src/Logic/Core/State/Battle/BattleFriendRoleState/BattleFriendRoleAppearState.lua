@@ -28,35 +28,14 @@ end
 -- 进入函数
 function BattleFriendRoleAppearState:onEnter(args)
     -- mmo.DebugHelper:showJavaLog("mmo:BattleFriendRoleAppearState")
-    ------------------------- 先做位置随机 ----------------------------------------------------------------
-    local posIndex = self:getRolesManager()._pMainPlayerRole:getPositionIndex()
-    local stepOffsetX = getRandomNumBetween(3,7)     -- 3到7步
-    local stepOffsetY = getRandomNumBetween(3,7)     -- 3到7步
-    local factorX = getRandomNumBetween(1,2)        -- 随机正负
-    local factorY = getRandomNumBetween(1,2)        -- 随机正负
-    if factorX == 2 then factorX = -1 end
-    if factorY == 2 then factorY = -1 end
-    local tiledType = self:getMapManager():getTiledAttriAt(cc.p(posIndex.x + stepOffsetX*factorX, posIndex.y + stepOffsetY*factorY))        
-    while tiledType == kType.kTiledAttri.kBarrier or 
-        posIndex.x + stepOffsetX*factorX >= self:getMapManager()._sMapIndexSize.width or
-        posIndex.x + stepOffsetX*factorX <= 0 or
-        posIndex.y + stepOffsetY*factorY >= self:getMapManager()._sMapIndexSize.height or
-        posIndex.y + stepOffsetY*factorY <= 0 do
-        stepOffsetX = getRandomNumBetween(3,7)     -- 3到7步
-        stepOffsetY = getRandomNumBetween(3,7)     -- 3到7步
-        factorX = getRandomNumBetween(1,2)        -- 随机正负
-        factorY = getRandomNumBetween(1,2)        -- 随机正负
-        if factorX == 2 then factorX = -1 end
-        if factorY == 2 then factorY = -1 end
-        tiledType = self:getMapManager():getTiledAttriAt(cc.p(posIndex.x + stepOffsetX*factorX, posIndex.y + stepOffsetY*factorY))
-
-    end
     -------------------------- 显示角色 --------------------------------------------------------------------
     if self:getMaster() then
+    ------------------------- 先做位置随机 ----------------------------------------------------------------
+        AIManager:getInstance():objBlinkToRandomPosAccordingToTargetObj(self:getMaster(), self:getRolesManager()._pMainPlayerRole,3,7)
+        
         -- 终止依托节点的action
         self:getMaster()._pAppearActionNode:stopAllActions()
 
-        self:getMaster():setPositionByIndex(cc.p(posIndex.x + stepOffsetX*factorX, posIndex.y + stepOffsetY*factorY))
         self:getMaster():setAngle3D(270)
         self:getMaster()._kDirection = mmo.HelpFunc:gDirectionAnalyseByAngle(270)
         self:getMaster():setVisible(true)

@@ -45,7 +45,7 @@ function FamilyManager:whetherHasPermission(familyCheifType,position)
 	
     -- 族长任命他人为族长
     if self._position == kFamilyPosition.kLeader 
-        and familyCheifType == kFamilyPosition.kLeader 
+        and familyCheifType == kFamilyChiefType.kChief 
         and position ~= kFamilyPosition.kLeader then 
         return true
     end

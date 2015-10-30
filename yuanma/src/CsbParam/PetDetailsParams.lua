@@ -2,7 +2,7 @@
 local PetDetailsParams = class("PetDetailsParams")
 
 function PetDetailsParams:ctor()
-    self._pCCS = cc.CSLoader:createNode("Pet.csb")
+    self._pCCS = cc.CSLoader:createNode("PetDetails.csb")
 	--技能tips背景板
     self._pBackGround = self._pCCS:getChildByName("BackGround")
     --关闭按钮

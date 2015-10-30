@@ -99,6 +99,12 @@ function BattleDebugLayer:debugIntoBattle()
     args._strNextMapName = copyFirstMapInfo.MapsName
     args._strNextMapPvrName = copyFirstMapInfo.MapsPvrName
     args._nNextMapDoorIDofEntity = copyFirstMapInfo.Doors[1][1]
+    args._nMainPlayerRoleCurHp = nil      -- 从副本进入时，这里为无效值
+    args._nMainPlayerRoleCurAnger = nil   -- 从副本进入时，这里为无效值
+    args._nMainPetRoleCurHp = nil         -- 从副本进入时，这里为无效值
+    args._tOtherPlayerRolesCurHp = {}      -- 从副本进入时，这里为无效值
+    args._tOtherPlayerRolesCurAnger = {}   -- 从副本进入时，这里为无效值
+    args._tOtherPetRolesCurHp = {}         -- 从副本进入时，这里为无效值 
     args._nCurCopyType = kType.kCopy.kGold
     args._nCurStageID = copyDataInfo.ID
     args._nCurStageMapID = copyDataInfo.MapID
@@ -113,6 +119,13 @@ function BattleDebugLayer:debugIntoBattle()
     args._tPvpRoleMountActvSkills = {}
     args._tPvpPasvSkills = {}
     args._tPvpPetRoleInfosInQueue = {}
+    args._tPvpPetCooperates = {}
+    args._tOtherPlayerRolesInfosOnBattleMap = {}
+    args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+    args._tOtherPlayerRolesMountActvSkillsInfos = {}
+    args._tOtherPlayerRolesPasvSkillsInfos = {}
+    args._tOtherPetCooperates = {}
+    args._bIsFirstBattleOfNewbie = false
     
     -- 主角玩家信息
     require("TestMainRoleInfo")
@@ -182,20 +195,20 @@ function BattleDebugLayer:debugIntoBattle()
         --},
         ------------------------------- 法师相关技能 ---------------------------------------
         -- 道法烈焰
-        {
-            id=18,
-            level=1
-        },
+        --{
+          --  id=18,
+          --  level=1
+        --},
         -- 道法凝冰
-        {
-            id=19,
-            level=1
-        },
+        --{
+          --  id=19,
+          --  level=1
+        --},
         -- 道法天雷
-        {
-            id=20,
-            level=1
-        },
+        --{
+          --  id=20,
+          --  level=1
+        --},
         -- 炎咆哮
           --{
             -- id=21,
@@ -208,8 +221,8 @@ function BattleDebugLayer:debugIntoBattle()
         --},
         -- 雷音斩
         --{
-         --   id=23,
-         --   level=1
+          --  id=23,
+          --  level=1
         --},
         -- 守身冰
         --{
@@ -237,71 +250,71 @@ function BattleDebugLayer:debugIntoBattle()
           --  level=1
         --},
         -- 大雷锤
-        {
-            id=29,
-            level=1
-        },
+        --{
+          --  id=29,
+          --  level=1
+        --},
         ------------------------------- 刺客相关技能 ---------------------------------------
-             --飞镖
-             --{
-               -- id=45,
-               -- level=1
-             --},
-            -- 连影杀
-             --{
-               --  id=34,
-               --  level=1
-             --},
-            -- 罗天坠
-           -- {
-             --   id=35,
-             --   level=1
-           -- },
-            -- 七星斩
-            --{
-            --  id=36,
-            --  level=1
-            --},
-            -- 风火雷
-            --{
-              --  id=37,
-              --  level=1
-            --},
-            -- 毒牙弹
-            --{
-              --  id=38,
-              --  level=1
-            --},
-            -- 腐骨尘
-            --{
-              --id=39,
-              --level=1
-            --},
-            -- 无形影
-            --{
-              --  id=40,
-              --  level=1
-           -- },
-            -- 嗜血刃
-            --{
-              --id=41,
-              --level=1
-            --},
-            -- 死寂杀
-            --{
-              --  id=42,
-              --  level=1
-            --},
-            -- 八方刃
-            --{
-              --id=43,
-              --level=1
-            --},
-            -- 飞刀阵
-            --{
-              --id=44,
-              --level=1
-            --},
+         --飞镖
+         --{
+           -- id=45,
+           -- level=1
+         --},
+        -- 连影杀
+         --{
+           --  id=34,
+           --  level=1
+         --},
+        -- 罗天坠
+         --{
+           -- id=35,
+           -- level=1
+         --},
+        -- 七星斩
+        --{
+         -- id=36,
+         -- level=1
+        --},
+        -- 风火雷
+        --{
+          --  id=37,
+          --  level=1
+        --},
+        -- 毒牙弹
+        --{
+          --  id=38,
+          --  level=1
+        --},
+        -- 腐骨尘
+        --{
+          --id=39,
+          --level=1
+        --},
+        -- 无形影
+        --{
+          --  id=40,
+          --  level=1
+        --},
+        -- 嗜血刃
+        --{
+          --id=41,
+          --level=1
+        --},
+        -- 死寂杀
+        --{
+          --id=42,
+          --level=1
+        --},
+        -- 八方刃
+        --{
+          --id=43,
+          --level=1
+        --},
+        -- 飞刀阵
+        --{
+          --id=44,
+          --level=1
+        --},
         }
     SkillsManager:getInstance()._tMainRoleMountAngerSkills = 
         {
@@ -321,10 +334,10 @@ function BattleDebugLayer:debugIntoBattle()
               --  level=1
             --},
             -- 绝剑·空裂
-            --{
-              --id=14,
-              --level=1
-            --},
+            {
+              id=14,
+              level=1
+            },
             -- 绝剑·焚天
             --{
               -- id=15,
@@ -335,13 +348,11 @@ function BattleDebugLayer:debugIntoBattle()
               --id=16,
               --level=1
             --},
-            
             -- 大凤化阳
-            {
-                id=31,
-                level=1
-            },
-            
+            --{
+              --  id=31,
+              --  level=1
+            --},
             -- 幻影阵
             --{
               --id=47,
@@ -358,35 +369,41 @@ function BattleDebugLayer:debugIntoBattle()
     SkillsManager:getInstance()._tMainRoleSkillsLevels.pasvSkills = 
         {
         --{
-        --  id=1012,
-        --  level=1
+          --  id=1001,
+          --  level=1
         --},
         --{
-        --   id=1013,
-        --   level=1
+          -- id=1002,
+          -- level=1
         -- },
-        -- {
-        --  id=1014,
-        --  level=1
-        -- },
-        -- {
-        --   id=1015,
-        --   level=1
-        -- },
+        --{
+          --id=1003,
+          --level=1
+        --},
+        --{
+          --id=1004,
+          --level=1
+        --},
         }
-        
+
     -- 好友技能 
-    --require("TestFriendRoleInfo")
-    --FriendManager:getInstance()._nMountFriendSkill = friendRoleInfo     -- 好友角色信息
-    --FriendManager:getInstance()._nMountFriendSkillId = 21                -- 好友技能ID
-    
+    --[[
+    require("TestFriendRoleInfo")
+    FriendManager:getInstance()._nMountFriendSkill = friendRoleInfo     -- 好友角色信息
+    FriendManager:getInstance()._nMountFriendSkillId = 21                -- 好友技能ID
+    ]]
+
     -- 宠物信息
-    --require("TestMainPetRoleInfo1")
-    --require("TestMainPetRoleInfo2")
-    --require("TestMainPetRoleInfo3")
-    --PetsManager:getInstance()._tMainPetRoleInfosInQueue[1] = mainPetRoleInfo1
-    --PetsManager:getInstance()._tMainPetRoleInfosInQueue[2] = mainPetRoleInfo2
-    --PetsManager:getInstance()._tMainPetRoleInfosInQueue[3] = mainPetRoleInfo3
+    --[[
+    require("TestMainPetRoleInfo1")
+    require("TestMainPetRoleInfo2")
+    require("TestMainPetRoleInfo3")
+    PetsManager:getInstance()._tMainPetRoleInfosInQueue[1] = mainPetRoleInfo1
+    PetsManager:getInstance()._tMainPetRoleInfosInQueue[2] = mainPetRoleInfo2
+    PetsManager:getInstance()._tMainPetRoleInfosInQueue[3] = mainPetRoleInfo3
+    -- 宠物共鸣信息
+    RolesManager:getInstance()._tMainPetCooperates[1] = TablePetsResonance[1]
+    ]]
     
     -- PVP对手信息
     --[[
@@ -394,6 +411,7 @@ function BattleDebugLayer:debugIntoBattle()
     args._pPvpRoleInfo = pvpRoleInfo
     args._tPvpRoleMountAngerSkills = 
     {
+        -- 毒龙烟
         --{
           --  id = 48,
           --  level = 1
@@ -445,37 +463,133 @@ function BattleDebugLayer:debugIntoBattle()
     }
     args._tPvpPasvSkills = 
     {
-    --{
-    --    id=1012,
-    --    level=1
-    --},
-    --{
-    --   id=1013,
-    --   level=1
-    -- },
-    --{
-    --  id=1014,
-    --  level=1
-    -- },
-    -- {
-    --   id=1015,
-    --   level=1
-    -- },
+        --{
+          --  id=1001,
+          --  level=1
+        --},
+        --{
+          -- id=1002,
+          -- level=1
+        -- },
+        --{
+          --id=1003,
+          --level=1
+        --},
+        --{
+          --id=1004,
+          --level=1
+        --},
     }
     ]]
-    
+
     -- 宠物信息
-    --require("TestPvpPetRoleInfo1")
-    --require("TestPvpPetRoleInfo2")
-    --require("TestPvpPetRoleInfo3")
-    --args._tPvpPetRoleInfosInQueue[1] = pvpPetRoleInfo1
-    --args._tPvpPetRoleInfosInQueue[2] = pvpPetRoleInfo2
-    --args._tPvpPetRoleInfosInQueue[3] = pvpPetRoleInfo3
+    --[[
+    require("TestPvpPetRoleInfo1")
+    require("TestPvpPetRoleInfo2")
+    require("TestPvpPetRoleInfo3")
+    args._tPvpPetRoleInfosInQueue[1] = pvpPetRoleInfo1
+    args._tPvpPetRoleInfosInQueue[2] = pvpPetRoleInfo2
+    args._tPvpPetRoleInfosInQueue[3] = pvpPetRoleInfo3
+    -- 宠物共鸣信息
+    args._tPvpPetCooperates[1] = TablePetsResonance[1]
+    ]]
+    -- 战场中的其他玩家信息
+    require("TestOtherPlayerRoleInfo1")
+    require("TestOtherPlayerRoleInfo2")
+    args._tOtherPlayerRolesInfosOnBattleMap = {}
+    args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+    args._tOtherPlayerRolesMountActvSkillsInfos = {}
+    args._tOtherPlayerRolesPasvSkillsInfos = {}
+
+    for i=1, 0 do
+      args._tOtherPlayerRolesInfosOnBattleMap[i] = otherPlayerRoleInfo1
+      -- 其他玩家的宠物共鸣信息
+      args._tOtherPetCooperates[i] = {}
+      args._tOtherPetCooperates[i][1] = TablePetsResonance[1]
+
+      args._tOtherPlayerRolesMountAngerSkillsInfos[i] = 
+      {
+          -- 毒龙烟
+          --{
+             -- id = 48,
+             -- level = 1
+          --}
+      }
+      args._tOtherPlayerRolesMountActvSkillsInfos[i] = 
+      {
+          -- 飞镖
+           --{
+             --id=45,
+             --level=1
+           --},
+          -- 连影杀
+           --{
+               --id=34,
+               --level=1
+           --},
+          -- 罗天坠
+           --{
+               --id=35,
+               --level=1
+           --},
+          -- 风火雷
+           --{
+              --id=37,
+              --level=1
+           --},
+          -- 毒牙弹
+           --{
+             --id=38,
+             --level=1
+           --},
+          -- 七星斩
+          -- {
+            --    id=36,
+            --    level=1
+           -- },
+          -- 无形影
+            --{
+               -- id=40,
+               -- level=1
+            --},
+
+          -- 飞刀阵
+          -- {
+          --   id=44,
+          --   level=1
+          -- },
+      }
+      args._tOtherPlayerRolesPasvSkillsInfos[i] = 
+      {
+        --{
+           --id=1007,
+           --level=1
+        --},
+      }
+
+    end
 
     LayerManager:getInstance():gotoRunningSenceLayer(BATTLE_SENCE_LAYER, args)
 
     -- 切换场景
     cc.Director:getInstance():replaceScene(pScene)
+
+    --ResPlistManager:getInstance():addSpriteFrames("pet_icon.plist")
+
+    --local layer = cc.LayerColor:create(cc.c4b(65,65,70,255))
+    --pScene:addChild(layer)
+    
+    --[[
+    local node = require("FightRoleUINode"):create(2,"PetIcon/PetIcon4.png",8,"小侏儒",150)
+    node:setPosition(cc.p(100,200))
+    layer:addChild(node)
+    ]]
+    --[[
+    ResPlistManager:getInstance():addSpriteFrames("battle_common_anis.plist")
+    local node = require("StarUINode"):create()
+    node:setPosition(cc.p(100,200))
+    layer:addChild(node)
+    ]]
 
     return
 end

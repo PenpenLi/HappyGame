@@ -53,7 +53,7 @@ function MaskBgLayer:showWithAni()
     self._pColorLayer:setVisible(true)
     self._pColorLayer:setOpacity(0.0)
     self._pColorLayer:stopAllActions()
-    local action = cc.EaseInOut:create(cc.FadeTo:create(1.0, 160), 5.0)
+    local action = cc.EaseInOut:create(cc.FadeTo:create(1.0, 230), 5.0)
     self._pColorLayer:runAction(action)
     return
 end

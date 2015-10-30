@@ -41,6 +41,9 @@ function WorldFuncBtn:ctor()
     self._moveToPoint = cc.p(0,13)
 	
 	self._sKeyName = ""
+
+    -- button 集合代理
+    self._pDelegate = nil
 end
 
 -- 创建函数
@@ -58,11 +61,18 @@ function WorldFuncBtn:dispose(info)
 	
 	local function touchEvent(sender,eventType)
 		if eventType == ccui.TouchEventType.ended then
+
+
 			self:callbackFunc(sender,eventType)
         elseif eventType == ccui.TouchEventType.began then
             AudioManager:getInstance():playEffect("ButtonClick")
 		end
 	end
+
+    local pBgSprite = cc.Sprite:createWithSpriteFrameName("MainUiPanelRes/zjm26.png")
+    pBgSprite:setPosition(0,-4)
+    pBgSprite:setAnchorPoint(cc.p(0, 0))
+    self:addChild(pBgSprite)
 	
 	self._pIconSprite = cc.Sprite:createWithSpriteFrameName("MainIcon/" .. self._nFuncInfo.Icon .. ".png")
     self._pIconSprite:setPosition(0,0)
@@ -114,6 +124,7 @@ function WorldFuncBtn:dispose(info)
         local point = self:convertTouchToNodeSpace(touch)
         if cc.rectContainsPoint(self._recBg,point) == true and self._bTouchAble == true then--self._fCallback()
             self:setKeyPress(true)
+            AudioManager:getInstance():playEffect("FunctionButton")
             return true   --可以向下传递事件
         end
         return false   --可以向下传递事件
@@ -160,12 +171,19 @@ function WorldFuncBtn:dispose(info)
                 FriendCGMessage:sendMessageQueryFriendList22000()
                 canCallback = false
             end
-            
+
             if canCallback == true then
                 -- DialogManager:getInstance():closeAllDialogs()
                 --RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kWorldPlayerRole):setCurStateByTypeID(kType.kState.kWorldPlayerRole.kStand)
+                if self._nFuncInfo.menus ~= nil and table.getn(self._nFuncInfo.menus) > 0 then
+                    if self._pDelegate ~= nil then
+                        self._pDelegate:showFuncListMenu(self._nFuncInfo.menus)
+                    end
+                elseif self._fCallback ~= nil then 
+                    self._fCallback()
+                end
                 TasksManager:stopAllOperate()
-                self._fCallback()
+                
                 NewbieManager:getInstance():showOutAndRemoveWithRunTime()
             end
         end
@@ -188,6 +206,10 @@ function WorldFuncBtn:dispose(info)
     self:registerScriptHandler(onNodeEvent)
     
     return
+end
+
+function WorldFuncBtn:setDelegate( delegate )
+    self._pDelegate = delegate
 end
 
 -- 新开启功能提示动画

@@ -25,7 +25,7 @@ end
 function BattleManager:clearCache()    
     self._fTimeMax = -1                                                 -- 最大时间
     self._fTimeCounter = -1                                             -- 时间计数器
-    self._bHasShownBattleEndTalk = false                                -- 是否已经显示完毕结束剧情对话
+    self._bHasShownBattleEndTalkOrStory = false                         -- 是否已经显示完毕结束剧情对话或者剧情动画
     self._bIsBossDead = false                                           -- 是否boss已经死亡
     self._bTimeCounting = false                                         -- 时间是否正在计数
     self._pBattleUILayer = nil                                          -- 战斗UI层
@@ -33,6 +33,7 @@ function BattleManager:clearCache()
     self._tBattleArgs = nil                                             -- 战斗对接参数（所有）
     self._kBattleResult = kType.kBattleResult.kBattling                 -- 战斗是否结束
     self._bIsTransforingFromEndBattle = false                           -- 是否正处于由战斗结束开始的场景切换
+    self._bIsFirstBattleOfNewbie = false                                -- 是否为新手引导中的第一场战斗
     self._tCopyResultCheckFuncs = {
         [kType.kCopy.kGold] = self.checkResultForGoldCopy,
         [kType.kCopy.kStuff] = self.checkResultForStuffCopy,
@@ -43,7 +44,8 @@ function BattleManager:clearCache()
         [kType.kCopy.kMidNight] = self.checkResultForMidNightCopy,
         [kType.kCopy.kPVP] = self.checkResultForPVPCopy,
         [kType.kCopy.kHuaShan] = self.checkResultForHuaShanCopy,
-        [kType.kCopy.kStory] = self.checkResultForStoryCopy
+        [kType.kCopy.kStory] = self.checkResultForStoryCopy,
+        [kType.kCopy.kTeamAIFight] = self.checkResultForkTeamAIFightCopy,
     }
     
     ------------------------------------ 爬塔副本专用 -----------------------------------------------------------
@@ -68,13 +70,17 @@ function BattleManager:update(dt)
         return
     end
     -- 战斗结果已经得出，则不再做任何战斗逻辑表现
-    if BattleManager:getInstance()._kBattleResult ~= kType.kBattleResult.kBattling then
+    if self._kBattleResult ~= kType.kBattleResult.kBattling then
         return
     end
     
+    if self._bIsFirstBattleOfNewbie == true then
+       return
+    end
+    
+    
     self:updateTime(dt)
     self:updateResult(dt)
-
     if self:getBattleUILayer()._pTimeCountDownNode then 
         self:updateBatttleLevelTime(dt)
     end
@@ -132,13 +138,13 @@ function BattleManager:updateTime(dt)
         self._fTimeCounter = self._fTimeCounter - dt
         if self._fTimeCounter <= 0 then
             self._fTimeCounter = 0
-            self:getBattleUILayer()._pTimeNode:setString("00:00")
+            self:getBattleUILayer()._pTimeUINode:setString("00:00")
         else
             local minute = mmo.HelpFunc:gGetMinuteStr(self._fTimeCounter)
             local second = mmo.HelpFunc:gGetSecondStr(self._fTimeCounter)
             local format = minute..":"..second
-            self:getBattleUILayer()._pTimeNode:setString(format)
-            if self:getBattleUILayer()._pTimeCountDownNode then 
+            self:getBattleUILayer()._pTimeUINode:setString(format)
+            if self:getBattleUILayer()._bIsScoreByTime == true then 
                 self:updateBatttleLevelTime(dt)
             end
         end
@@ -150,24 +156,33 @@ function BattleManager:updateBatttleLevelTime(dt)
     if self._bTimeCounting == false then
         return
     end
-    local maxBattleLevelSec = self:getBattleUILayer()._pTimeCountDownNode:getMaxSecByLevel(self._nTimeBattleLevel)
-    --maxBattleLevelSec = self._nTimeBattleLevel == 5 and maxBattleLevelSec - TableConstants.StarDelay.Value or maxBattleLevelSec 
-    self._nTimeBattleRemainSec = maxBattleLevelSec - (StagesManager:getInstance():getCurStageDataInfo().Timeing - self._fTimeCounter) 
+    local pCurStageInfo = StagesManager:getInstance():getCurStageDataInfo()
+    local tBattleLevelText = {"OneStarGrade","TwoStarGrade","ThreeStarGrade","FourStarGrade","FiveStarGrade"}
+    local maxBattleLevelSec = pCurStageInfo[tBattleLevelText[self._nTimeBattleLevel]] 
+    self._nTimeBattleRemainSec = maxBattleLevelSec - (pCurStageInfo.Timeing - self._fTimeCounter) 
 
+    -- 时间统一格式
+    local function getBattleCDTimeStr(nRemainSecc)
+        local minute = mmo.HelpFunc:gGetMinuteStr(nRemainSecc)
+        local second = mmo.HelpFunc:gGetSecondStr(nRemainSecc)
+        return string.format("剩余时间 %s:%s",minute,second)
+    end
+
+    -- 战斗评星
     if self._nTimeBattleRemainSec <= 0 then 
         if self._nTimeBattleLevel ~= 1 then 
             self._nTimeBattleLevel = self._nTimeBattleLevel - 1 
             -- 设置战斗评星的图标
-            self:getBattleUILayer()._pTimeCountDownNode:updateImgByBattleLevel(self._nTimeBattleLevel)
+            self:getBattleUILayer()._pStarUINode:setStar(self._nTimeBattleLevel)
             -- 获取当前评级最多消耗时间 
-            local fontColor = self._nTimeBattleLevel == 1 and cRed or cWhite
-            self:getBattleUILayer()._pTimeCountDownNode._pTimeText:setColor(fontColor)
-        else
-            self:getBattleUILayer()._pTimeCountDownNode:timeCountDown(0)
+            local fontColor = self._nTimeBattleLevel == 1 and cFontRed or cFontWhite
+            self:getBattleUILayer()._pTimeUINode:setTextColor(fontColor)
+        else  
+            self:getBattleUILayer()._pTimeUINode:setString(getBattleCDTimeStr(0))
             return
         end
     end
-    self:getBattleUILayer()._pTimeCountDownNode:timeCountDown(self._nTimeBattleRemainSec)
+    self:getBattleUILayer()._pTimeUINode:setString(getBattleCDTimeStr(self._nTimeBattleRemainSec))
 end
 
 -- 监控游戏结果
@@ -190,19 +205,29 @@ function BattleManager:updateResult(dt)
     if MapManager:getInstance()._bBossDeadFilming == true then
         return
     end
+
+    --如果当前正在播放剧情动画，暂不做结算处理
+    if StoryGuideManager:getInstance()._bIsStory == true then
+       return
+    end
     
     -- 通用结算逻辑判定
     local isFinalMap = MapManager:getInstance():isFinalMapInBattle()
     if isFinalMap == true then  -- 当前为最后一张地图
-        if StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kPVP -- 当前副本类型不为PVP
-            and StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kHuaShan then  -- 当前副本类型不为华山论剑
+        if StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kPVP and StagesManager:getInstance()._nCurCopyType ~= kType.kCopy.kHuaShan then  -- 当前副本类型不为PVP且不为华山论剑
             if MonstersManager:getInstance()._bIsBossDead == true or self._bIsBossDead == true then    -- 存在boss, 如果boss死亡，则立即结算
                 -- 检查战斗结束时是否需要播放剧情对话(仅限在剧情副本生效)
-                if self._bHasShownBattleEndTalk == false and StagesManager:getInstance()._nCurCopyType == kType.kCopy.kStory then
+                if self._bHasShownBattleEndTalkOrStory == false and StagesManager:getInstance()._nCurCopyType == kType.kCopy.kStory then
                     if StagesManager:getInstance():getCurStageDataInfo().BattleEndTalkID ~= -1 then
                         TalksManager:getInstance():setCurTalks(StagesManager:getInstance():getCurStageDataInfo().BattleEndTalkID)
-                        self._bHasShownBattleEndTalk = true        -- 标记已经显示了结束剧情对话
+                        self._bHasShownBattleEndTalkOrStory = true        -- 标记已经显示了结束剧情对话
                         self._bIsBossDead = true                   -- 标记boss已经死亡
+                        return
+                    elseif StagesManager:getInstance():getCurStageDataInfo().BattleEndStoryID ~= -1 then
+                        --检查战斗结束时需要播放剧情动画(仅限在剧情副本生效)
+                        StoryGuideManager:getInstance():createStoryGuideById(StagesManager:getInstance():getCurStageDataInfo().BattleEndStoryID)
+                        self._bIsBossDead = true                   -- 标记boss已经死亡
+                        self._bHasShownBattleEndTalkOrStory = true   -- 标记已经显示了结束剧情动画
                         return
                     end
                 end
@@ -215,10 +240,16 @@ function BattleManager:updateResult(dt)
                         -- 在已经没有下一波的情况下，判断是否当前战斗地图中所有野怪已经全部被干掉了
                         if table.getn(pMonstersManager._tMonsters) == pMonstersManager._nCurMonsterAreaIndex then
                             -- 检查战斗结束时是否需要播放剧情对话(仅限在剧情副本生效)
-                            if self._bHasShownBattleEndTalk == false and StagesManager:getInstance()._nCurCopyType == kType.kCopy.kStory then
+                            if self._bHasShownBattleEndTalkOrStory == false and StagesManager:getInstance()._nCurCopyType == kType.kCopy.kStory then
                                 if StagesManager:getInstance():getCurStageDataInfo().BattleEndTalkID ~= -1 then
                                     TalksManager:getInstance():setCurTalks(StagesManager:getInstance():getCurStageDataInfo().BattleEndTalkID)
-                                    self._bHasShownBattleEndTalk = true    -- 标记已经显示了结束剧情对话
+                                    self._bHasShownBattleEndTalkOrStory = true    -- 标记已经显示了结束剧情对话
+                                    return
+                                elseif StagesManager:getInstance():getCurStageDataInfo().BattleEndStoryID ~= -1 then
+                                    --检查战斗结束时需要播放剧情动画(仅限在剧情副本生效)
+                                    StoryGuideManager:getInstance():createStoryGuideById(StagesManager:getInstance():getCurStageDataInfo().BattleEndStoryID)
+                                    self._bIsBossDead = true                   -- 标记boss已经死亡
+                                    self._bHasShownBattleEndTalkOrStory = true   -- 标记已经显示了结束剧情动画
                                     return
                                 end
                             end
@@ -263,7 +294,7 @@ function BattleManager:requestForResult()
         DialogManager:getInstance():closeDialogByName("AlertDialog")
         local nConstTime = math.ceil(self._fTimeMax - self._fTimeCounter)
         print("****************************************** nConstTime:".. nConstTime)
-        MessageGameInstance:sendMessageUploadBattleResult21004(StagesManager:getInstance()._nBattleId,{useTime = nConstTime, monsters = winData})
+        MessageGameInstance:sendMessageUploadBattleResult21004(StagesManager:getInstance()._nBattleId,{scoreDepend = nConstTime, monsters = winData})
     end
     -- 延时2秒后开始结算
     cc.Director:getInstance():getRunningScene():runAction(cc.Sequence:create(cc.DelayTime:create(1.0),cc.CallFunc:create(toServer)))
@@ -434,6 +465,11 @@ function BattleManager:checkResultForStoryCopy(dt)
     end
 end
 
+-- 组队副本（AI版）
+function BattleManager:checkResultForkTeamAIFightCopy(dt)
+
+end
+
 --爬塔副本的结算（特殊处理）
 function BattleManager:showTowerAccounts()
     self:getBattleUILayer():setTowerCdTextVisible(false)     --如果有倒计时text就设置为不可见
@@ -538,12 +574,21 @@ function BattleManager:entryTowerBattleCopy()
     args._strNextMapName = pSelectedCopysFirstMapInfo.MapsName
     args._strNextMapPvrName = pSelectedCopysFirstMapInfo.MapsPvrName
     args._nNextMapDoorIDofEntity = pSelectedCopysFirstMapInfo.Doors[1][1]
-    --require("TestMainRoleInfo")    --roleInfo
     args._pMainRoleInfo = RolesManager:getInstance()._pMainRoleInfo 
     args._nMainPlayerRoleCurHp = RolesManager:getInstance()._pMainPlayerRole._nCurHp        -- 从副本进入时，这里为无效值
-    args._nMainPlayerRoleCurAnger = RolesManager:getInstance()._pMainPlayerRole._nCurAnger   -- 从副本进入时，这里为无效值
+    args._nMainPlayerRoleCurAnger = RolesManager:getInstance()._pMainPlayerRole._nCurAnger  -- 从副本进入时，这里为无效值
     if PetsManager:getInstance()._pMainPetRole then
-        args._nMainPetRoleCurHp = PetsManager:getInstance()._pMainPetRole._nCurHp               -- 从副本进入时，这里为无效值
+        args._nMainPetRoleCurHp = PetsManager:getInstance()._pMainPetRole._nCurHp           -- 从副本进入时，这里为无效值
+    end
+    args._tOtherPlayerRolesCurHp = {}
+    args._tOtherPlayerRolesCurAnger = {}
+    for k, v in pairs(RolesManager:getInstance()._tOtherPlayerRoles) do 
+        args._tOtherPlayerRolesCurHp[k] = v._nCurHp
+        args._tOtherPlayerRolesCurAnger[k] = v._nCurAnger
+    end
+    args._tOtherPetRolesCurHp = {}
+    for k, v in pairs(PetsManager:getInstance()._tOtherPetRoles) do 
+        args._tOtherPetRolesCurHp[k] = v._nCurHp
     end
     args._nCurCopyType =SelectedCopysDataInfo.CopysType
     args._nCurStageID = SelectedCopysDataInfo.ID
@@ -559,6 +604,13 @@ function BattleManager:entryTowerBattleCopy()
     args._tPvpRoleMountActvSkills = {}
     args._tPvpPasvSkills = {}
     args._tPvpPetRoleInfosInQueue = {}
+    args._tPvpPetCooperates = {}
+    args._tOtherPlayerRolesInfosOnBattleMap = {}
+    args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+    args._tOtherPlayerRolesMountActvSkillsInfos = {}
+    args._tOtherPlayerRolesPasvSkillsInfos = {}
+    args._tOtherPetCooperates = {}
+    args._bIsFirstBattleOfNewbie = false
 
     --切换战斗场景
     LayerManager:getInstance():gotoRunningSenceLayer(BATTLE_SENCE_LAYER,args)

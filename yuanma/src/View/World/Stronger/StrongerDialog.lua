@@ -81,7 +81,8 @@ function StrongerDialog:initUI()
 		return cell
 	end
 	self._pListController:setDataSource(self._tDataSource)
-
+	-- 显示玩家的战斗力
+	self._pFightPowerText:setString(RolesManager:getInstance()._pMainRoleInfo.roleAttrInfo.fightingPower)
 end
 
 -- 获取条目信息

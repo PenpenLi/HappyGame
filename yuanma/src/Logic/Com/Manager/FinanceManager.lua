@@ -52,7 +52,7 @@ function FinanceManager:getIconByFinanceType(kFinanceType)
     -- 荣誉值
     tIcos[kFinance.kHR] = {filename = "icon_0005.png",fileBigName = "icon_0005.png",textureType = ccui.TextureResType.plistType}
     -- 家族活跃度
-    tIcos[kFinance.kFA] = {filename = "icon_0006.png",fileBigName = "icon_0006.png",textureType = ccui.TextureResType.plistType}
+    --tIcos[kFinance.kFA] = {filename = "icon_0006.png",fileBigName = "icon_0006.png",textureType = ccui.TextureResType.plistType}
     -- 家族贡献度
     tIcos[kFinance.kFC] = {filename = "icon_0007.png",fileBigName = "icon_0007.png",textureType = ccui.TextureResType.plistType} 
     -- 家族建设值

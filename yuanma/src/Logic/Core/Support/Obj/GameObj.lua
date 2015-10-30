@@ -275,5 +275,13 @@ function GameObj:getChatManager()
     return self._pChatManager
 end
 
+-- 获取剧情的管理器
+function GameObj:getStoryGuideManager() 
+    if self._pStoryGuideManager == nil then
+        self._pStoryGuideManager = StoryGuideManager:getInstance()
+    end
+    return self._pStoryGuideManager
+end
+
 --------------------------------------------------------------------------------------------------------------
 return GameObj

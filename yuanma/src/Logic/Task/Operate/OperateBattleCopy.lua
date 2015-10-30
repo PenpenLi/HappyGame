@@ -86,6 +86,8 @@ function OperateBattleCopy:onEnter()
         else
             DialogManager:getInstance():showDialog("StoryCopyDialog")
         end
+    elseif self._kBattleCopyType == kType.kCopy.kTeamAIFight then -- 组队（AI版）副本
+
     end
     
     self._bIsOver = true    -- 结束

@@ -13,9 +13,7 @@ function RankingListRenderParams:ctor()
     self._pText3 = self._pCCS:getChildByName("Text_3")
     --职业
     self._pText4 = self._pCCS:getChildByName("Text_4")
-    --战斗力
-    self._pText5 = self._pCCS:getChildByName("Text_5")
- 
+    
 end
 
 function RankingListRenderParams:create()

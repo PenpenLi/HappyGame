@@ -341,8 +341,6 @@ end
 --得到所有可以分解的装备列表
 function BagCommonManager:InitResolveAllEquip()
     local tAllCanResolveEqu = {}  --所有可分解的装备
-    local tWhiteResloveEqu = {}   --白色可以分级的装备
-    local tGreenResloveEqu = {}   --绿色可以分解的装备
     local tBlueResolveEqu = {}    --蓝色可分解的装备
     local tPurpleResolveEqu = {}  --紫色分解的装备
     local tOrangeResolveEqu = {}  --橙色可分解的装备
@@ -351,11 +349,7 @@ function BagCommonManager:InitResolveAllEquip()
     tAllCanResolveEqu = self._tEquipArry 
     for k,v in pairs(self._tEquipArry) do
         local nQua = v.dataInfo.Quality
-        if nQua == kType.kQuality.kWhite then --如果是大于蓝色的那么就添加到表里
-            table.insert(tWhiteResloveEqu,v)
-        elseif nQua == kType.kQuality.kGreen then --如果是大于蓝色的那么就添加到表里
-            table.insert(tGreenResloveEqu,v)
-        elseif nQua == kType.kQuality.kBlue then  --蓝色装备
+        if nQua == kType.kQuality.kBlue then  --蓝色装备
            table.insert(tBlueResolveEqu,v)
         elseif nQua == kType.kQuality.kPurple then --紫色装备
            table.insert(tPurpleResolveEqu,v)
@@ -366,7 +360,7 @@ function BagCommonManager:InitResolveAllEquip()
     end
 
     -- 得到的是一个表数组
-    self._tArrayAllResolveEqu = {tBlueResolveEqu ,tPurpleResolveEqu ,tOrangeResolveEqu,tAllCanResolveEqu}
+    self._tArrayAllResolveEqu = {tAllCanResolveEqu,tBlueResolveEqu ,tPurpleResolveEqu ,tOrangeResolveEqu}
 end
 
 -- 根据id 获得某个基数类物品的数量 比如宝石，材料

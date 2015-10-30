@@ -156,7 +156,7 @@ function MonsterSkill59:onUpdateProcessDo(dt)
         self:setVisible(true)
         self:playActionByIndex(1)
         self:setPosition(cc.p(self:getMaster():getPositionX(), self:getMaster():getPositionY() + self:getMaster():getHeight()/2))
-        self:getAIManager():objBlinkToRandomPosAccordingToTargetObj(self:getMaster(), self:getRolesManager()._pMainPlayerRole, 15) -- 瞬移到随机位置（在主角位置的周边30个格子的距离内）
+        self:getAIManager():objBlinkToRandomPosAccordingToTargetObj(self:getMaster(), self:getRolesManager()._pMainPlayerRole, 1, 15) -- 瞬移到随机位置（在主角位置的周边30个格子的距离内）
         if TableTempleteMonster[self:getMaster()._pRoleInfo.TempleteID].AppointedRotation == -1 then
             self:getAIManager():roleRefreshDirectionWhenAttackEnemys(self:getMaster(), self)
         end

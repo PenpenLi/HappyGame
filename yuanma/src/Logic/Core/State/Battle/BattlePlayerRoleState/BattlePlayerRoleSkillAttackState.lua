@@ -59,7 +59,7 @@ function BattlePlayerRoleSkillAttackState:onExit()
         for i = 1, self:getMaster()._refStick._nWaitingSkillActOverToSubCount do
             self:getMaster()._refStick:sub()
         end
-	self._nSkillWayIndex = kType.kSkill.kWayIndex.kNone
+	   self._nSkillWayIndex = kType.kSkill.kWayIndex.kNone
     end
     return
 end

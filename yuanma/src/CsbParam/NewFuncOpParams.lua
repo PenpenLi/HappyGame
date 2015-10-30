@@ -6,9 +6,9 @@ function NewFuncOpParams:ctor()
 	--挂点
     self._pNodeNewFunc = self._pCCS:getChildByName("NodeNewFunc")
 	--图标底板
-	self._pIconBg = self._pNodeNewFunc:getChildByName("IconBg")
+	--self._pIconBg = self._pNodeNewFunc:getChildByName("IconBg")
 	--图标
-    self._pIcon = self._pNodeNewFunc:getChildByName("Icon")
+    --self._pIcon = self._pNodeNewFunc:getChildByName("Icon")
     --提示文字
     self._pFuncText = self._pNodeNewFunc:getChildByName("FuncText")
 end

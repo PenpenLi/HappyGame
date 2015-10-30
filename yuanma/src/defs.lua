@@ -11,16 +11,60 @@
 -- 通用颜色定义
 cWhite = cc.c3b(255,255,255)
 cRed = cc.c3b(234,45,45)
-cGreen = cc.c3b(59,255,59)
-cOrange = cc.c3b(255,198,0)
-cBlue = cc.c3b(48,159,253)
-cPurple = cc.c3b(144,66,251)
+cGreen = cc.c3b(12,228,95)
+cOrange = cc.c3b(233,147,6)
+cBlue = cc.c3b(10,92,176)
+cPurple = cc.c3b(78,32,113)
 cGrey = cc.c3b(145,145,145)
 cDeepGrey = cc.c3b(70,70,70)
-cYellow = cc.c3b(255,253,103)
+cYellow = cc.c3b(255,252,175)
+cLightYellow = cc.c3b(255,254,235)
 cBlack = cc.c3b(0,0,0)
 cMapNight = cc.c3b(8,93,189)
 cPeopleNight = cc.c3b(42,245,254)
+
+-- 字体颜色
+cFontDarkRed = cc.c4b(93, 35, 35, 255)              -- 暗红色
+cFontWhite = cc.c4b(255, 255, 255, 255)             -- 纯白色
+cFontLightYellow = cc.c4b(255, 252, 175, 255)       -- 浅黄色
+cFontMidYellow = cc.c4b(249, 241, 133, 255)         -- 中黄色
+cFontDarkYellow = cc.c4b(233, 147, 6, 255)          -- 深黄色
+cFontGreen = cc.c4b(12, 228, 95, 255)               -- 绿色
+cFontDarkGreen = cc.c4b(75, 128, 60, 255)           -- 暗绿色
+cFontDarkBlue = cc.c4b(10, 92, 176, 255)            -- 暗蓝色
+cFontDarkPurple = cc.c4b(78, 32, 113, 255)          -- 暗紫色
+cFontRed = cc.c4b(205, 6, 6, 255)                   -- 红色
+cFontGrey = cc.c4b(145, 145, 145, 255)              -- 灰色
+cFontBrown = cc.c4b(104,33,41,255)                  -- 棕色
+cFontFrameTitle = cc.c4b(253,243,225,255)           -- 界面标题米色  
+
+-- 字体阴影颜色
+cFontShadow = cc.c4b(0, 0, 0, 178)                  -- 纯黑色
+
+-- 字体描边颜色
+cFontOutline = cc.c4b(87, 63, 60, 255)              -- 咖啡色
+cFontOutline2 = cc.c4b(135, 77, 14, 255)            -- 浅咖啡色
+
+-- test
+--[[
+     按钮控件a，给按钮文字设置字体颜色
+     a:getTitleRenderer():setTextColor(cFontDarkRed)
+
+     按钮控件a，给按钮文字添加阴影
+     a:getTitleRenderer():enableShadow(cFontShadow)
+
+     按钮控件a，给按钮文字添加描边
+     a:getTitleRenderer():enableOutline(cFontOutline,2)
+
+     文本控件Label，Text对象a，给文本设置字体颜色
+     a:setTextColor(cFontDarkRed)
+
+     文本控件Label，Text对象a，给文本添加阴影
+     a:enableShadow(cFontShadow)
+
+     文本控件Label，Text对象a，给文本添加描边
+     a:enableOutline(cFontOutline,2)
+]]
 
 -- 场景会话类型
 kSession =
@@ -40,7 +84,7 @@ isFirstLoginMain = true
 strCommonFontName = "simhei.ttf"
 
 -- UI按钮点击时的缩放比例
-nButtonZoomScale = 0.2
+nButtonZoomScale = -0.1
 
 -- 默认家园地图文件名称
 tDefaultMapNames = {"world_map1","world_map2"}
@@ -160,6 +204,16 @@ kDirection =
 -- 所有类型定义
 kType =
     {
+        ----------------- 阵营类型 -------------------
+        kCampType = 
+        {
+            kMain = 1,                      -- 我方阵营
+            kPvp = 2,                       -- PVP方阵营
+            kOther = 3,                     -- 其他玩家阵营
+            kMonster = 4,                   -- 野怪阵营
+            kEntity = 5,                    -- 实体阵营
+        },
+        ----------------- 天气类型 -------------------
         kSky = 
         {
             kDaySunShine = 0,               -- 【白日】晴天
@@ -205,6 +259,7 @@ kType =
             kPVP = 8,           -- 排行榜副本
             kHuaShan = 9,       -- 华山论剑副本
             kStory = 10,        -- 剧情副本
+            kTeamAIFight = 11,  -- 组队副本（AI版） 
 
         },
         -------------副本类型(文字)-------------------
@@ -221,6 +276,7 @@ kType =
             ["8"] = "竞技场",           -- 排行榜副本
             ["9"] = "斗神殿",       -- 华山论剑副本
             ["10"] = "剧情副本",        -- 剧情副本
+            ["11"] = "组队副本",        -- 组队副本（AI版）
 
         },
         -------------动画展现类型----------------
@@ -251,9 +307,12 @@ kType =
             kBattleEntity = 7,              -- 战斗实体状态机
             kBattlePlayerRole = 8,          -- 战斗玩家角色状态机
             kBattlePetRole = 9,             -- 战斗玩家宠物角色状态机
-            kBattleMonster = 10,            -- 战斗怪物角色状态机
-            kBattleFriendRole = 11,         -- 战斗好友角色状态机
-            kBattleSkill = 12,              -- 战斗技能状态机
+            kBattleOtherPlayerRole = 10,    -- 战斗其他玩家角色状态机
+            kBattleOtherPetRole = 11,       -- 战斗其他玩家宠物角色状态机
+            kBattleMonster = 12,            -- 战斗怪物角色状态机
+            kBattleFriendRole = 13,         -- 战斗好友角色状态机
+            kBattleSkill = 14,              -- 战斗技能状态机
+            kStoryGuideRole =15,            -- 剧情引导中的状态机
         },
         ---------------状态类型--------------------
         kState =
@@ -326,6 +385,32 @@ kType =
                 kFrozen = 7,        -- 冻结状态
                 kDizzy = 8,         -- 眩晕状态
             },
+            kBattleOtherPlayerRole =   -- 战斗其他角色状态
+            {
+                kNone = 0,          -- 无效状态
+                kAppear = 1,        -- 出场状态
+                kStand = 2,         -- 站立状态
+                kRun = 3,           -- 奔跑状态
+                kGenAttack = 4,     -- 普通攻击状态
+                kSkillAttack = 5,   -- 技能攻击状态
+                kAngerAttack = 6,   -- 怒气攻击状态
+                kBeaten = 7,        -- 受击打状态
+                kDead = 8,          -- 死亡状态
+                kFrozen = 9,        -- 冻结状态
+                kDizzy = 10,        -- 眩晕状态
+            },
+            kBattleOtherPetRole =        -- 战斗其他宠物角色状态
+            {
+                kNone = 0,          -- 无效状态
+                kAppear = 1,        -- 出场状态
+                kStand = 2,         -- 站立状态
+                kRun = 3,           -- 奔跑状态
+                kSkillAttack = 4,   -- 技能攻击状态
+                kBeaten = 5,        -- 受击打状态
+                kDead = 6,          -- 死亡状态
+                kFrozen = 7,        -- 冻结状态
+                kDizzy = 8,         -- 眩晕状态
+            },
             kBattleFriendRole =     -- 战斗好友角色状态
             {
                 kNone = 0,          -- 无效状态
@@ -333,7 +418,9 @@ kType =
                 kAppear = 2,        -- 出场状态
                 kDisAppear = 3,     -- 退场状态
                 kStand = 4,         -- 站立状态
-                kSkillAttack = 5,   -- 技能攻击状态
+                kRun = 5,           -- 奔跑状态
+                kSkillAttack = 6,   -- 出场技能攻击状态
+                kGenAttack = 7,     -- 普通攻击状态
             },
             kBattleMonster =
             {
@@ -355,6 +442,14 @@ kType =
                 kChant = 2,      -- 吟唱状态
                 kProcess = 3,    -- 执行状态
                 kRelease = 4,    -- 释放状态
+            },
+            kStoryGuideRole =   -- 剧情场景中状态
+            {
+                kNone = 0,      -- 无效状态
+                kStand = 1,     -- 站立状态
+                kRun = 2,       -- 奔跑状态
+                kDead = 3,      -- 死亡状态
+                kSkillAttack = 4,   -- 放技能状态
             },
         },
         --------------控制机类型----------------------
@@ -415,6 +510,7 @@ kType =
             kMonsterArea = 4,   -- 野怪区域
             kDialog = 5,        -- 对话框触发
             kTalks = 6,         -- 剧情对话
+            kStory = 7,         -- 剧情动画
         },
         kBattleResult = 
         {
@@ -635,6 +731,8 @@ kType =
                 kMonsterSkill59 = 358,
                 kMonsterSkill60 = 359,
                 kMonsterSkill61 = 360,
+                kMonsterSkill62 = 361,
+                kMonsterSkill63 = 362,
 
                 --------实体相关-------------------
                 kPoisonPoolSkill = 400,
@@ -700,11 +798,11 @@ kType =
         kSkillEarlyWarning = 
         {
             kNone = 0,
-            kType1 = 1,
-            kType2 = 2,
-            kType3 = 3,
-            kType4 = 4,
-            kType5 = 5,
+            kType1 = 1,  -- 红颜特效
+            kType2 = 2,  -- 准心特效
+            kType3 = 3,  -- 大号箭头
+            kType4 = 4,  -- 圆形特效(自身)
+            kType5 = 5,  -- 圆形特效(范围)
         },
         ------------------
         kObjCmd = 
@@ -816,7 +914,7 @@ DetailInfosCallbackCMD = {
         if pItemInfo.baseType ==kItemType.kEquip then --假如是装备的只需要弹出提示框
             local nItemName = pItemInfo.templeteInfo.Name
             local nItemPrice =  pItemInfo.dataInfo.Price
-            showConfirmDialog("是否确定出售 "..nItemName.." 出售后不可回收\n\n您将获得"..nItemPrice.."金币",function()
+            showConfirmDialog("是否确定出售 "..nItemName.." 出售后不可回收您将获得"..nItemPrice.."金币",function()
                 EquipmentCGMessage:sendMessageSellItem20128(pItemInfo.position,1)
                 BagCommonManager:getInstance():setSellOutPosition(pItemInfo.position)
                 DialogManager:getInstance():closeDialogByName("EquipCallOutDialog")
@@ -1030,14 +1128,14 @@ EquipmentTabType = {
 }
 
 RoleDialogTabType = {
-    RoleDialogTypeBag = 1,         --背包
+    RoleDialogTypeBag = 1,          --背包
     RoleDialogTypeDetail = 2,       --详细信息
 }
 
 fairyLandTabType = {
     fairyLandTabInlay = 1,         --镶嵌
-    fairyLandTabDrop = 2,     --卸下
-    fairyLandTabAllAttUp = 3,   --整体提升效果
+    fairyLandTabDrop = 2,          --卸下
+    fairyLandTabAllAttUp = 3,      --整体提升效果
 
 }
 
@@ -1166,4 +1264,25 @@ kFamilyPositionTitle = {"族长","副族长","长老","成员"}
 kResultType = {
     kGreadResult = 1,
     kTimeResult = 1,
+}
+
+--场景引导的对话类型
+kStoryGuideTalkType = {
+    kCreate = 1,         --创建Npc,主角或者怪物
+    kMove = 2,           --玩家，npc，怪物，移动
+    kTalk = 3,           --当前位置对话
+    kSkill = 4,          --原地放技能
+    kRemove = 5,         --移除npc或者怪物或者主角
+    kRotation = 6,       --旋转
+    kCameraMove = 7,     --镜头移动
+    kWaiting = 8,        --延时等待
+    kPlayMusic = 9,      --播放音乐
+    kPlayEffect = 10,    --播放音效
+}
+
+kBuyThingsType = {
+    kBuyStrength = 1,   --买体力
+    kBuyNumber = 2,     --买次数
+    kBuyGoldNumber = 3, --买摇钱树次数   
+
 }

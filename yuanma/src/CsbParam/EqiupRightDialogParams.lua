@@ -7,10 +7,14 @@ function EqiupRightDialogParams:ctor()
     self._pBackGround = self._pCCS:getChildByName("BackGround")
     --标题底板
     self._pFrameTitle = self._pBackGround:getChildByName("FrameTitle")
-    --标题图标
-    self._pEqiupFrameIcon = self._pBackGround:getChildByName("EqiupFrameIcon")
-    --标题艺术字
+    
+    --标题文字
     self._pEqiupText = self._pBackGround:getChildByName("EqiupText")
+    self._pEqiupText:setTextColor(cFontFrameTitle)
+
+
+
+
     --左侧板挂点
     self._pHangingPoint = self._pBackGround:getChildByName("HangingPoint")
     --右侧小底板
@@ -42,14 +46,20 @@ function EqiupRightDialogParams:ctor()
     self._pBagTabButton3 = self._pThreePoint:getChildByName("BagTabButton3")
     --关闭按钮
     self._pCloseButton = self._pBackGround:getChildByName("CloseButton") 
-     --钻石数量底板
-    self._pMoneyBg = self._pBackGround:getChildByName("MoneyBg")   
-    -- 钻石的图标
-    self._pMoneyIcon = self._pMoneyBg:getChildByName("icon_018")
+     --金币数量底板
+    self._pGoldBg = self._pBackGround:getChildByName("MoneyBg1")
+    --金币数量
+    self._pGoldNumber = self._pGoldBg:getChildByName("Money_Number1") 
+ 
+    --金币数量增加按钮
+    self._pGoldAdd = self._pGoldBg:getChildByName("MoneyAdd1") 
+    --钻石数量底板
+    self._pMoneyBg = self._pBackGround:getChildByName("MoneyBg2")
     --钻石数量
-    self._pMoneyNumber = self._pMoneyBg:getChildByName("Money_Number") 
-    
-    
+    self._pMoneyNumber = self._pMoneyBg:getChildByName("Money_Number2") 
+
+    --钻石数量增加按钮
+    self._pMoneyAdd = self._pMoneyBg:getChildByName("MoneyAdd2") 
 end
 
 function EqiupRightDialogParams:create()

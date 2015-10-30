@@ -55,12 +55,12 @@ function PlayerInfPanelParams:ctor()
     --属性16 雷属性攻击
     self._pBg16 = self._pInfBg:getChildByName("Bg16")
     self._pNum16 = self._pBg16:getChildByName("Num16")
-    --详细说明板子按钮
-    self._pButtonQ = self._pCCS:getChildByName("ButtonQ")
-    --防御属性  
-    self._pDefText = self._pInfFramePoint:getChildByName("Text_86") 
-    --攻击属性 
-    self._pAtaText = self._pInfFramePoint:getChildByName("Text_87")
+
+    --详细属性板子按钮
+    self._pXqButton = self._pInfFramePoint:getChildByName("XqButton")
+ 
+
+
 
 end
 

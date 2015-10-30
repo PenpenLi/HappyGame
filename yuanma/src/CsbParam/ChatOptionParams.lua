@@ -28,7 +28,8 @@ function ChatOptionParams:ctor()
 
     --屏蔽人数显示 （x/50)
     self._pBlockNum = self._pBackGround:getChildByName("BlockNum")    
-    
+    self._pBlockNum:setTextColor(cFontDarkRed)
+
     --下方列表
     self._pListView = self._pBackGround:getChildByName("ListView")    
     
@@ -38,16 +39,34 @@ function ChatOptionParams:ctor()
     self._pHeadIconBg = self._pBlockBg:getChildByName("HeadIconBg")
     --头像本身
     self._pHeadIcon = self._pHeadIconBg:getChildByName("HeadIcon")    
-    --删除按钮
+     --玩家昵称
     self._pBlockName = self._pBlockBg:getChildByName("BlockName")    
-    --玩家昵称
+    self._pBlockName:setTextColor(cFontDarkRed)
+    --删除按钮
     self._pDelButton = self._pBlockBg:getChildByName("DelButton")    
-   
+    
+    
+     --标题
+    self._pTitle = self._pBackGround:getChildByName("Title")
+    self._pTitle:enableShadow(cFontShadow)
 
+    --选项标题1
+    self._pText1 = self._pBackGround:getChildByName("Text1")
+    self._pText1:setTextColor(cFontDarkRed)
 
+    --选项标题2
+    self._pText2 = self._pBackGround:getChildByName("Text2")
+    self._pText2:setTextColor(cFontDarkRed)
 
+    --选项标题3
+    self._pText3 = self._pBackGround:getChildByName("Text3")
+    self._pText3:setTextColor(cFontDarkRed)
+    
+    --屏蔽标题
+    self._pBlockTitle = self._pBackGround:getChildByName("BlockTitle")
+    self._pBlockTitle:setTextColor(cFontDarkRed)
 
-
+    
 
 end
 

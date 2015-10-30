@@ -165,8 +165,8 @@ function HuaShanDialog:initUI()
     local function onTouchEnded(touch,event)
         local location = touch:getLocation()
         local actionOverCallBack = function()  --动画播放完毕的回调 播放默认待机动作
-            local pStandAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.StandActFrameRegion[1],self._tTempletetInfo.StandActFrameRegion[2])
-            pStandAnimate:setSpeed(self._tTempletetInfo.StandActFrameRegion[3])
+            local pStandAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.ReadyFightActFrameRegion[1],self._tTempletetInfo.ReadyFightActFrameRegion[2])
+            pStandAnimate:setSpeed(self._tTempletetInfo.ReadyFightActFrameRegion[3])
             self._pRolePlayer:runAction(cc.RepeatForever:create(pStandAnimate))
         end
 
@@ -435,10 +435,15 @@ function HuaShanDialog:createRoleModel(equipemts,fashionOptions,roleCareer)
     self:setMaterialInfo(equipemts)
 
     self._pRolePlayer:stopAllActions()
+    if self._pRoleAnimation then
+        --self._pRoleAnimation:release();
+        self._pRoleAnimation = nil 
+    end
     self._pRoleAnimation = cc.Animation3D:create(pRoleModelAni..".c3b")
+
     local actionOverCallBack = function ()
-        local pRunActAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.StandActFrameRegion[1],self._tTempletetInfo.StandActFrameRegion[2])
-        pRunActAnimate:setSpeed(self._tTempletetInfo.StandActFrameRegion[3])
+        local pRunActAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.ReadyFightActFrameRegion[1],self._tTempletetInfo.ReadyFightActFrameRegion[2])
+        pRunActAnimate:setSpeed(self._tTempletetInfo.ReadyFightActFrameRegion[3])
         self._pRolePlayer:runAction(cc.RepeatForever:create(pRunActAnimate))
     end
     self:setModelScaleByInfo(pModelScale)
@@ -557,6 +562,9 @@ function HuaShanDialog:entryBattleCopy(pvperFightInfo)
         args._nMainPlayerRoleCurHp = nil      -- 从副本进入时，这里为无效值
         args._nMainPlayerRoleCurAnger = nil   -- 从副本进入时，这里为无效值
         args._nMainPetRoleCurHp = nil         -- 从副本进入时，这里为无效值
+        args._tOtherPlayerRolesCurHp = {}      -- 从副本进入时，这里为无效值
+        args._tOtherPlayerRolesCurAnger = {}   -- 从副本进入时，这里为无效值
+        args._tOtherPetRolesCurHp = {}         -- 从副本进入时，这里为无效值
         args._nCurCopyType = kCopy.kHuaShan
         args._nCurStageID = self._pSelectedCopysDataInfo.ID
         args._nCurStageMapID = self._pSelectedCopysDataInfo.MapID
@@ -586,7 +594,14 @@ function HuaShanDialog:entryBattleCopy(pvperFightInfo)
         for i,v in ipairs(pvperFightInfo.pets) do
             args._tPvpPetRoleInfosInQueue[i] = v.petInfo
         end
-        
+        args._tPvpPetCooperates = {}
+        args._tOtherPlayerRolesInfosOnBattleMap = {}
+        args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+        args._tOtherPlayerRolesMountActvSkillsInfos = {}
+        args._tOtherPlayerRolesPasvSkillsInfos = {}
+        args._tOtherPetCooperates = {}
+        args._bIsFirstBattleOfNewbie = false
+    
         --关闭当前打开的Dialog
         self:getGameScene():closeDialogByNameWithNoAni("HuaShanDialog")
         --切换战斗场景

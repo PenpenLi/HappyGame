@@ -152,6 +152,18 @@ end
 function BuffNode:clearAllTempDate()
     self._bTempHasBeing = false
     self._tTempChangeDate = {}
+   
+end
+
+--清理所以的buff跟缓存信息
+function BuffNode:clearAllBuffAndTempDate()
+    self._tTempChangeDate = {}
+    for k,v in pairs(self._tBuffUiArray) do
+        v:removeFromParent(true)
+    end
+    self._tBuffUiArray = {}
+    self._tBuffDateArray = {}
+
 end
 
 
@@ -166,7 +178,7 @@ function BuffNode:update(dt)
         if self._bHasBuffChange then
             self._bHasBuffChange = false
             local pBuff = self._tTempChangeDate[1]
-            if pBuff.type == 1 then --add
+            if pBuff and pBuff.type == 1 then --add
                 self:addBuff(pBuff.date)
             else                   --remove
                 self:removeBuff(pBuff.date)

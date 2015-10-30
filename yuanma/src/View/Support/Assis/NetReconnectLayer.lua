@@ -14,7 +14,12 @@ end)
 -- 构造函数
 function NetReconnectLayer:ctor()
     self._strName = "NetReconnectLayer"         -- 层名称
-    self._pReconnectLbl = nil
+    self._pBg = nil                             -- 背景
+    self._pReconnectLbl = nil                   -- 文字提示
+    self._pCircle = nil
+    self._pCircle2 = nil
+    self._pCircle3 = nil
+
 end
 
 -- 创建函数
@@ -26,22 +31,47 @@ end
 
 -- 处理函数
 function NetReconnectLayer:dispose()
-    local sScreen = mmo.VisibleRect:getVisibleSize()
+
+    self._pBg = cc.Sprite:createWithSpriteFrameName("ccsComRes/pmd.png")
+    self._pBg:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/3+1)
+    self._pBg:setScaleX(mmo.VisibleRect:width()/self._pBg:getContentSize().width)
+    self._pBg:setScaleY(1.5)
+    self:addChild(self._pBg)
     
-    self._pColorLayer =  cc.LayerColor:create(cc.c4b(0,0,0,255))
-    self._pColorLayer:setOpacity(90.0)
-    self:addChild( self._pColorLayer)
-    
-    self._pReconnectLbl = cc.Label:createWithTTF("", strCommonFontName, 21)
+    self._pReconnectLbl = cc.Label:createWithTTF("", strCommonFontName, 30)
     self._pReconnectLbl:setLineHeight(20)
     self._pReconnectLbl:setAdditionalKerning(-2)
-    self._pReconnectLbl:setTextColor(cc.c4b(255, 255, 255, 255))
-    self._pReconnectLbl:setPosition(sScreen.width/2-40, sScreen.height/2-20)
-    self._pReconnectLbl:setWidth(145)
-    self._pReconnectLbl:setString("重连中..")
-    self._pReconnectLbl:enableOutline(cc.c4b(0, 0, 0, 255), 2)
-    self._pReconnectLbl:setAnchorPoint(0,0)
+    self._pReconnectLbl:setTextColor(cFontWhite)
+    self._pReconnectLbl:enableOutline(cFontOutline,2)
+    self._pReconnectLbl:setString("网络重连中...")
+    self._pReconnectLbl:setPosition(mmo.VisibleRect:width()/2, mmo.VisibleRect:height()/3)
     self:addChild(self._pReconnectLbl)
+
+    -- 无限旋转的菊花
+    self._pCircle = cc.Sprite:createWithSpriteFrameName("com_001.png")
+    self._pCircle:setScale(0.4)
+    self._pCircle:setPosition(mmo.VisibleRect:width()/2+120, mmo.VisibleRect:height()/3)
+    self._pCircle:stopAllActions()
+    self._pCircle:setRotation(0)
+    self._pCircle:runAction(cc.RepeatForever:create(cc.RotateBy:create(0.2,35.0)))
+    self:addChild(self._pCircle)
+
+    self._pCircle2 = cc.Sprite:createWithSpriteFrameName("com_001.png")
+    self._pCircle2:setPosition(mmo.VisibleRect:width()/2+120, mmo.VisibleRect:height()/3)
+    self._pCircle2:stopAllActions()
+    self._pCircle2:setRotation(90)
+    self._pCircle2:setScale(0.6)
+    self._pCircle2:runAction(cc.RepeatForever:create(cc.RotateBy:create(0.35,-35.0)))
+    self:addChild(self._pCircle2)
+
+    self._pCircle3 = cc.Sprite:createWithSpriteFrameName("com_001.png")
+    self._pCircle3:setPosition(mmo.VisibleRect:width()/2+120, mmo.VisibleRect:height()/3)
+    self._pCircle3:stopAllActions()
+    self._pCircle3:setRotation(180)
+    self._pCircle3:setScale(0.6)
+    self._pCircle3:runAction(cc.RepeatForever:create(cc.RotateBy:create(0.5,-35.0)))
+    self:addChild(self._pCircle3)
+
     -- 触摸注册
     local function onTouchBegin(touch,event)
         return true

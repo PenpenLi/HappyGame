@@ -38,6 +38,7 @@ function PetHandler:handleMsgGetPetsList(msg)
     if msg.header.result == 0 then
         PetsManager:getInstance()._tMainPetsInfos = msg.body.petInfos
         PetsManager:getInstance():setMountPets(msg.body.fieldIds)
+        PetsManager:getInstance():updatePetCooperate()
         
         --DialogManager:getInstance():showDialog("PetDialog",{msg.body.petInfos})
         
@@ -62,6 +63,7 @@ function PetHandler:handleMsgField(msg)
         --end
     
         PetsManager:getInstance():setMountPets(msg.body.fieldIds)
+        PetsManager:getInstance():updatePetCooperate()
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kNetFieldPet, msg.body)
         
         NewbieManager:showOutAndRemoveWithRunTime()
@@ -86,6 +88,7 @@ function PetHandler:handleMsgUnField(msg)
         --end
     
         PetsManager:getInstance():setMountPets(msg.body.fieldIds)
+        PetsManager:getInstance():updatePetCooperate()
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kNetUnFieldPet, msg.body)
     else
         print("返回错误码："..msg.header.result)
@@ -123,6 +126,7 @@ function PetHandler:handleMsgAdvance(msg)
         BagCommonManager:getInstance():updateItemArry(msg["body"].itemInfos)
         --print_lua_table(msg["body"].itemInfos)
         PetsManager:getInstance():AdvancePetWithId(msg["body"]["argsBody"].petId , msg.body.step)
+        PetsManager:getInstance():updatePetCooperate()
         
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kUpdateBagItemList, {})
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kNetAdvancePet, msg.body)

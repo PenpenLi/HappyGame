@@ -798,6 +798,50 @@ int lua_mmo_api_HelpFunc_roleLevelUpZTGame(lua_State* tolua_S)
 #endif
     return 0;
 }
+int lua_mmo_api_HelpFunc_createNormalMappedNode(lua_State* tolua_S)
+{
+    int argc = 0;
+    bool ok  = true;
+
+#if COCOS2D_DEBUG >= 1
+    tolua_Error tolua_err;
+#endif
+
+#if COCOS2D_DEBUG >= 1
+    if (!tolua_isusertable(tolua_S,1,"HelpFunc",0,&tolua_err)) goto tolua_lerror;
+#endif
+
+    argc = lua_gettop(tolua_S) - 1;
+
+    if (argc == 5)
+    {
+        cocos2d::Node* arg0;
+        std::string arg1;
+        std::string arg2;
+        std::string arg3;
+        int arg4;
+        ok &= luaval_to_object<cocos2d::Node>(tolua_S, 2, "cc.Node",&arg0);
+        ok &= luaval_to_std_string(tolua_S, 3,&arg1, "HelpFunc:createNormalMappedNode");
+        ok &= luaval_to_std_string(tolua_S, 4,&arg2, "HelpFunc:createNormalMappedNode");
+        ok &= luaval_to_std_string(tolua_S, 5,&arg3, "HelpFunc:createNormalMappedNode");
+        ok &= luaval_to_int32(tolua_S, 6,(int *)&arg4, "HelpFunc:createNormalMappedNode");
+        if(!ok)
+        {
+            tolua_error(tolua_S,"invalid arguments in function 'lua_mmo_api_HelpFunc_createNormalMappedNode'", nullptr);
+            return 0;
+        }
+        cocos2d::Node* ret = HelpFunc::createNormalMappedNode(arg0, arg1, arg2, arg3, arg4);
+        object_to_luaval<cocos2d::Node>(tolua_S, "cc.Node",(cocos2d::Node*)ret);
+        return 1;
+    }
+    luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "HelpFunc:createNormalMappedNode",argc, 5);
+    return 0;
+#if COCOS2D_DEBUG >= 1
+    tolua_lerror:
+    tolua_error(tolua_S,"#ferror in function 'lua_mmo_api_HelpFunc_createNormalMappedNode'.",&tolua_err);
+#endif
+    return 0;
+}
 int lua_mmo_api_HelpFunc_getSystemSTime(lua_State* tolua_S)
 {
     int argc = 0;
@@ -1359,6 +1403,47 @@ int lua_mmo_api_HelpFunc_isPlayingVideo(lua_State* tolua_S)
 #endif
     return 0;
 }
+int lua_mmo_api_HelpFunc_doRippleNodeTouch(lua_State* tolua_S)
+{
+    int argc = 0;
+    bool ok  = true;
+
+#if COCOS2D_DEBUG >= 1
+    tolua_Error tolua_err;
+#endif
+
+#if COCOS2D_DEBUG >= 1
+    if (!tolua_isusertable(tolua_S,1,"HelpFunc",0,&tolua_err)) goto tolua_lerror;
+#endif
+
+    argc = lua_gettop(tolua_S) - 1;
+
+    if (argc == 4)
+    {
+        cocos2d::Node* arg0;
+        cocos2d::Point arg1;
+        double arg2;
+        double arg3;
+        ok &= luaval_to_object<cocos2d::Node>(tolua_S, 2, "cc.Node",&arg0);
+        ok &= luaval_to_point(tolua_S, 3, &arg1, "HelpFunc:doRippleNodeTouch");
+        ok &= luaval_to_number(tolua_S, 4,&arg2, "HelpFunc:doRippleNodeTouch");
+        ok &= luaval_to_number(tolua_S, 5,&arg3, "HelpFunc:doRippleNodeTouch");
+        if(!ok)
+        {
+            tolua_error(tolua_S,"invalid arguments in function 'lua_mmo_api_HelpFunc_doRippleNodeTouch'", nullptr);
+            return 0;
+        }
+        HelpFunc::doRippleNodeTouch(arg0, arg1, arg2, arg3);
+        return 0;
+    }
+    luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "HelpFunc:doRippleNodeTouch",argc, 4);
+    return 0;
+#if COCOS2D_DEBUG >= 1
+    tolua_lerror:
+    tolua_error(tolua_S,"#ferror in function 'lua_mmo_api_HelpFunc_doRippleNodeTouch'.",&tolua_err);
+#endif
+    return 0;
+}
 int lua_mmo_api_HelpFunc_loginZTGame(lua_State* tolua_S)
 {
     int argc = 0;
@@ -1651,6 +1736,42 @@ int lua_mmo_api_HelpFunc_showWaveEffectByShader(lua_State* tolua_S)
 #if COCOS2D_DEBUG >= 1
     tolua_lerror:
     tolua_error(tolua_S,"#ferror in function 'lua_mmo_api_HelpFunc_showWaveEffectByShader'.",&tolua_err);
+#endif
+    return 0;
+}
+int lua_mmo_api_HelpFunc_createRippleNode(lua_State* tolua_S)
+{
+    int argc = 0;
+    bool ok  = true;
+
+#if COCOS2D_DEBUG >= 1
+    tolua_Error tolua_err;
+#endif
+
+#if COCOS2D_DEBUG >= 1
+    if (!tolua_isusertable(tolua_S,1,"HelpFunc",0,&tolua_err)) goto tolua_lerror;
+#endif
+
+    argc = lua_gettop(tolua_S) - 1;
+
+    if (argc == 1)
+    {
+        std::string arg0;
+        ok &= luaval_to_std_string(tolua_S, 2,&arg0, "HelpFunc:createRippleNode");
+        if(!ok)
+        {
+            tolua_error(tolua_S,"invalid arguments in function 'lua_mmo_api_HelpFunc_createRippleNode'", nullptr);
+            return 0;
+        }
+        cocos2d::Node* ret = HelpFunc::createRippleNode(arg0);
+        object_to_luaval<cocos2d::Node>(tolua_S, "cc.Node",(cocos2d::Node*)ret);
+        return 1;
+    }
+    luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "HelpFunc:createRippleNode",argc, 1);
+    return 0;
+#if COCOS2D_DEBUG >= 1
+    tolua_lerror:
+    tolua_error(tolua_S,"#ferror in function 'lua_mmo_api_HelpFunc_createRippleNode'.",&tolua_err);
 #endif
     return 0;
 }
@@ -2317,6 +2438,42 @@ int lua_mmo_api_HelpFunc_initDuduVoice(lua_State* tolua_S)
 #endif
     return 0;
 }
+int lua_mmo_api_HelpFunc_createLightNode(lua_State* tolua_S)
+{
+    int argc = 0;
+    bool ok  = true;
+
+#if COCOS2D_DEBUG >= 1
+    tolua_Error tolua_err;
+#endif
+
+#if COCOS2D_DEBUG >= 1
+    if (!tolua_isusertable(tolua_S,1,"HelpFunc",0,&tolua_err)) goto tolua_lerror;
+#endif
+
+    argc = lua_gettop(tolua_S) - 1;
+
+    if (argc == 1)
+    {
+        std::string arg0;
+        ok &= luaval_to_std_string(tolua_S, 2,&arg0, "HelpFunc:createLightNode");
+        if(!ok)
+        {
+            tolua_error(tolua_S,"invalid arguments in function 'lua_mmo_api_HelpFunc_createLightNode'", nullptr);
+            return 0;
+        }
+        cocos2d::Node* ret = HelpFunc::createLightNode(arg0);
+        object_to_luaval<cocos2d::Node>(tolua_S, "cc.Node",(cocos2d::Node*)ret);
+        return 1;
+    }
+    luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "HelpFunc:createLightNode",argc, 1);
+    return 0;
+#if COCOS2D_DEBUG >= 1
+    tolua_lerror:
+    tolua_error(tolua_S,"#ferror in function 'lua_mmo_api_HelpFunc_createLightNode'.",&tolua_err);
+#endif
+    return 0;
+}
 int lua_mmo_api_HelpFunc_gDirectionAnalyse(lua_State* tolua_S)
 {
     int argc = 0;
@@ -2884,6 +3041,7 @@ int lua_register_mmo_api_HelpFunc(lua_State* tolua_S)
         tolua_function(tolua_S,"removeWaveEffectByShader", lua_mmo_api_HelpFunc_removeWaveEffectByShader);
         tolua_function(tolua_S,"cancelVibrate", lua_mmo_api_HelpFunc_cancelVibrate);
         tolua_function(tolua_S,"roleLevelUpZTGame", lua_mmo_api_HelpFunc_roleLevelUpZTGame);
+        tolua_function(tolua_S,"createNormalMappedNode", lua_mmo_api_HelpFunc_createNormalMappedNode);
         tolua_function(tolua_S,"getSystemSTime", lua_mmo_api_HelpFunc_getSystemSTime);
         tolua_function(tolua_S,"setShortRecordTime", lua_mmo_api_HelpFunc_setShortRecordTime);
         tolua_function(tolua_S,"playVibrator", lua_mmo_api_HelpFunc_playVibrator);
@@ -2900,6 +3058,7 @@ int lua_register_mmo_api_HelpFunc(lua_State* tolua_S)
         tolua_function(tolua_S,"removeAllTimelineActions", lua_mmo_api_HelpFunc_removeAllTimelineActions);
         tolua_function(tolua_S,"onRegister", lua_mmo_api_HelpFunc_onRegister);
         tolua_function(tolua_S,"isPlayingVideo", lua_mmo_api_HelpFunc_isPlayingVideo);
+        tolua_function(tolua_S,"doRippleNodeTouch", lua_mmo_api_HelpFunc_doRippleNodeTouch);
         tolua_function(tolua_S,"loginZTGame", lua_mmo_api_HelpFunc_loginZTGame);
         tolua_function(tolua_S,"bitAnd", lua_mmo_api_HelpFunc_bitAnd);
         tolua_function(tolua_S,"setUserIDForBugly", lua_mmo_api_HelpFunc_setUserIDForBugly);
@@ -2908,6 +3067,7 @@ int lua_register_mmo_api_HelpFunc(lua_State* tolua_S)
         tolua_function(tolua_S,"gGetMinuteStr", lua_mmo_api_HelpFunc_gGetMinuteStr);
         tolua_function(tolua_S,"print", lua_mmo_api_HelpFunc_print);
         tolua_function(tolua_S,"showWaveEffectByShader", lua_mmo_api_HelpFunc_showWaveEffectByShader);
+        tolua_function(tolua_S,"createRippleNode", lua_mmo_api_HelpFunc_createRippleNode);
         tolua_function(tolua_S,"pressRecordVoice", lua_mmo_api_HelpFunc_pressRecordVoice);
         tolua_function(tolua_S,"gNumToStr", lua_mmo_api_HelpFunc_gNumToStr);
         tolua_function(tolua_S,"getRefCount", lua_mmo_api_HelpFunc_getRefCount);
@@ -2926,6 +3086,7 @@ int lua_register_mmo_api_HelpFunc(lua_State* tolua_S)
         tolua_function(tolua_S,"isLogined", lua_mmo_api_HelpFunc_isLogined);
         tolua_function(tolua_S,"createRoleZTGame", lua_mmo_api_HelpFunc_createRoleZTGame);
         tolua_function(tolua_S,"initDuduVoice", lua_mmo_api_HelpFunc_initDuduVoice);
+        tolua_function(tolua_S,"createLightNode", lua_mmo_api_HelpFunc_createLightNode);
         tolua_function(tolua_S,"gDirectionAnalyse", lua_mmo_api_HelpFunc_gDirectionAnalyse);
         tolua_function(tolua_S,"getSystemMSTime", lua_mmo_api_HelpFunc_getSystemMSTime);
         tolua_function(tolua_S,"enableDebugMode", lua_mmo_api_HelpFunc_enableDebugMode);

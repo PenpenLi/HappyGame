@@ -59,15 +59,18 @@ function BattlePetRoleDeadState:onEnter(args)
         local deadOver = function()
             self:getMaster():removeAllEffects()  -- 移除所有特效
             if self:getMaster()._strCharTag == "main" then
+                local pBattleUILayerDelegate = self:getMaster()._pBattleUIDelegate  -- 死去宠物的ui_delegate
                 self:getPetsManager():changeToNextMainPetRoleOnMap()            -- 切换宠物对象
                 self:getSkillsManager():changeToNextMainPetRoleSkillsOnMap()    -- 切换宠物技能缓存
                 -- 关联主角宠物信息到ui
                 if self:getPetsManager()._pMainPetRole then
-                    self:getPetsManager()._pMainPetRole:setBattleUILayerDelegate(cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer"))
+                    self:getPetsManager()._pMainPetRole:setBattleUILayerDelegate(pBattleUILayerDelegate)
                 else
-                    if cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer") then
-                        cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pPetNode:removeFromParent(true)
-                        cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pPetNode = nil
+                    if pBattleUILayerDelegate then
+                        pBattleUILayerDelegate._pMainPetUINode:removeFromParent(true)
+                        pBattleUILayerDelegate._pMainPetUINode = nil
+                        -- 宠物死光了，则共鸣按钮隐藏
+                        pBattleUILayerDelegate._pResonanceSkillAttackButton._pSkillBg:setVisible(false)
                     end
                 end
             elseif self:getMaster()._strCharTag == "pvp" then

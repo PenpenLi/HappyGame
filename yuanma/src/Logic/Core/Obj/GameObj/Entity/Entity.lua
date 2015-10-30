@@ -94,6 +94,8 @@ end
 function Entity:initAni()
     self._kAniType = self._tTempleteInfo.AniType
     self._strAniName = self._tTempleteInfo.AniResName
+    
+    ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(self._tTempleteInfo.PvrName)
     self._pAni = cc.CSLoader:createNode(self._strAniName..".csb")
     self:addChild(self._pAni)
 end

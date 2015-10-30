@@ -29,7 +29,7 @@ function NewbieManager:clearCache()
     self._bIsForceGuideForBattle = false    -- 是否为强制性战斗引导
     self._nCurOpenLevel = 1                 -- 目前 已经开启到的等级
     
-    self._bSkipGuide = true                 -- 是否跳过剧情动画和所有引导   false为不跳过
+    self._bSkipGuide = false                 -- 是否跳过剧情动画和所有引导   false为不跳过
 
 end
 
@@ -139,7 +139,6 @@ function NewbieManager:showNewbieByID(id)
             self._pCurInfo.IsRunTime, 
             self._pCurInfo.Adaptation,
             cc.p(self._pCurInfo.TouchPosX, self._pCurInfo.TouchPosY),
-            self._pCurInfo.ArrowDirection,
             cc.p(self._pCurInfo.TextPosX,self._pCurInfo.TextPosY),
             cc.size(self._pCurInfo.TextSizeWidth,self._pCurInfo.TextSizeHeight),
             self._pCurInfo.TextContent)
@@ -188,7 +187,6 @@ function NewbieManager:showNextNewbie()
             self._pCurInfo.IsRunTime, 
             self._pCurInfo.Adaptation,
             cc.p(self._pCurInfo.TouchPosX, self._pCurInfo.TouchPosY),
-            self._pCurInfo.ArrowDirection,
             cc.p(self._pCurInfo.TextPosX,self._pCurInfo.TextPosY),
             cc.size(self._pCurInfo.TextSizeWidth,self._pCurInfo.TextSizeHeight),
             self._pCurInfo.TextContent)

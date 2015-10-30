@@ -35,7 +35,7 @@ function TalksTriggerItem:work()
             self._bCanUpdate = true
             self:getTalksManager():setCurTalks(self._nTalkID)
         elseif self._bCanUpdate == true then    -- 进入每一帧update
-            if self:getTalksManager():isCurTalksFinished() == true then     -- 如果当前对话已经结束，则结束当前触发器作用
+            if self:getTalksManager():isCurTalksFinished() == false then     -- 如果当前对话已经结束，则结束当前触发器作用
                 self._bCanUpdate = false
                 self._pOwnerTrigger:addCurStep()
             end

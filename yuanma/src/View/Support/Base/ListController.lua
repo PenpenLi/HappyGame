@@ -41,6 +41,7 @@ function ListController:ctor()
     self._nCellVertiaclDis = 0              -- 纵向间距
     self._nCellHorizontalDis = 0            -- 横向间距
     self._kCellAnchorPointType = 0          -- 默认的锚点（0.5，0.5）
+    self._nRowCount = 4
 end
 
 -- 创建函数
@@ -59,6 +60,11 @@ function ListController:dispose(delegate,scrollView,layoutType,cellWidth,cellHei
     self._sCellHeight = cellHeight
     ------------------- 结点事件------------------------
     return
+end
+
+-- 设置rows布局情况下，每行数量
+function ListController:setRowsCount(args)
+    self._nRowCount = args
 end
 
 -- 设置纵向间距
@@ -113,7 +119,7 @@ function ListController:setDataSource(dataSource)
         end,
         [listLayoutType.LayoutType_rows] = function ()
             local itemCount = self._pNumOfCellDelegateFunc()
-            local rowCount = math.ceil(itemCount/4)
+            local rowCount = math.ceil(itemCount/self._nRowCount)
 
             local nViewWidth  = self._pScrollItemsView:getContentSize().width
             local nViewHeight = self._pScrollItemsView:getContentSize().height
@@ -130,8 +136,8 @@ function ListController:setDataSource(dataSource)
             for i = 1,itemCount do
                 local cell = self._pDataSourceDelegateFunc(self._pHostDelegate,self,i)
                
-                local t1,t2 = math.modf((i-1)/4)
-                t2 = t2*4
+                local t1,t2 = math.modf((i-1)/self._nRowCount)
+                t2 = t2*self._nRowCount
                 
                 self._pCellUseIndex = self._pCellUseIndex + 1
                 cell:setVisible(true)

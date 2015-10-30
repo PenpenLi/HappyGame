@@ -89,7 +89,7 @@ function FamilyApplicatPanel:initBtnEvent()
 end
 
 function FamilyApplicatPanel:updateUI()
-	local nRenderHeight = 50
+	local nRenderHeight = 60
 	local nContentWidth = self._pScrollView:getInnerContainerSize().width
 	local nContentHeight = self._pScrollView:getInnerContainerSize().height
     self._pScrollView:removeAllChildren(true)

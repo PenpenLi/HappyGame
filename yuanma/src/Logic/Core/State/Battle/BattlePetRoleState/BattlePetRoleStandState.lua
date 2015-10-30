@@ -76,12 +76,7 @@ function BattlePetRoleStandState:procCheckPos(dt)
     -- 时间计数
     self._fTimeCounter = self._fTimeCounter + dt
     if self._fTimeCounter >= 0.5 then   -- 每隔0.5s检测一次
-        local target = nil
-        if self:getMaster()._strCharTag == "main" then
-            target = self:getRolesManager()._pMainPlayerRole
-        elseif self:getMaster()._strCharTag == "pvp" then
-            target = self:getRolesManager()._pPvpPlayerRole
-        end
+        local target = self:getMaster()._pMaster  -- 宠物的主人
         ---------------------------------------------- 开始寻路 ----------------------------------------------------------
         local posIndex = self:getMaster():getPositionIndex()
         local targetPosIndex = self:getMapManager():convertPiexlToIndex(cc.p(target:getPositionX(), target:getPositionY()))

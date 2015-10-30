@@ -32,7 +32,15 @@ end
 
 -- 处理函数
 function SplashLayer:dispose()    
-      
+    -- mask
+    local pMask = cc.LayerColor:create(cc.c4b(0,0,0,255))
+    local pLoadingText = cc.Label:createWithTTF("玩命加载中，请稍后......", "res/fonts/simhei.ttf", 40)
+    pLoadingText:setTextColor(cc.c4b(255, 255, 255, 255))
+    pLoadingText:enableOutline(cc.c4b(87, 63, 60, 255),2)
+    pLoadingText:setPosition(cc.p(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2))
+    pMask:addChild(pLoadingText)
+    self:addChild(pMask,9999)
+
     -- 触摸注册
     local function onTouchBegin(touch,event)
         local location = touch:getLocation()

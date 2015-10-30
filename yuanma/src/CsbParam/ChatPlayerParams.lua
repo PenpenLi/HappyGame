@@ -16,8 +16,16 @@ function ChatPlayerParams:ctor()
     
     --玩家昵称
     self._pName = self._pBackGround:getChildByName("Name")    
+    
+    --等级标题
+    self._pTextLv = self._pBackGround:getChildByName("TextLv")        
+    self._pTextLv:enableOutline(cFontOutline,2)
+    self._pLevel:setTextColor(cFontLightYellow)
+    
     --玩家等级数字
     self._pLevel = self._pBackGround:getChildByName("Level")    
+    self._pLevel:enableOutline(cFontOutline,2)
+    self._pLevel:setTextColor(cFontLightYellow)
     --添加好友按钮
     self._pFriend = self._pBackGround:getChildByName("Friend")    
     --发起私聊按钮

@@ -21,7 +21,7 @@ function ThugSkill2:ctor()
     self._bStickAdd = false                                    -- 引用计数的标记
     
     self._nCurTimes = 0                                        -- 一共放三次
-    self._nDisInterval = 60                                    -- 特效每次出现时在WarnRange的正负_nDisInterval像素内的位置上
+    self._fDistancePerTime = 30                                -- 每次变化的像素间隔
     self._nStartRotation3D = 0                                 -- 起始时的master角度
     
     self._nRoleAttackActionIndex = 7                           -- 角色攻击动作index
@@ -77,7 +77,11 @@ function ThugSkill2:onUse()
         self._fCDCounter = 0   -- CD时间清空 
         self._pCurState._pOwnerMachine:setCurStateByTypeID(kType.kState.kBattleSkill.kChant)
     else  -- 如果当前技能正处于使用状态，则立即将角色切换回站立状态
-        self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+        elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+        end
     end
 end
 
@@ -164,7 +168,11 @@ function ThugSkill2:onEnterChantDo(state)
         self:getMaster()._refStick:sub()
         self._bStickAdd = false
         if self:getMaster():isUnusualState() == false then     -- 正常状态
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)          
+            elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
         end
     end
     -- 摇杆禁用
@@ -196,8 +204,8 @@ function ThugSkill2:onEnterProcessDo(state)
     -- 给技能指定施展时的zorder
     self._nSettledZorder = kZorder.kMaxSkill
     
-    local offsetY = ( self._pSkillInfo.WarnRange + getRandomNumBetween(1,self._nDisInterval) )*math.sin(math.rad(self._nStartRotation3D))
-    local offsetX = ( self._pSkillInfo.WarnRange + getRandomNumBetween(1,self._nDisInterval) )*math.cos(math.rad(self._nStartRotation3D))
+    local offsetY = ( self._pSkillInfo.WarnRange + self._nCurTimes*self._fDistancePerTime )*math.sin(math.rad(self._nStartRotation3D))
+    local offsetX = ( self._pSkillInfo.WarnRange + self._nCurTimes*self._fDistancePerTime )*math.cos(math.rad(self._nStartRotation3D))
     local posX, posY = self:getMaster():getPosition()
     self:setPosition(posX + offsetX, posY + 30 + offsetY)
     

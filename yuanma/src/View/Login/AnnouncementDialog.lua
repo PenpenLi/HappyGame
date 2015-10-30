@@ -47,8 +47,6 @@ function AnnouncementDialog:dispose(args)
     self._pScrollViewModel = params._pScrollViewDesc
     self._pDescTitle = params._pTitleText
 
-
-
     -- 初始化dialog的基础组件
     self:disposeCSB()
     LoginCGMessage:sendMessageGetNoticeTag()

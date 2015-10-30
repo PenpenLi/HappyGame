@@ -7,7 +7,8 @@ function GmDialogParams:ctor()
     self._pBackGround = self._pCCS:getChildByName("BackGround")
     --关闭按钮
     self._pCloseButton = self._pBackGround:getChildByName("CloseButton")
-    
+    -- 滚动容器
+    self._pScrollView = self._pCCS:getChildByName("ScrollView_2")
 end
 
 function GmDialogParams:create()

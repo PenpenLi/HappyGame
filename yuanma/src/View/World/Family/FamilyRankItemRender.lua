@@ -94,8 +94,10 @@ end
 function FamilyRankItemRender:selectEvent(selectedIndex)
 	local strImgName = self._nIndex == selectedIndex and "HomeRankingsListRes/jzjm28.png" or "HomeRankingsListRes/none.png"
 	self._pBg:loadTexture(strImgName,ccui.TextureResType.plistType)
-	-- 弹tips
-	DialogManager:getInstance():showDialog("FamilyTipDialog",{1,self._pFamilyUnit,{isApplied = self._isApplied}})
+	if self._nIndex == selectedIndex then 
+		-- 弹tips
+		DialogManager:getInstance():showDialog("FamilyTipDialog",{1,self._pFamilyUnit,{isApplied = self._isApplied}})
+	end
 end
 
 function FamilyRankItemRender:setIndex(index)

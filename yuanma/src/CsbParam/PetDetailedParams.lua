@@ -56,7 +56,7 @@ function PetDetailedParams:ctor()
     --特性值3
     self._pText21 = self._pDetailedScrollView:getChildByName("Text21")
     --特性值4
-    self._pText22 = self._pDetailedScrollView:getChildByName("Text12")
+    self._pText22 = self._pDetailedScrollView:getChildByName("Text22")
     --技能1
     self._pText23 = self._pDetailedScrollView:getChildByName("Text23")
     --技能2

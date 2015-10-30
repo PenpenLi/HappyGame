@@ -61,47 +61,46 @@ function LayerManager:gotoRunningSenceLayer(targetSenceLayerDef,args,debug)
 
 end
 
+-- 关闭指定名称的层（无动画）
+function LayerManager:closeLayerByNameWithNoAni(layerName)
+    self._pAppSence:closeLayerByNameWithNoAni(layerName)
+end
+
 -- 释放对话框和层
 function LayerManager:releaseLayersAndDialogs()
 	    -- 切换到对应会话类型
     if self._pAppSence._kCurSessionKind == kSession.kLogin then
-        self._pAppSence:closeLayerByNameWithNoAni("StoryLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("RoleCreateLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("RoleSelectLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("RoleLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("LoginLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("NoticeLayer")
-        self._pAppSence:closeAllDialogsWithNoAni()
+        self:closeLayerByNameWithNoAni("StoryLayer")
+        self:closeLayerByNameWithNoAni("RoleCreateLayer")
+        self:closeLayerByNameWithNoAni("RoleSelectLayer")
+        self:closeLayerByNameWithNoAni("RoleLayer")
+        self:closeLayerByNameWithNoAni("LoginLayer")
+        self:closeLayerByNameWithNoAni("NoticeLayer")
+        DialogManager:getInstance():closeAllDialogsWithNoAni()
     elseif self._pAppSence._kCurSessionKind == kSession.kWorld then
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:aaa_111")
-        self._pAppSence:closeLayerByNameWithNoAni("NoticeLayer")
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:aaa_222")
-        self._pAppSence:closeLayerByNameWithNoAni("WorldUILayer")
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:aaa_333")
-        self._pAppSence:closeLayerByNameWithNoAni("WorldLayer")
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:aaa_444")
-        self._pAppSence:closeAllDialogsWithNoAni()
+        self:closeLayerByNameWithNoAni("NoticeLayer")
+        self:closeLayerByNameWithNoAni("WorldUILayer")
+        self:closeLayerByNameWithNoAni("WorldLayer")
+        self:closeLayerByNameWithNoAni("StoryGuideLayer")
+        DialogManager:getInstance():closeAllDialogsWithNoAni()
         self:clearManagerCache()        -- 清空管理器缓存
     elseif self._pAppSence._kCurSessionKind == kSession.kBattle then
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:444_111")
-        self._pAppSence:closeLayerByNameWithNoAni("NoticeLayer")
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:444_222")
-        self._pAppSence:closeLayerByNameWithNoAni("BattleUILayer")
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:444_333")
-        self._pAppSence:closeLayerByNameWithNoAni("BattleLayer")
-        -- mmo.DebugHelper:showJavaLog("mmo:LoadingLayer:444_444")
-        self._pAppSence:closeAllDialogsWithNoAni()
+        self:closeLayerByNameWithNoAni("NoticeLayer")
+        self:closeLayerByNameWithNoAni("BattleUILayer")
+        self:closeLayerByNameWithNoAni("BattleLayer")
+        self:closeLayerByNameWithNoAni("StoryGuideLayer")
+        DialogManager:getInstance():closeAllDialogsWithNoAni()
         self:clearManagerCache()        -- 清空管理器缓存
     elseif self._pAppSence._kCurSessionKind == kSession.kGuide then
-        self._pAppSence:closeLayerByNameWithNoAni("StoryLayer")
-        self._pAppSence:closeAllDialogsWithNoAni()
+        self:closeLayerByNameWithNoAni("StoryLayer")
+        DialogManager:getInstance():closeAllDialogsWithNoAni()
     elseif self._pAppSence._kCurSessionKind == kSession.kSelect then
-        self._pAppSence:closeLayerByNameWithNoAni("StoryLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("RoleCreateLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("RoleSelectLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("RoleLayer")
-        self._pAppSence:closeLayerByNameWithNoAni("LoginLayer")
-        self._pAppSence:closeAllDialogsWithNoAni()
+        self:closeLayerByNameWithNoAni("StoryLayer")
+        self:closeLayerByNameWithNoAni("RoleCreateLayer")
+        self:closeLayerByNameWithNoAni("RoleSelectLayer")
+        self:closeLayerByNameWithNoAni("RoleLayer")
+        self:closeLayerByNameWithNoAni("LoginLayer")
+        DialogManager:getInstance():closeAllDialogsWithNoAni()
     end
     self._pAppSence._kCurSessionKind = self._kRunningSenseLayerType[1]
     self._kRunningSenseLayerType = nil
@@ -123,6 +122,7 @@ function LayerManager:clearManagerCache()
     AIManager:getInstance():clearCache()
     StagesManager:getInstance():clearCache()
     TalksManager:getInstance():clearCache()
+    StoryGuideManager:getInstance():clearCache()
 end
 
 -- 由loading的doWhenCloseOver调用，切换到目标session
@@ -136,12 +136,14 @@ function LayerManager:transforToTargetSession()
     elseif self._pAppSence._kCurSessionKind == kSession.kWorld then
         mmo.HelpFunc:setMaxTouchesNum(1)
         self._pAppSence:showLayer(require("WorldLayer"):create())
+        self._pAppSence:showLayer(require("StoryGuideLayer"):create())
         self._pAppSence:showLayer(require("WorldUILayer"):create(),kZorder.kMainUiLayer)
         self._pAppSence:showLayer(require("NoticeLayer"):create(),kZorder.kSystemMessageLayer)
         AudioManager:getInstance():playMusic("WorldBackGround", true) -- 背景音乐
     elseif self._pAppSence._kCurSessionKind == kSession.kBattle then
         mmo.HelpFunc:setMaxTouchesNum(2)
         self._pAppSence:showLayer(require("BattleLayer"):create())
+        self._pAppSence:showLayer(require("StoryGuideLayer"):create())
         self._pAppSence:showLayer(require("BattleUILayer"):create(),kZorder.kMainUiLayer)
         self._pAppSence:showLayer(require("NoticeLayer"):create(),kZorder.kSystemMessageLayer)
         AudioManager:getInstance():playMusic("BattleBackGround", true) -- 背景音乐

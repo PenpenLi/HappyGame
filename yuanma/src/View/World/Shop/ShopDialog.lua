@@ -49,16 +49,6 @@ function ShopDialog:ctor()
 	--  标签节点
 	self._pTagNode = nil
 
-	-- 标签的纹理集合
-    self._tTagTextures = {
-    	{normal = "ShopUIRes/scjm10.png",pressed = "ShopUIRes/scjm11.png"},
-    	{normal = "ShopUIRes/scjm12.png",pressed = "ShopUIRes/scjm13.png"},
-    	{normal = "ShopUIRes/scjm14.png",pressed = "ShopUIRes/scjm15.png"},
-    	{normal = "ShopUIRes/scjm16.png",pressed = "ShopUIRes/scjm17.png"},
-    	{normal = "ShopUIRes/scjm18.png",pressed = "ShopUIRes/scjm19.png"},
-    	{normal = "ShopUIRes/scjm20.png",pressed = "ShopUIRes/scjm21.png"},
-    }		
-
     kQualityFontColor4b = {
 		cc.c4b(255,255,255,255),
 		cc.c4b(59,255,59,255),
@@ -119,9 +109,9 @@ function ShopDialog:initUI()
 	self._pTagBtn = params._pbutton01
 	self._pTagBtn:setVisible(false)
     self._pGoodsScrollView = params._pscrollview01
-	self._pCoinIcon = params._pcurrencyicon
-	self._pCoinNumText = params._pmoney
-	self._pChargeBtn = params._pbuttonrecharge
+	self._pCoinIcon = params._pcurrencyicon02
+	self._pCoinNumText = params._pmoney02
+	self._pChargeBtn = params._pbuttonrecharge02
 	self._pChargeBtn:setZoomScale(nButtonZoomScale)
 	self._pChargeBtn:setPressedActionEnabled(true)
 
@@ -167,21 +157,22 @@ function ShopDialog:updateUI()
 			if k == 1 then 
 			  self._pTagBtn:setVisible(true)
 			  -- 设置标签显示的文字
-			  --self._pTagBtn:setTitleText(shopTag.tagName)
-			  local pTagTextures = self._tTagTextures[shopTag.tagType + 1]
-              self._pTagBtn:loadTextures(pTagTextures.normal,pTagTextures.pressed,pTagTextures.pressed,ccui.TextureResType.plistType)
+			  self._pTagBtn:setTitleText(shopTag.tagName)
+			  --local pTagTextures = self._tTagTextures[shopTag.tagType + 1]
+              --self._pTagBtn:loadTextures(pTagTextures.normal,pTagTextures.pressed,pTagTextures.pressed,ccui.TextureResType.plistType)
 			  -- 设置标签的tag (shopTag.tagType + 10000)
 			  self._pTagBtn:setTag(shopTag.tagType + 10000)
 			  self._pTagBtn:addTouchEventListener(tagClickEvent)
 			  table.insert(self._tTags,self._pTagBtn)
 		    else
 		    	local tag = self._pTagBtn:clone()
-		    	--tag:setTitleText(shopTag.tagName)
-		    	local pTagTextures = self._tTagTextures[shopTag.tagType + 1]
-                tag:loadTextures(pTagTextures.normal,pTagTextures.pressed,pTagTextures.pressed,ccui.TextureResType.plistType)
+		    	tag:setTitleText(shopTag.tagName)
+		    	--local pTagTextures = self._tTagTextures[shopTag.tagType + 1]
+                --tag:loadTextures(pTagTextures.normal,pTagTextures.pressed,pTagTextures.pressed,ccui.TextureResType.plistType)
 		    	tag:setTag(shopTag.tagType + 10000)
 		    	local x = tagX + tagWidth * (k-1)		    	
 		    	tag:setPosition(x,tagY)
+		    	tag:getTitleRenderer():setTextColor(cFontDarkRed)
 		    	tag:addTouchEventListener(tagClickEvent)
 		    	self._pTagNode:addChild(tag)
 		    	table.insert(self._tTags,tag)
@@ -213,9 +204,9 @@ function ShopDialog:tagSelecteChanged(nTag)
 	-- 改变按钮显示的样式
 	for index,tagBtn in pairs(self._tTags) do
 		if nTag == tagBtn:getTag() then
-			tagBtn:loadTextureNormal(self._tTagTextures[tagBtn:getTag() - 10000 + 1].pressed,ccui.TextureResType.plistType)
+			tagBtn:loadTextureNormal("ShopUIRes/scjm18.png",ccui.TextureResType.plistType)
 		else
-			tagBtn:loadTextureNormal(self._tTagTextures[tagBtn:getTag() - 10000 + 1].normal,ccui.TextureResType.plistType)
+			tagBtn:loadTextureNormal("ShopUIRes/scjm19.png",ccui.TextureResType.plistType)
 		end
 	end
 end
@@ -227,22 +218,35 @@ function ShopDialog:updateGoodsList(goodsInfoArry)
 	end
 	-- 初始化魔板列表
 	self._pGoodsScrollView:setVisible(true)
-	self._pGoodsScrollView:removeAllChildren(true)
+    self._pGoodsScrollView:removeAllPages ()
+
 	local scrollViewSize = self._pGoodsScrollView:getContentSize()
-	local scrollViewInnerSize = self._pGoodsScrollView:getInnerContainerSize()
-	local nRenderWidth = 235
-	local nRenderHeight = 525
+	
+	local nRenderWidth = 275
+	local nRenderHeight = 275
+	local marginLeft = 10  -- 左边距
+	local marginTop = 15   -- 上边距
+	local itemCount = 6    -- 每页显示物品的个数
 	local itemNum = #goodsInfoArry
-	self._pGoodsScrollView:setInnerContainerSize(cc.size(nRenderWidth * itemNum,scrollViewInnerSize.height))
-	for index,goodsDataInfo in pairs(goodsInfoArry) do
-		local itemCell = require("ShopItemRender"):create(self._kFinaneType,self._kShopType)
-		itemCell:setDataSource(goodsDataInfo)
-		itemCell:setPositionX(nRenderWidth * (index - 1) + nRenderWidth / 2)
-		itemCell:setPositionY(nRenderHeight/2)
-		itemCell:setTouchEnabled(true)
-		itemCell:setSwallowTouches(false)
-        self._pGoodsScrollView:addChild(itemCell)
-	end	
+	-- 一共需要多少页
+	local pageNum = math.ceil(itemNum / itemCount)
+	
+	for i = 1, pageNum do
+		local layout = ccui.Layout:create()
+        layout:setContentSize(scrollViewSize)
+        layout:setSwallowTouches(true)
+        for j = 1, 6 do
+        	local itemIndex = j + (i - 1) * 6
+        	if itemIndex <= itemNum then 
+        		local itemCell = require("ShopItemRender"):create(self._kFinaneType,self._kShopType)
+        		itemCell:setDataSource(goodsInfoArry[itemIndex])
+                itemCell:setPositionX((j-1)%3 * (nRenderWidth + marginLeft) + nRenderWidth / 2 + marginLeft)
+                itemCell:setPositionY(scrollViewSize.height - math.floor((j-1) / 3) * (nRenderHeight + marginTop) - nRenderHeight / 2 - marginTop)
+        		layout:addChild(itemCell)
+        		self._pGoodsScrollView:addPage(layout)
+        	end
+        end
+	end
 end
 
 -- 初始化触摸相关
@@ -321,8 +325,6 @@ function ShopDialog:setDataSource(tGoodsArry)
 		self._tDataSource = tGoodsArry
 		-- 更新商品列表
 		self:updateGoodsList(tGoodsArry)
-        -- 切换标签时
-        self._pGoodsScrollView:jumpToLeft()
 	end
 end
 
@@ -341,11 +343,11 @@ end
 -- 根据商城类型设置充值按钮是否可见
 function ShopDialog:setChargeBtnVisibleByShopType()
 	-- body
-	-- if self._kShopType == kShopType.kDiamondShop then
-	-- 	self._pChargeBtn:setVisible(true)
-	-- else
-	-- 	self._pChargeBtn:setVisible(false)
-	-- end		
+	if self._kShopType == kShopType.kDiamondShop then
+		self._pChargeBtn:setVisible(true)
+	else
+		self._pChargeBtn:setVisible(false)
+	end		
 end
 
 -- 显示完成

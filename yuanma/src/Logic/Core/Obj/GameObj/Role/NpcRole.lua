@@ -25,21 +25,21 @@ function NpcRole:ctor()
 end
 
 -- 创建函数
-function NpcRole:create(roleInfo, recBottom, recBody)
+function NpcRole:create(roleInfo)
     local role = NpcRole.new()
-    role:dispose(roleInfo, recBottom, recBody)
+    role:dispose(roleInfo)
     return role
 end
 
 -- 处理函数
-function NpcRole:dispose(roleInfo, recBottom, recBody)
+function NpcRole:dispose(roleInfo)
     ------------------- 初始化 ------------------------  
     -- 设置角色信息
     self:initInfo(roleInfo)
     -- 初始化动画
     self:initAni()
     -- 初始化人物身上默认bottom和body矩形信息
-    self:initRects(recBottom, recBody)
+    self:initRects(cc.rect(0,0,0,0), cc.rect(0,0,0,0))
     -- 创建状态机
     self:initStateMachine()
     
@@ -91,6 +91,7 @@ function NpcRole:initAni()
     
     -- 脚底法阵
     if self._tTempleteInfo.MagicEffect ~= "none" and self._tTempleteInfo.MagicEffect ~= "" then
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(self._tTempleteInfo.MagicEffect)
         self._pMagicEffectAni = cc.CSLoader:createNode(self._tTempleteInfo.MagicEffect..".csb")
         local pMagicEffectAction = cc.CSLoader:createTimeline(self._tTempleteInfo.MagicEffect..".csb")
         pMagicEffectAction:gotoFrameAndPlay(0, pMagicEffectAction:getDuration(), true)
@@ -106,6 +107,8 @@ function NpcRole:initAni()
         self._pName:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(3.0,cc.p(0,20))), cc.EaseSineInOut:create(cc.MoveBy:create(3.0,cc.p(0,-20))))))
     else
         self._pName = cc.Label:createWithTTF(self._tTempleteInfo.Name, strCommonFontName, 20)
+        self._pName:setTextColor(cFontWhite)
+        self._pName:enableOutline(cFontOutline,2)
     end
     self._pName:setPosition(cc.p(0,self:getHeight()+5))
     self:addChild(self._pName)
@@ -117,9 +120,10 @@ function NpcRole:initAni()
     self:addChild( self._pTalkBg)
     self._pTalkBg:setVisible(false)
     
-    local pDis = 20
-    self._pTalkDec = cc.Label:createWithTTF("", strCommonFontName, 20)
+    local pDis = 16
+    self._pTalkDec = cc.Label:createWithTTF("", strCommonFontName, pDis)
     self._pTalkDec:setWidth(self._pTalkBg:getContentSize().width-pDis)
+    self._pTalkDec:setColor(cFontDarkRed)
     self._pTalkDec:setAnchorPoint(0,1)
     self._pTalkDec:setPosition(cc.p(pDis/2,self._pTalkBg:getContentSize().height-pDis/2))
     self._pTalkBg:addChild(self._pTalkDec)

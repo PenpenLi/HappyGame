@@ -62,9 +62,7 @@ function QueueUpDialog:dispose(args)
             end
     	end	
     end
-    
     CDManager:getInstance():insertCD({cdType.kServerRank,pTallTime,timeCallBack})
-    
     
     
     local exitRankDialog = function (sender, eventType)
@@ -73,7 +71,6 @@ function QueueUpDialog:dispose(args)
            LoginCGMessage:sendMessageCancelRank()
         end
     end
-    
     self._pOkButton:addTouchEventListener(exitRankDialog)
    
     -- 触摸注册

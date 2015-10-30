@@ -153,6 +153,8 @@ function MonstersManager:appearMonstersWithAreaAndWave(areaIndex, waveIndex)
             NewbieManager:getInstance():showNewbieByID("Guide_1_2")
             cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._bStickDisabled = true  -- 摇杆禁用
             RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pGenAttackButton:setVisible(true) -- 普通攻击按钮出现
+            cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pGenAttackButtonTable:setVisible(true)
         end
         if NewbieManager:getInstance()._pLastID == "Guide_1_2" then
             if self._nCurMonsterAreaIndex == 2 and self._nCurMonsterWaveIndex == 1 then
@@ -161,8 +163,10 @@ function MonstersManager:appearMonstersWithAreaAndWave(areaIndex, waveIndex)
                 NewbieManager:getInstance():showNewbieByID("Guide_1_3")
                 local showOver = function()
                     cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._bStickDisabled = false
+                    cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._tSkillAttackButtons[1]:setVisible(true)
                 end
                 cc.Director:getInstance():getRunningScene():runAction(cc.Sequence:create(cc.DelayTime:create(NewbieManager:getInstance()._pCurInfo.ShowDelay),cc.CallFunc:create(showOver)))
+                
             end
             return
         end
@@ -178,7 +182,6 @@ function MonstersManager:disposeWhenBattleResult()
         if vMonster._bActive == true then
             if vMonster:isUnusualState() == false then     -- 正常状态
                 vMonster:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kStand, true)
-                --print("野怪回到站立！")
             end
         end
     end
@@ -267,3 +270,4 @@ function MonstersManager:removeAllMonsters()
     end
     self._tMonsters = {}
 end
+

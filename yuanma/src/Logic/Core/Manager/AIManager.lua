@@ -49,7 +49,19 @@ function AIManager:getsideType(obj)
             elseif obj._strCharTag == "pvp" then
                 sideType = "foe-side"
             end
+        elseif obj._kRoleType == kType.kRole.kOtherPlayer then
+            if obj._strCharTag == "main" then
+                sideType = "us-side"
+            elseif obj._strCharTag == "pvp" then
+                sideType = "foe-side"
+            end
         elseif obj._kRoleType == kType.kRole.kPet then
+            if obj._strCharTag == "main" then
+                sideType = "us-side"
+            elseif obj._strCharTag == "pvp" then
+                sideType = "foe-side"
+            end
+        elseif obj._kRoleType == kType.kRole.kOtherPet then
             if obj._strCharTag == "main" then
                 sideType = "us-side"
             elseif obj._strCharTag == "pvp" then
@@ -96,6 +108,16 @@ function AIManager:getGroup(obj, sideType, groupType)
                     table.insert(group, PetsManager:getInstance()._pMainPetRole)
                 end
             end
+            for k, v in pairs(RolesManager:getInstance()._tOtherPlayerRoles) do
+                if obj ~= v then
+                    table.insert(group, v)
+                end
+            end
+            for k, v in pairs(PetsManager:getInstance()._tOtherPetRoles) do
+                if obj ~= v then
+                    table.insert(group, v)
+                end
+            end
         elseif groupType == kType.kTargetGroupType.kOneSelf then    -- 自己
             table.insert(group,obj)
         end
@@ -104,6 +126,12 @@ function AIManager:getGroup(obj, sideType, groupType)
             table.insert(group, RolesManager:getInstance()._pMainPlayerRole)
             if PetsManager:getInstance()._pMainPetRole then
                 table.insert(group, PetsManager:getInstance()._pMainPetRole)
+            end
+            for k, v in pairs(RolesManager:getInstance()._tOtherPlayerRoles) do
+                table.insert(group, v)
+            end
+            for k, v in pairs(PetsManager:getInstance()._tOtherPetRoles) do
+                table.insert(group, v)
             end
         elseif groupType == kType.kTargetGroupType.kSelfs then    -- 己方
             if RolesManager:getInstance()._pPvpPlayerRole then
@@ -157,7 +185,7 @@ end
 -- 参数：attacker 角色对象                skill 角色的技能     
 function AIManager:roleRefreshDirectionWhenAttackEnemys(attacker, skill)
     if attacker == nil or skill == nil then
-        return
+        return nil
     end
     -- 先判定attacker是 “我方” 或者 “敌方” 
     local sideType = self:getsideType(attacker)
@@ -221,6 +249,7 @@ function AIManager:roleRefreshDirectionWhenAttackEnemys(attacker, skill)
             attacker:setAngle3D(fAttackAngle)
             attacker._kDirection = mmo.HelpFunc:gDirectionAnalyseByAngle(fAttackAngle)
         end
+        return targetsInDirection[1].enemy
     elseif table.getn(targets) ~= 0 then  -- 虽然不存在当前方向中的目标，但是存在警戒范围内的目标
         table.sort(targets,fromSmallToBigOnDistance2)  -- 按照目标对象与自身的距离2次幂从小到大排序
         if targets[1].enemy ~= attacker then
@@ -228,6 +257,7 @@ function AIManager:roleRefreshDirectionWhenAttackEnemys(attacker, skill)
             attacker:setAngle3D(fAttackAngle)
             attacker._kDirection = mmo.HelpFunc:gDirectionAnalyseByAngle(fAttackAngle)
         end
+        return targets[1].enemy
     end
 
 end
@@ -259,7 +289,7 @@ function AIManager:objSearchNearestEnemysInViewAndSkillWarningRange(attacker, sk
     local targetsInWarning = {}
     local viewRange = 0         -- 视野范围，如果是PlayerRole，则viewRange会保持为0，即无限大
     if attacker._kGameObjType == kType.kGameObj.kRole then
-        if attacker._kRoleType ~= kType.kRole.kPlayer then
+        if attacker._kRoleType ~= kType.kRole.kPlayer and attacker._kRoleType ~= kType.kRole.kOtherPlayer and attacker._kRoleType ~= kType.kRole.kFriend then
             viewRange = attacker._pRoleInfo.ViewRange
         end
     elseif attacker._kGameObjType == kType.kGameObj.kEntity then
@@ -280,13 +310,11 @@ function AIManager:objSearchNearestEnemysInViewAndSkillWarningRange(attacker, sk
     local posPetMasterY = -1
     local targetsInViewForPet = {}
     local targetsInWarningForPet = {}
-    if attacker._kGameObjType == kType.kGameObj.kRole and attacker._kRoleType == kType.kRole.kPet then
-        if attacker._strCharTag == "main" then
-            petMaster = PetsManager:getInstance()._pMainPetRole
-        elseif attacker._strCharTag == "pvp" then
-            petMaster = PetsManager:getInstance()._pPvpPetRole
+    if attacker._kGameObjType == kType.kGameObj.kRole then
+        if attacker._kRoleType == kType.kRole.kPet or attacker._kRoleType == kType.kRole.kOtherPet then
+            petMaster = attacker._pMaster
+            posPetMasterX, posPetMasterY = petMaster:getPosition()
         end
-        posPetMasterX, posPetMasterY = petMaster:getPosition()
     end
     ------------------------------------------------------------------
     for kEnemy, vEnemy in pairs(enemys) do 
@@ -297,7 +325,7 @@ function AIManager:objSearchNearestEnemysInViewAndSkillWarningRange(attacker, sk
             local attackerWarningRange2 = warningRange*warningRange
             if attackerViewRange2 == 0 or distance2 <= attackerViewRange2 then -- 非PlayerRole
                 -- 受击视野范围内所有的目标集合
-                if attacker._kGameObjType == kType.kGameObj.kRole and attacker._kRoleType == kType.kRole.kPet and needNearestInViewRangeToMasterForPet == true then
+                if attacker._kGameObjType == kType.kGameObj.kRole and (attacker._kRoleType == kType.kRole.kPet or attacker._kRoleType == kType.kRole.kOtherPet) and needNearestInViewRangeToMasterForPet == true then
                     local distanceBetweenPetMasterAndEnemy2 = (posEnemyX - posPetMasterX)*(posEnemyX - posPetMasterX) + (posEnemyY - posPetMasterY)*(posEnemyY - posPetMasterY)
                     table.insert(targetsInViewForPet,{["enemy"] = vEnemy, ["distance2"] = distanceBetweenPetMasterAndEnemy2}) 
                 else
@@ -307,7 +335,7 @@ function AIManager:objSearchNearestEnemysInViewAndSkillWarningRange(attacker, sk
                     -- 收集警戒范围内所有的目标集合
                     table.insert(targetsInWarning,{["enemy"] = vEnemy, ["distance2"] = distance2})
                     -- 如果attacker为宠物，则需要手机宠物视野范围内的离主人最近的目标集合
-                    if attacker._kGameObjType == kType.kGameObj.kRole and attacker._kRoleType == kType.kRole.kPet and needNearestInWarningRangeToMasterForPet == true then
+                    if attacker._kGameObjType == kType.kGameObj.kRole and (attacker._kRoleType == kType.kRole.kPet or attacker._kRoleType == kType.kRole.kOtherPet) and needNearestInWarningRangeToMasterForPet == true then
                         local distanceBetweenPetMasterAndEnemy2 = (posEnemyX - posPetMasterX)*(posEnemyX - posPetMasterX) + (posEnemyY - posPetMasterY)*(posEnemyY - posPetMasterY)
                         table.insert(targetsInWarningForPet,{["enemy"] = vEnemy, ["distance2"] = distanceBetweenPetMasterAndEnemy2})
                     end
@@ -330,7 +358,7 @@ function AIManager:objSearchNearestEnemysInViewAndSkillWarningRange(attacker, sk
         table.sort(targetsInWarningForPet,fromSmallToBigOnDistance2)  -- 按照目标对象与宠物主人的距离2次幂从小到大排序
     end
     
-    if attacker._kGameObjType == kType.kGameObj.kRole and attacker._kRoleType == kType.kRole.kPet then
+    if attacker._kGameObjType == kType.kGameObj.kRole and (attacker._kRoleType == kType.kRole.kPet or attacker._kRoleType == kType.kRole.kOtherPet) then
         if needNearestInViewRangeToMasterForPet == true then
             targetsInView = targetsInViewForPet
         end
@@ -384,13 +412,11 @@ function AIManager:objSearchNearestEnemysInRangeForDamage(attacker, range, needN
     local posPetMasterY = -1
     local targetsInViewForPet = {}
     local targetsInWarningForPet = {}
-    if attacker._kGameObjType == kType.kGameObj.kRole and attacker._kRoleType == kType.kRole.kPet then
-        if attacker._strCharTag == "main" then
-            petMaster = PetsManager:getInstance()._pMainPetRole
-        elseif attacker._strCharTag == "pvp" then
-            petMaster = PetsManager:getInstance()._pPvpPetRole
+    if attacker._kGameObjType == kType.kGameObj.kRole then
+        if attacker._kRoleType == kType.kRole.kPet or attacker._kRoleType == kType.kRole.kOtherPet then
+            petMaster = attacker._pMaster
+            posPetMasterX, posPetMasterY = petMaster:getPosition()
         end
-        posPetMasterX, posPetMasterY = petMaster:getPosition()
     end
     ------------------------------------------------------------------
 
@@ -402,7 +428,7 @@ function AIManager:objSearchNearestEnemysInRangeForDamage(attacker, range, needN
             local range2 = range*range
             if distance2 <= range2 then
                 -- 受击范围内所有的目标集合
-                if attacker._kGameObjType == kType.kGameObj.kRole and attacker._kRoleType == kType.kRole.kPet and needNearestInRangeToMasterForPet == true then
+                if attacker._kGameObjType == kType.kGameObj.kRole and (attacker._kRoleType == kType.kRole.kPet or attacker._kRoleType == kType.kRole.kOtherPet) and needNearestInRangeToMasterForPet == true then
                     local distanceBetweenPetMasterAndEnemy2 = (posEnemyX - posPetMasterX)*(posEnemyX - posPetMasterX) + (posEnemyY - posPetMasterY)*(posEnemyY - posPetMasterY)
                     table.insert(targetsInRange,{["enemy"] = vEnemy, ["distance2"] = distanceBetweenPetMasterAndEnemy2}) 
                 else
@@ -705,10 +731,10 @@ function AIManager:skillCollidingOnEnemysAndHurt(attacker, skill)
 end
 
 -- 瞬移到以某个对象为中心一定格子范围内的随机位置
-function AIManager:objBlinkToRandomPosAccordingToTargetObj(obj, targetObj, rangeBlockNum)
+function AIManager:objBlinkToRandomPosAccordingToTargetObj(obj, targetObj, rangeBlockNumBegin, rangeBlockNumEnd)
     local targetPosIndex = targetObj:getPositionIndex()
-    local stepOffsetX = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
-    local stepOffsetY = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
+    local stepOffsetX = getRandomNumBetween(rangeBlockNumBegin,rangeBlockNumEnd)     -- rangeBlockNumBegin到rangeBlockNumEnd步
+    local stepOffsetY = getRandomNumBetween(rangeBlockNumBegin,rangeBlockNumEnd)     -- rangeBlockNumBegin到rangeBlockNumEnd步
     local factorX = getRandomNumBetween(1,2)        -- 随机正负
     local factorY = getRandomNumBetween(1,2)        -- 随机正负
     if factorX == 2 then factorX = -1 end
@@ -719,8 +745,8 @@ function AIManager:objBlinkToRandomPosAccordingToTargetObj(obj, targetObj, range
         targetPosIndex.x + stepOffsetX*factorX <= 0 or
         targetPosIndex.y + stepOffsetY*factorY >= MapManager:getInstance()._sMapIndexSize.height or
         targetPosIndex.y + stepOffsetY*factorY <= 0 do
-        stepOffsetX = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
-        stepOffsetY = getRandomNumBetween(1,rangeBlockNum)     -- 1到rangeBlockNum步
+        stepOffsetX = getRandomNumBetween(rangeBlockNumBegin,rangeBlockNumEnd)     -- rangeBlockNumBegin到rangeBlockNumEnd步
+        stepOffsetY = getRandomNumBetween(rangeBlockNumBegin,rangeBlockNumEnd)     -- rangeBlockNumBegin到rangeBlockNumEnd步
         factorX = getRandomNumBetween(1,2)        -- 随机正负
         factorY = getRandomNumBetween(1,2)        -- 随机正负
         if factorX == 2 then factorX = -1 end
@@ -728,5 +754,85 @@ function AIManager:objBlinkToRandomPosAccordingToTargetObj(obj, targetObj, range
         tiledType = MapManager:getInstance():getTiledAttriAt(cc.p(targetPosIndex.x + stepOffsetX*factorX, targetPosIndex.y + stepOffsetY*factorY))
     end
     obj:setPositionByIndex(cc.p(targetPosIndex.x + stepOffsetX*factorX, targetPosIndex.y + stepOffsetY*factorY))
+    return cc.p(targetPosIndex.x + stepOffsetX*factorX, targetPosIndex.y + stepOffsetY*factorY)
+end
+
+-- 根据阵营类型使用使用共鸣技能(当campType == kType.kCampType.kOther时role生效，为otherPlayer)
+function AIManager:usePetCooperateSkillByCampType(campType,role)
+    if campType == kType.kCampType.kMain then   -- 我方阵营
+        if type(RolesManager:getInstance()._tMainPetCooperates[1]) == "table" and type(RolesManager:getInstance()._tMainPetCooperates[1].RequiredPet) == "table" then
+            -- 查找当前宠物共鸣信息中宠物进阶数最小值
+            local minStepValue = 999
+            for kCooperate,vCooperate in pairs(RolesManager:getInstance()._tMainPetCooperates[1].RequiredPet) do
+                for kInfo,vInfo in pairs(PetsManager:getInstance()._tMainPetRoleInfosInQueue) do
+                    if vCooperate == vInfo.petId then
+                        if minStepValue >= vInfo.step then
+                            minStepValue = vInfo.step
+                        end
+                        break
+                    end
+                end
+            end
+            -- 使用宠物共鸣技能(作用对象：角色+当前宠物)
+            local buffId = RolesManager:getInstance()._tMainPetCooperates[1]["Buff"..minStepValue]
+            if RolesManager:getInstance()._pMainPlayerRole._nCurHp > 0 then
+                RolesManager:getInstance()._pMainPlayerRole:addBuffByID(buffId)
+            end
+            if PetsManager:getInstance()._pMainPetRole and PetsManager:getInstance()._pMainPetRole._nCurHp > 0 then
+                PetsManager:getInstance()._pMainPetRole:addBuffByID(buffId)
+            end
+        end
+    elseif campType == kType.kCampType.kPvp then   -- PVP方阵营
+        if type(RolesManager:getInstance()._tPvpPetCooperates[1]) == "table" and type(RolesManager:getInstance()._tPvpPetCooperates[1].RequiredPet) == "table" then
+            -- 查找当前宠物共鸣信息中宠物进阶数最小值
+            local minStepValue = 999
+            for kCooperate,vCooperate in pairs(RolesManager:getInstance()._tPvpPetCooperates[1].RequiredPet) do
+                for kInfo,vInfo in pairs(PetsManager:getInstance()._tPvpPetRoleInfosInQueue) do
+                    if vCooperate == vInfo.petId then
+                        if minStepValue >= vInfo.step then
+                            minStepValue = vInfo.step
+                        end
+                        break
+                    end
+                end
+            end
+            -- 使用宠物共鸣技能(作用对象：角色+当前宠物)
+            local buffId = RolesManager:getInstance()._tPvpPetCooperates[1]["Buff"..minStepValue]
+            if RolesManager:getInstance()._pPvpPlayerRole._nCurHp > 0 then
+                RolesManager:getInstance()._pPvpPlayerRole:addBuffByID(buffId)
+            end
+            if PetsManager:getInstance()._pPvpPetRole and PetsManager:getInstance()._pPvpPetRole._nCurHp > 0 then
+                PetsManager:getInstance()._pPvpPetRole:addBuffByID(buffId)
+            end
+        end
+    elseif campType == kType.kCampType.kOther then   -- 其他玩家阵营
+        if type(role._pCurPetRole._pCooperateInfo) == "table" and type(role._pCurPetRole._pCooperateInfo.RequiredPet) == "table" then
+            -- 查找当前宠物共鸣信息中宠物进阶数最小值
+            local minStepValue = 999
+            for kCooperate,vCooperate in pairs(role._pCurPetRole._pCooperateInfo.RequiredPet) do
+                for kInfo,vInfo in pairs(role._pRoleInfo.pets) do
+                    if vCooperate == vInfo.petInfo.petId then
+                        if minStepValue >= vInfo.petInfo.step then
+                            minStepValue = vInfo.petInfo.step
+                        end
+                        break
+                    end
+                end
+            end
+            -- 使用宠物共鸣技能(作用对象：角色+当前宠物)
+            local buffId = role._pCurPetRole._pCooperateInfo["Buff"..minStepValue]
+            if role._nCurHp > 0 then
+                role:addBuffByID(buffId)
+            end
+            if role._pCurPetRole and role._pCurPetRole._nCurHp > 0 then
+                role._pCurPetRole:addBuffByID(buffId)
+            end
+        end
+    elseif campType == kType.kCampType.kMonster then  -- 野怪阵营
+
+    elseif campType == kType.kCampType.kEntity then  -- 实体阵营
+
+    end
 
 end
+

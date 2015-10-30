@@ -37,7 +37,8 @@ function SkillsManager:clearCache()
     ---------------------------------- 主角玩家宠物的技能（只创建保留当前上阵的宠物技能） ------------------------------------------
     self._tCurMainPetRoleSkills = {}                            -- 玩家当前宠物技能集合 格式：{skill1,skill2,skill3,skill4}
     ---------------------------------- 好友技能 ------------------------------------------------------------------
-    self._pFriendSkill = nil                                    -- 玩家当前配置的好友援助技能
+    self._pFriendSkill = nil                                    -- 玩家当前配置的好友援助出场技能
+    self._tFriendSkills = {}                                    -- 玩家当前配置的好友援助普通攻击技能
     ---------------------------------- PVP对手的技能 ------------------------------------------------------
     self._tPvpRoleSkills = {}                                   -- Pvp对手技能集合
     self._tPvpRoleSkillsLevels = {}
@@ -49,6 +50,13 @@ function SkillsManager:clearCache()
     self._tPvpRoleMountPasvSkills = {}                          -- 服务器返回的Pvp角色当前已经装备的被动技能 {{id=1,level=1},{},{}.....}
     ---------------------------------- PVP玩家宠物的技能（只创建保留当前上阵的宠物技能） ------------------------------------------
     self._tCurPvpPetRoleSkills = {}                             -- PVP当前宠物技能集合 格式：{skill1,skill2,skill3,skill4}
+    ---------------------------------- 其他玩家的技能 ----------------------------------------------------------------------------
+    self._tOtherPlayerRoleSkills = {} 							-- 其他玩家的技能集合
+    self._tOtherPlayerRolesMountAngerSkillsInfos = {}           -- 服务器返回的其他玩家当前已经装备的怒气技能 { {{id=1,level=1}}, {}, {}, ......} 
+    self._tOtherPlayerRolesMountActvSkillsInfos = {}            -- 服务器返回的其他玩家当前已经装备的主动技能 { {{id=1,level=1},{id=2,level=1}....}, {}, {}.....}
+    self._tOtherPlayerRolesPasvSkillsInfos = {}                 -- 服务器返回的其他玩家当前已经装备的被动技能 { {{id=1,level=1},{id=2,level=1}....}, {}, {}.....}
+    ---------------------------------- 其他玩家宠物的技能 -------------------------------------------------------------------------
+    self._tOtherPetSkills = {}                                  -- 其他玩家的宠物技能集合
     ---------------------------------- 野怪的技能 -----------------------------------------------------------
     self._tMonstersSkills = {}                                  -- 野怪技能集合{{波，波，波...},{波，波，波....},{波，波，波....}...}
     ---------------------------------- 实体的技能 ----------------------------------------------------------
@@ -102,6 +110,13 @@ function SkillsManager:update(dt)
             self._pFriendSkill = nil
         end
     end
+    for k,v in pairs(self._tFriendSkills) do 
+        if v._bActive == false then  -- 若已失效，则立即移除并删除
+            v:removeFromParent(true)
+            table.remove(self._tFriendSkills,k)
+            break
+        end
+    end
 
     -- PVP对手技能集合的遍历
     for k,v in pairs(self._tPvpRoleSkills) do
@@ -117,6 +132,24 @@ function SkillsManager:update(dt)
         if v._bActive == false then  -- 若已失效，则立即移除并删除
             v:removeFromParent(true)
             table.remove(self._tCurPvpPetRoleSkills,k)
+            break
+        end
+    end
+
+    -- 其他玩家角色技能集合的遍历
+    for k, v in pairs(self._tOtherPlayerRoleSkills) do
+        if v._bActive == false then  -- 若已失效，则立即移除并删除
+            v:removeFromParent(true)
+            table.remove(self._tOtherPlayerRoleSkills,k)
+            break
+        end
+    end
+
+    -- 其他玩家宠物技能集合的遍历
+    for k, v in pairs(self._tOtherPetSkills) do 
+        if v._bActive == false then  -- 若已失效，则立即移除并删除
+            v:removeFromParent(true)
+            table.remove(self._tOtherPetSkills,k)
             break
         end
     end
@@ -165,7 +198,12 @@ function SkillsManager:update(dt)
             self._pFriendSkill:update(dt)
         end
     end
-    
+    for k,v in pairs(self._tFriendSkills) do 
+        if v._bActive == true then
+            v:update(dt)
+        end
+    end
+
     -- PVP对手技能集合的遍历
     for k,v in pairs(self._tPvpRoleSkills) do
         if v._bActive == true then
@@ -180,6 +218,20 @@ function SkillsManager:update(dt)
         end
     end
     
+    -- 其他玩家角色技能集合的遍历
+    for k, v in pairs(self._tOtherPlayerRoleSkills) do
+        if v._bActive == true then
+            v:update(dt)
+        end
+    end
+
+    -- 其他玩家宠物技能集合的遍历
+    for k, v in pairs(self._tOtherPetSkills) do
+        if v._bActive == true then
+            v:update(dt)
+        end
+    end
+
     -- 野怪技能集合的遍历
     local nCurMonsterAreaIndex = MonstersManager:getInstance()._nCurMonsterAreaIndex
     local nCurMonsterWaveIndex = MonstersManager:getInstance()._nCurMonsterWaveIndex
@@ -207,7 +259,8 @@ end
 -- 创建调试层
 function SkillsManager:createAllSkills(bDebug)
     -------------------------------- 创建主角的技能集合 ---------------------------------------
-    local pMainRole = RolesManager:getInstance()._pMainPlayerRole 
+    local pMainRole = RolesManager:getInstance()._pMainPlayerRole
+    
     -- 添加玩家角色的主动技能集合
     for k,v in pairs(self._tMainRoleMountActvSkills) do
         local pSkillInfo = self:getMainRoleSkillDataByID(v.id,v.level)
@@ -216,7 +269,7 @@ function SkillsManager:createAllSkills(bDebug)
         table.insert(self._tMainRoleSkills,pSkill)
         pMainRole._tSkills[k+1] = pSkill
         MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
-    end 
+    end
     
     -- 添加玩家角色普通攻击 技能
     local pSkillInfo = self:getMainRoleSkillDataByID((RolesManager:getInstance()._pMainRoleInfo.roleCareer-1)*activeSkillNum + 1,0)
@@ -328,6 +381,7 @@ function SkillsManager:createAllSkills(bDebug)
     end
     -------------------------------- 创建好友技能 ---------------------------------------
     if RolesManager:getInstance()._pFriendRole then
+        -- 添加出场技能
         local pSkillInfo = TableFriendSkills[FriendManager:getInstance():getFriendSkillId()]
         local pClassName = TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.ClassName
         ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.PvrName)
@@ -335,10 +389,72 @@ function SkillsManager:createAllSkills(bDebug)
         self._pFriendSkill = pSkill
         RolesManager:getInstance()._pFriendRole._pSkill = pSkill
         MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
+        -- 添加普通攻击 技能
+        local pSkillInfo = self:getCareerSkillInfo(RolesManager:getInstance()._pFriendRole._pRoleInfo.roleCareer, (RolesManager:getInstance()._pFriendRole._pRoleInfo.roleCareer-1)*activeSkillNum + 1,0)
+        local pClassName = TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.ClassName
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.PvrName)
+        local pSkill = require(pClassName):create(RolesManager:getInstance()._pFriendRole, pSkillInfo)
+        self._tFriendSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] = pSkill
+        RolesManager:getInstance()._pFriendRole._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] = pSkill
+        MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
     end
 
     -------------------------------- 创建其他玩家的技能集合 ---------------------------------------
-    
+    for kRole, vRole in pairs(RolesManager:getInstance()._tOtherPlayerRoles) do
+        for k, v in pairs(self._tOtherPlayerRolesMountActvSkillsInfos[kRole]) do
+            local pSkillInfo = self:getCareerSkillInfo(vRole._pRoleInfo.roleCareer, v.id, v.level)
+            local pClassName = TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.ClassName
+            local pSkill = require(pClassName):create(vRole, pSkillInfo)
+            table.insert(self._tOtherPlayerRoleSkills, pSkill)
+            vRole._tSkills[k+1] = pSkill
+            MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
+        end
+        -- 添加其他玩家的普通攻击 技能
+        local pSkillInfo = self:getCareerSkillInfo(vRole._pRoleInfo.roleCareer, (vRole._pRoleInfo.roleCareer-1)*activeSkillNum + 1,0)
+        local pClassName = TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.ClassName
+        local pSkill = require(pClassName):create(vRole, pSkillInfo)
+        table.insert(self._tOtherPlayerRoleSkills,pSkill)
+        vRole._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] = pSkill
+        MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
+        -- 添加其他玩家角色怒气攻击 技能
+        for k,v in pairs(self._tOtherPlayerRolesMountAngerSkillsInfos[kRole]) do
+            local pSkillInfo = self:getCareerSkillInfo(vRole._pRoleInfo.roleCareer,v.id,v.level)
+            local pClassName = TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.ClassName
+            local pSkill = require(pClassName):create(vRole, pSkillInfo)
+            table.insert(self._tOtherPlayerRoleSkills,pSkill)
+            vRole._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kAngerAttack] = pSkill
+            MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
+        end
+        -- 添加其他玩家的被动技能数据集合的缓存
+        for kPassive, vPassive in pairs(self._tOtherPlayerRolesPasvSkillsInfos[kRole]) do 
+            if vPassive.level > 0 then
+                local skillData = self:getCareerSkillInfo(vRole._pRoleInfo.roleCareer, vPassive.id, vPassive.level)
+                vRole._tPassiveSkillInfos[skillData.TypeID] = skillData
+            end
+        end
+    end
+
+    -------------------------------- 创建其他玩家宠物的技能集合 ---------------------------------------
+    for kPet,vPet in pairs(PetsManager:getInstance()._tOtherPetRoles) do
+        -- 添加宠物的技能集合
+        local skillIDsIndexInTable = math.ceil((vPet._nLevel+0.1)/10)     -- （向下取整）每隔10级为一个组技能集合阶段
+        local tSkillIDs = {}
+        for k,v in pairs(vPet._pRoleInfo.SkillRequiredLv) do
+            if vPet._kQuality >= v then
+                table.insert(tSkillIDs, vPet._pRoleInfo.SkillIDs[skillIDsIndexInTable][k])
+            end
+        end
+        for kID,vID in pairs(tSkillIDs) do
+            local pSkillInfo = TablePetsSkills[vID]
+            local pClassName = TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.ClassName
+            ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.PvrName)
+            local pSkill = require(pClassName):create(vPet, pSkillInfo)
+            table.insert(self._tOtherPetSkills,pSkill)
+            table.insert(vPet._tSkills,pSkill)
+            MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
+        end
+    end
+
     -------------------------------- 创建Monster的技能集合 ----------------------------------------   
     for areaIndex = 1, #MonstersManager:getInstance()._tMonsters do
         self._tMonstersSkills[areaIndex] = {}  -- 插入新的一个区域
@@ -471,8 +587,6 @@ function SkillsManager:setForceMinPositionZ(bForce, value)
 end
 
 -- （主角玩家的宠物）切换到下一个宠物的技能
--- 参数：如果index有值，则切换到指定index的宠物的技能
---       如果index没有值，则按照顺序切换到下一个宠物的技能
 function SkillsManager:changeToNextMainPetRoleSkillsOnMap()
     local pMainPetRole = PetsManager:getInstance()._pMainPetRole
     if pMainPetRole then
@@ -494,13 +608,13 @@ function SkillsManager:changeToNextMainPetRoleSkillsOnMap()
             table.insert(pMainPetRole._tSkills,pSkill)
             MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
         end
+        -- 刷新相机
+        pMainPetRole:refreshCamera()
     end
-    
+
 end
 
 -- （PVP玩家的宠物）切换到下一个宠物的技能
--- 参数：如果index有值，则切换到指定index的宠物的技能
---       如果index没有值，则按照顺序切换到下一个宠物的技能
 function SkillsManager:changeToNextPvpPetRoleSkillsOnMap()
     local pPvpPetRole = PetsManager:getInstance()._pPvpPetRole 
     if pPvpPetRole then
@@ -521,8 +635,38 @@ function SkillsManager:changeToNextPvpPetRoleSkillsOnMap()
             table.insert(pPvpPetRole._tSkills,pSkill)
             MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
         end
+        -- 刷新相机
+        pPvpPetRole:refreshCamera()
+
     end
     
+end
+
+-- （其他玩家的宠物）切换到下一个宠物的技能
+-- 参数：newPet：已经新创建出来的宠物对象
+function SkillsManager:changeToNextOtherPetRoleSkillsOnMap(newPet)
+    if newPet then
+        -- 添加宠物的技能集合
+        local skillIDsIndexInTable = math.ceil((newPet._nLevel+0.1)/10)     -- （向下取整）每隔10级为一个组技能集合阶段
+        local tSkillIDs = {}
+        for k,v in pairs(newPet._pRoleInfo.SkillRequiredLv) do
+            if newPet._kQuality >= v then
+                table.insert(tSkillIDs, newPet._pRoleInfo.SkillIDs[skillIDsIndexInTable][k])
+            end
+        end
+        for kID,vID in pairs(tSkillIDs) do
+            local pSkillInfo = TablePetsSkills[vID]
+            local pClassName = TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.ClassName
+            ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(TableTempleteSkills[pSkillInfo.TempleteID].DetailInfo.PvrName)
+            local pSkill = require(pClassName):create(newPet, pSkillInfo)
+            table.insert(self._tOtherPetSkills,pSkill)
+            table.insert(newPet._tSkills,pSkill)
+            MapManager:getInstance()._pTmxMap:addChild(pSkill, kZorder.kMinSkill)
+        end
+        -- 刷新相机
+        newPet:refreshCamera() 
+    end
+
 end
 
 -------------------------------------------------------技能数据表操作相关－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
@@ -672,7 +816,7 @@ function SkillsManager:getMainRoleSkillIconByID(id)
     return self._pActSkillData[RolesManager:getInstance()._pMainRoleInfo.roleCareer][id][1].skillIcon
 end
 
-function SkillsManager:getSkillIconByID(roleCareer,id,level)
+function SkillsManager:getCareerSkillInfo(roleCareer,id,level)
     return self._pActSkillData[roleCareer][id][level]
 end
 

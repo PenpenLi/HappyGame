@@ -29,7 +29,10 @@ function GameInstanceHandler:ctor()
     NetHandlersManager:registHandler(21017, self.handleQueryPickCardState21017)
     --获取关卡状态
     NetHandlersManager:registHandler(21019, self.handleQueryBattleInfo21019)
-    
+    -- 获取排行榜回复
+    NetHandlersManager:registHandler(21321, self.handleQueryRankListResp21321)
+    --获取组队信息回复
+    NetHandlersManager:registHandler(21021, self.handleFormTeamResp21021)
 end
 
 -- 创建函数
@@ -43,15 +46,16 @@ end
 function GameInstanceHandler:handleMsgQueryBattleList(msg)
     print("GameInstanceHandler 21001")
     if msg.header.result == 0 then 
-        DialogManager:getInstance():showDialog("CopysDialog",{msg["body"].argsBody.copyTypes,3})
+        --DialogManager:getInstance():showDialog("CopysDialog",{msg["body"].argsBody.copyTypes,3})
         
         local event = {battleExts = msg["body"].battleExts}
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kQueryBattleList, event)
-        
+        --[[
         if TasksManager:getInstance()._bNeedScroll == true then
             NetRespManager:getInstance():dispatchEvent(kNetCmd.kGameCopysScroll,{id = TasksManager:getInstance()._nScrollCopyId})
             TasksManager:getInstance():setAutoScrollOver()
         end
+        ]]
         
     else
         print("返回错误码："..msg.header.result)
@@ -161,5 +165,25 @@ function GameInstanceHandler:handleQueryBattleInfo21019(msg)
     end
 end
 
+function GameInstanceHandler:handleQueryRankListResp21321(msg)
+    print("GameInstanceHandler 21321")
+    if msg.header.result == 0 then 
+        local event = {rankType = msg.body.argsBody.rankType, list = msg.body.rankList, selfRank = msg.body.selfRank}
+        NetRespManager:getInstance():dispatchEvent(kNetCmd.kQueryRankListResp,event)
+    else
+        print("返回错误码："..msg.header.result)
+    end
+end
+
+
+function GameInstanceHandler:handleFormTeamResp21021(msg)
+    print("GameInstanceHandler 21021")
+    if msg.header.result == 0 then 
+        local event = msg.body
+        NetRespManager:getInstance():dispatchEvent(kNetCmd.kFormTeamInfo,event)
+    else
+        print("返回错误码："..msg.header.result)
+    end
+end
 
 return GameInstanceHandler

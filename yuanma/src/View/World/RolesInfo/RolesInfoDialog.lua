@@ -18,21 +18,19 @@ function RolesInfoDialog:ctor()
 
     self._pBg = nil
     self._pCloseButton = nil
-    self._pVip_button = nil                    --vip按钮
-    self._pVip_Number = nil                    --vip等级 lable
     self._pRoleName = nil                      --角色名字 lable
-    self._pChange_Name = nil                   --更改昵称 button
     self._pRoleLevel = nil                     --角色等级 lable
-    self._pExpBar = nil                        --角色经验进度条 bar
-    self._pExpNumber = nil                     --角色经验比例   label
     self._pFightingPower = nil                 --战斗力  lable
-    self._pExchangeUi_Button =nil              --切换背包  button
+    self._pRoleLeftNode = nil                  --挂载人物的node
+    self._pNodeRigh = nil                      --挂在左侧的属性node
     self._pPlayer = nil                        --人物的背景框
     self._pWeapon1 = nil                       --武器1
     self._pWeapon2 = nil                       --武器2
     self._pFashionBack = nil                   --时装翅膀
     self._pFashionHalo = nil                   --时装光环
-    self._tEquALlPostion = {}                  --所有的装备postion
+    self._tEquALlNode = {}                     --所有的装备的挂载信息
+
+    self._pCurSelectRoleType = RoleDialogTabType.RoleDialogTypeBag
 
     self._pPanelExchange  = true               -- 背包层和人物属性层标识  背包层 true ; 人物属性层 false
     self._pCheckBoxTable = {true, true, true}  -- 时装的默认都是显示的
@@ -51,7 +49,6 @@ function RolesInfoDialog:ctor()
 
     self._bRoleAniHasChange = false            --记录角色的ani是否改变
 
-    self._sBgContSize = nil                    --背景框的size
     self._pNodeRigh = nil
     self._pBagView = nil                       --背包view
     self._pDetailInfoView = nil                --详细属性view
@@ -68,9 +65,179 @@ function RolesInfoDialog:create(args)
     return dialog
 end
 
+-- 处理函数
+function RolesInfoDialog:dispose(args)
+    -- 设置是否需要缓存
+    self:setNeedCache(true)
+
+    NetRespManager:getInstance():addEventListener(kNetCmd.kUpdateRoleInfo ,handler(self, self.updateRoleInfo))
+    NetRespManager:getInstance():addEventListener(kNetCmd.kWareEquipment ,handler(self, self.updateEquipmentArray))
+    NetRespManager:getInstance():addEventListener(kNetCmd.kFashionHasWare, handler(self, self.updateFashionHasVisable))
+    NetRespManager:getInstance():addEventListener(kNetCmd.kWorldLayerTouch,handler(self, self.handleTouchable))
+    NetRespManager:getInstance():addEventListener(kNetCmd.kEquipWarning ,handler(self, self.updateEquipWarning))
+    ResPlistManager:getInstance():addSpriteFrames("PlayerRolesDialog.plist")
+
+    self._pCurSelectRoleType = args[1]
+    --初始化ui
+    self:initUi()
+    --加载数据
+    self:initUiDate()
+    --初始化角色的装备信息
+    self:initRoleEquInfo()   
+    --创建3d模型
+    self:createRoleModel()   
+    --设置背包跟详细信息的状态
+    self:setTabBtnState()
+
+   --self:addWaveEffect(kType.kBodyParts.kBody,3)
+   --self:addWaveEffect(kType.kBodyParts.kWeapon,2)
+   --self:addWaveEffect(kType.kBodyParts.kBack,2)
+   --self:hideWaveEffect(kType.kBodyParts.kBody)
+      -- 避免模型穿透
+    RolesManager:getInstance():setForceMinPositionZ(true,-10000)
+    PetsManager:getInstance():setForceMinPositionZ(true,-10000)
+
+    local pTouchPostion = nil
+    local bIsMove = false
+    local pTouchRec = self._pPlayer:getBoundingBox()
+    self.pTouchBeginP = nil
+    -- 触摸注册
+    local function onTouchBegin(touch,event)
+        local location = touch:getLocation()
+        self.pTouchBeginP = location
+        local pLocal = self._pRoleLeftNode:convertTouchToNodeSpace(touch)
+        if cc.rectContainsPoint(pTouchRec,pLocal) == true and self._pCurSelectRoleType == RoleDialogTabType.RoleDialogTypeBag then
+            pTouchPostion = pLocal
+        end
+
+        print("touch begin 11".."x="..location.x.."  y="..location.y)
+        if cc.rectContainsPoint(self._recBg,location) == false then
+            --self:close()
+        end
+        return true
+    end
+    local function onTouchMoved(touch,event)
+        local location2 = touch:getLocation()
+        if (math.abs(self.pTouchBeginP.x - location2.x)+math.abs(self.pTouchBeginP.y - location2.y) <= 2 )then
+        	return 
+        end
+       local location = self._pRoleLeftNode:convertTouchToNodeSpace(touch)
+
+        print("touch move ".."x="..location.x.."  y="..location.y)
+        if self._pRolePlayer and pTouchPostion then
+            bIsMove = true
+            local pRotation = self._pRolePlayer:getRotation3D()
+            local dist = location.x - pTouchPostion.x
+            pRotation.y = pRotation.y+dist/5
+            self._pRolePlayer:setRotation3D(pRotation)
+            pTouchPostion = location
+        end
+
+    end
+    local function onTouchEnded(touch,event)
+        local location = touch:getLocation()
+        print("touch end a ".."x="..location.x.."  y="..location.y)
+
+        local actionOverCallBack = function()  --动画播放完毕的回调 播放默认待机动作
+            local pStandAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.ReadyFightActFrameRegion[1],self._tTempletetInfo.ReadyFightActFrameRegion[2])
+            pStandAnimate:setSpeed(self._tTempletetInfo.ReadyFightActFrameRegion[3])
+            self._pRolePlayer:runAction(cc.RepeatForever:create(pStandAnimate))
+        end
+
+        if pTouchPostion and bIsMove == false and (cc.rectContainsPoint(pTouchRec,pTouchPostion) == true) then -- 如果点击有位移了播放动画
+            if self._pRolePlayer then
+                self._pRolePlayer:stopAllActions()
+                local len = table.getn(self._tAllActions)
+                local  nRundom = mmo.HelpFunc:gGetRandNumberBetween(1,len)
+                local  tAction = self._tAllActions[nRundom]
+                local  pAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation,tAction[1],tAction[2])
+                pAnimate:setSpeed(tAction[4])
+                self._pRolePlayer:runAction(cc.Sequence:create(pAnimate,cc.CallFunc:create(actionOverCallBack)))
+        end
+        end
+        pTouchPostion = nil
+        bIsMove = false
+    end
+    
+  
+
+    -- 添加监听器
+ 
+    self._pTouchListener = cc.EventListenerTouchOneByOne:create()
+    self._pTouchListener:setSwallowTouches(true)
+    self._pTouchListener:registerScriptHandler(onTouchBegin,cc.Handler.EVENT_TOUCH_BEGAN )
+    self._pTouchListener:registerScriptHandler(onTouchMoved,cc.Handler.EVENT_TOUCH_MOVED )
+    self._pTouchListener:registerScriptHandler(onTouchEnded,cc.Handler.EVENT_TOUCH_ENDED )
+    self:getEventDispatcher():addEventListenerWithSceneGraphPriority(self._pTouchListener, self)
+
+    local function onNodeEvent(event)
+        if event == "exit" then
+            self:onExitRolesInfoDialog()
+        end
+    end
+    self:registerScriptHandler(onNodeEvent)
+  
+    
+    return
+
+end
+
+
+--初始化ui
+function RolesInfoDialog:initUi()
+ 
+    -- 加载dialog组件
+    local params = require("PlayerRolesDialogParams"):create()
+    self._pCCS = params._pCCS
+    self._pBg = params._pBackGround
+   
+    self._pCloseButton = params._pCloseButton
+    self._pRoleName = params._pName                      --角色名字 lable
+    self._pRoleLevel = params._pLevel_number             --角色等级 lable
+    self._pFightingPower = params._pZhandouli_number     --战斗力   lable
+    self._pPlayer = params._pPlayer                      --人物的背景框
+    self._tEquALlNode = params._tEquALlNode              --装备
+    self._pBagBtn = params._pBaoGuo                      --包裹按钮
+    self._pRoleDetailBtn = params._pExchange             --人物信息按钮
+    self._pNodeRigh = params._pNodeRight
+    self._pRoleLeftNode = params._pRoleInfoNode          --角色的挂在node
+    self._pAttack_number = params._pAttack_number        --人物的攻击力
+    self._pHp_number = params._pHp_number                --人物的血
+    self._pDefend_number = params._pDefend_number        --人物的防御
+    -- 初始化dialog的基础组件
+    self:disposeCSB()
+
+    --背包
+    self._pBagView = BagCommonManager:getInstance():getBagPanel()
+    self._pBagView:setPosition(self._pBg:getContentSize().width/4-40,0)
+    self._pRoleLeftNode:addChild(self._pBagView)
+    --角色详细信息
+    self._pDetailInfoView = require("PlayerDetailInfoPanel"):create({nil,false})
+    self._pNodeRigh:addChild(self._pDetailInfoView)
+    --角色详细信息左边的信息
+    self._pDeatilInfoLeftView = require("RoleDetailLeftPanel"):create()
+    self._pNodeRigh:addChild(self._pDeatilInfoLeftView)
+end
+
+--加载数据
+function RolesInfoDialog:initUiDate()
+   
+    --设置人物的info
+    self._tRoleInfo = RolesManager:getInstance()._pMainRoleInfo
+    self._tTempletetInfo = TableTempleteCareers[self._tRoleInfo.roleCareer]
+    self._pCheckBoxTable = self._tRoleInfo.fashionOptions --时装是否显示
+    -- self._tTempletetInfo = TableTempleteCareers[1]
+    -- 人物动画帧时间
+    local pActionSize = table.getn(self._tTempletetInfo.AttackActFrameRegions)
+    for i=pActionSize-3,pActionSize do
+        table.insert(self._tAllActions,self._tTempletetInfo.AttackActFrameRegions[i])
+    end
+    self:setRoleBaseAttr()
+
+end
+
 --更新装备信息
 function RolesInfoDialog:updateEquipmentArray(event)
-
 
     self._tRoleInfo = event.roleInfo
     self._pCheckBoxTable =self._tRoleInfo.fashionOptions
@@ -107,6 +274,7 @@ function RolesInfoDialog:updateRoleInfo(event)
     self._tRoleInfo = RolesManager:getInstance()._pMainRoleInfo
     self:setRoleBaseAttr()
     self:updateRoleEquipments()
+    self._pDeatilInfoLeftView:refreshRoleInfo()
 end
 
 function RolesInfoDialog:updateRoleEquipments()
@@ -124,285 +292,60 @@ function RolesInfoDialog:handleTouchable(event)
 end
 
 
--- 处理函数
-function RolesInfoDialog:dispose(args)
-    -- 设置是否需要缓存
-    self:setNeedCache(true)
-
-    
-    NetRespManager:getInstance():addEventListener(kNetCmd.kUpdateRoleInfo ,handler(self, self.updateRoleInfo))
-    NetRespManager:getInstance():addEventListener(kNetCmd.kWareEquipment ,handler(self, self.updateEquipmentArray))
-    NetRespManager:getInstance():addEventListener(kNetCmd.kFashionHasWare, handler(self, self.updateFashionHasVisable))
-    NetRespManager:getInstance():addEventListener(kNetCmd.kWorldLayerTouch,handler(self, self.handleTouchable))
-    NetRespManager:getInstance():addEventListener(kNetCmd.kEquipWarning ,handler(self, self.updateEquipWarning))
-    ResPlistManager:getInstance():addSpriteFrames("PlayerRolesDialog.plist")
-
-    -- 加载dialog组件
-    local params = require("PlayerRolesDialogParams"):create()
-    self._pCCS = params._pCCS
-    self._pBg = params._pBackGround
-    self._pNodeRigh = params._pNodeRight
-    self._sBgContSize = self._pBg:getContentSize()
-    self._pCloseButton = params._pCloseButton
-    self._pVip_button = params._pVip_button              --vip按钮
-    self._pVip_Number = params._pVip_number              --vip等级  lable
-    self._pRoleName = params._pName                      --角色名字 lable
-    self._pChange_Name = params._pChange_name            --更改昵称 button
-    self._pRoleLevel = params._pLevel_number             --角色等级 lable
-    self._pExpBar = params._pExp_bar2                    --角色经验进度条 bar
-    self._pExpNumber = params._pExp_number               --角色经验比例   label
-    self._pFightingPower = params._pZhandouli_number     --战斗力   lable
-    self._pExchangeUi_Button = params._pExchange         --切换背包 button
-    self._pPlayer = params._pPlayer                      --人物的背景框
-    local sContSize = self._pPlayer:getContentSize()
-
-    local pPosX,pPosY = self._pPlayer:getPosition()
-    local nUpAndDownDis = 5                             --装备上下与框的间隔
-    local nLeftAndReightDis = 0                         --装备左右与框的间隔
-    local nSize = 101                                   --一个装备框的大小
-    local nFashionDis = 13                              --下面时装和人物的距离
-    -- 左上4，左上3，左上2，左上1
-    table.insert(self._tEquALlPostion,cc.p(-nSize-nLeftAndReightDis,nSize*3+3*nUpAndDownDis))
-    table.insert(self._tEquALlPostion,cc.p(-nSize-nLeftAndReightDis,nSize*2+2*nUpAndDownDis))
-    table.insert(self._tEquALlPostion,cc.p(-nSize-nLeftAndReightDis,nSize*1+1*nUpAndDownDis))
-    table.insert(self._tEquALlPostion,cc.p(-nSize-nLeftAndReightDis,0))
-    --右上4，右上3，右上2，右上1
-    table.insert(self._tEquALlPostion,cc.p(sContSize.width+nLeftAndReightDis,nSize*3+3*nUpAndDownDis))
-    table.insert(self._tEquALlPostion,cc.p(sContSize.width+nLeftAndReightDis,nSize*2+2*nUpAndDownDis))
-    table.insert(self._tEquALlPostion,cc.p(sContSize.width+nLeftAndReightDis,nSize*1+1*nUpAndDownDis))
-    table.insert(self._tEquALlPostion,cc.p(sContSize.width+nLeftAndReightDis,0))
-    --下左1 2 3
-    table.insert(self._tEquALlPostion,cc.p(sContSize.width/2-3*nSize/2-20,-nFashionDis-nSize))
-    table.insert(self._tEquALlPostion,cc.p(sContSize.width/2-nSize/2,-nFashionDis-nSize))
-    table.insert(self._tEquALlPostion,cc.p(sContSize.width/2+nSize/2+20,-nFashionDis-nSize))
-
-    -- 人物动画帧时间
-    --设置人物的info
-    self._tRoleInfo = RolesManager:getInstance()._pMainRoleInfo
-    self._tTempletetInfo = TableTempleteCareers[self._tRoleInfo.roleCareer]
-    self._pCheckBoxTable = self._tRoleInfo.fashionOptions --时装是否显示
-    -- self._tTempletetInfo = TableTempleteCareers[1]
-    local pActionSize = table.getn(self._tTempletetInfo.AttackActFrameRegions)
-    for i=pActionSize-3,pActionSize do
-        table.insert(self._tAllActions,self._tTempletetInfo.AttackActFrameRegions[i])
-    end
-
-    self:initRoleEquInfo()   --初始化角色的装备信息
-    self:createRoleModel()   --创建3d模型
-    -- 初始化dialog的基础组件
-    self:disposeCSB()
-
-    --背包
-    self._pBagView = BagCommonManager:getInstance():getBagPanel()
-   self._pNodeRigh:addChild(self._pBagView)
-
-    --角色详细信息
-    self._pDetailInfoView = require("PlayerDetailInfoPanel"):create({nil,false})
-    --self._pDetailInfoView:setPosition(self._sBgContSize.width*0.723, self._sBgContSize.height*0.52)
-    self._pDetailInfoView:setVisible(false)
-    self._pNodeRigh:addChild(self._pDetailInfoView)
-
-    self:initRoleBaseInfo(args[1])  --初始化角色的基本信息
-    
-    
-   --self:addWaveEffect(kType.kBodyParts.kBody,3)
-   --self:addWaveEffect(kType.kBodyParts.kWeapon,2)
-   --self:addWaveEffect(kType.kBodyParts.kBack,2)
-   --self:hideWaveEffect(kType.kBodyParts.kBody)
-      -- 避免模型穿透
-    RolesManager:getInstance():setForceMinPositionZ(true,-10000)
-    PetsManager:getInstance():setForceMinPositionZ(true,-10000)
-
-    local pTouchPostion = nil
-    local bIsMove = false
-    local pTouchRec = self._pPlayer:getBoundingBox()
-    self.pTouchBeginP = nil
-    -- 触摸注册
-    local function onTouchBegin(touch,event)
-        local location = touch:getLocation()
-        self.pTouchBeginP = location
-        local pLocal = self._pBg:convertTouchToNodeSpace(touch)
-        if cc.rectContainsPoint(pTouchRec,pLocal) == true then
-            pTouchPostion = pLocal
-        end
-
-        print("touch begin 11".."x="..location.x.."  y="..location.y)
-        if cc.rectContainsPoint(self._recBg,location) == false then
-            --self:close()
-        end
-        return true
-    end
-    local function onTouchMoved(touch,event)
-        local location2 = touch:getLocation()
-        if (math.abs(self.pTouchBeginP.x - location2.x)+math.abs(self.pTouchBeginP.y - location2.y) <= 2 )then
-        	return 
-        end
-       local location = self._pBg:convertTouchToNodeSpace(touch)
-
-        print("touch move ".."x="..location.x.."  y="..location.y)
-        if self._pRolePlayer and pTouchPostion then
-            bIsMove = true
-            local pRotation = self._pRolePlayer:getRotation3D()
-            local dist = location.x - pTouchPostion.x
-            pRotation.y = pRotation.y+dist/5
-            self._pRolePlayer:setRotation3D(pRotation)
-            pTouchPostion = location
-        end
-
-    end
-    local function onTouchEnded(touch,event)
-        local location = touch:getLocation()
-        print("touch end a ".."x="..location.x.."  y="..location.y)
-
-        local actionOverCallBack = function()  --动画播放完毕的回调 播放默认待机动作
-            local pStandAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.StandActFrameRegion[1],self._tTempletetInfo.StandActFrameRegion[2])
-            pStandAnimate:setSpeed(self._tTempletetInfo.StandActFrameRegion[3])
-            self._pRolePlayer:runAction(cc.RepeatForever:create(pStandAnimate))
-        end
-
-        if pTouchPostion and bIsMove == false and (cc.rectContainsPoint(pTouchRec,pTouchPostion) == true) then -- 如果点击有位移了播放动画
-            if self._pRolePlayer then
-                self._pRolePlayer:stopAllActions()
-                local len = table.getn(self._tAllActions)
-                local  nRundom = mmo.HelpFunc:gGetRandNumberBetween(1,len)
-                local  tAction = self._tAllActions[nRundom]
-                local  pAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation,tAction[1],tAction[2])
-                pAnimate:setSpeed(tAction[4])
-                self._pRolePlayer:runAction(cc.Sequence:create(pAnimate,cc.CallFunc:create(actionOverCallBack)))
-        end
-        end
-        pTouchPostion = nil
-        bIsMove = false
-    end
-    
-    -- 添加监听器
-    self._pTouchListener = cc.EventListenerTouchOneByOne:create()
-    self._pTouchListener:setSwallowTouches(true)
-    self._pTouchListener:registerScriptHandler(onTouchBegin,cc.Handler.EVENT_TOUCH_BEGAN )
-    self._pTouchListener:registerScriptHandler(onTouchMoved,cc.Handler.EVENT_TOUCH_MOVED )
-    self._pTouchListener:registerScriptHandler(onTouchEnded,cc.Handler.EVENT_TOUCH_ENDED )
-    self:getEventDispatcher():addEventListenerWithSceneGraphPriority(self._pTouchListener, self)
-
-    local function onNodeEvent(event)
-        if event == "exit" then
-            self:onExitRolesInfoDialog()
-        end
-    end
-    self:registerScriptHandler(onNodeEvent)
-    
-    return
-
-end
-
 
 --初始化角色的基本信息
-function RolesInfoDialog:initRoleBaseInfo(tabType)
+function RolesInfoDialog:setTabBtnState()
 
-    --vip button
-    local  onTouchVipButton = function (sender, eventType)
-        if eventType == ccui.TouchEventType.ended then
-            print("this is a VIP button")
-        elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
-        end
-    end
-
-    --更改昵称 button
-    local onTouchChangeRoleName = function(sender, eventType)
-        if eventType == ccui.TouchEventType.ended then
-            print("this is a ChangeRoleName button")
-           if DialogManager:getInstance():getDialogByName(RolesChangeNameDialog) == nil then 
-              DialogManager:getInstance():showDialog("RolesChangeNameDialog",{kChangeNameType.kChangeRoleName})
-           end
-        elseif eventType == ccui.TouchEventType.began then
-           AudioManager:getInstance():playEffect("ButtonClick") 
-        end
-    end
-
-
-    --更改昵称 button
-    self._pChange_Name:addTouchEventListener(onTouchChangeRoleName)
-    self._pChange_Name:setZoomScale(nButtonZoomScale)
-    self._pChange_Name:setPressedActionEnabled(true)
-    
-    --self._pChange_Name:getTitleRenderer():enableOutline(cc.c4b(0, 0, 0, 255), 2)
-    --self._pChange_Name:getTitleRenderer():enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
-    --切换背包和属性标签
-    self:initLoadUiByType(tabType)
- 
-    --vip button
-    
-    self._pVip_Number:setString(self._tRoleInfo.vipInfo.vipLevel)
-    self._pVip_button:addTouchEventListener(onTouchVipButton)
-    self._pVip_button:setZoomScale(nButtonZoomScale)
-    self._pVip_button:setPressedActionEnabled(true)
-    self:setRoleBaseAttr() --设置人物的基本属性信息 攻击力等级等
-end
-
---切换属性和背包的标签
-function RolesInfoDialog:initLoadUiByType(tabType)
-	
-    --切换背包和属性标签
-    local onTouchChangeUi = function (sender, eventType)
-        if eventType == ccui.TouchEventType.ended then
-            if self._pPanelExchange  then
-                self._pPanelExchange = false
-                print("change Role property Ui")
-                self._pExchangeUi_Button:setTitleText("切回\n背包")
-                self._pBagView:setVisible(false)
-                self._pDetailInfoView:setVisible(true)
+    local setBagBtnState  = function()
+        local pImage = {{"PlayerRolesDialogRes/baoguo01.png","PlayerRolesDialogRes/baoguo02.png"},{"PlayerRolesDialogRes/button5_normal.png","PlayerRolesDialogRes/button5_press.png"}}
+        local tBtnArray = { self._pBagBtn, self._pRoleDetailBtn }
+        for k ,v in pairs(tBtnArray) do
+            if k == self._pCurSelectRoleType then
+               v:loadTextures( pImage[k][2],pImage[k][2],nil,ccui.TextureResType.plistType)
             else
-                self._pPanelExchange  = true
-                print("change Role Equipment Ui")
-                self._pExchangeUi_Button:setTitleText("查看\n属性")
-                self._pBagView:setVisible(true)
-                self._pDetailInfoView:setVisible(false)
+               v:loadTextures( pImage[k][1],pImage[k][2],nil,ccui.TextureResType.plistType)
             end
-        elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+        end
+        if self._pCurSelectRoleType == RoleDialogTabType.RoleDialogTypeBag then --背包
+            self._pRoleLeftNode:setVisible(true)
+            self._pNodeRigh:setVisible(false)
+        else
+            self._pRoleLeftNode:setVisible(false)
+            self._pNodeRigh:setVisible(true)
         end
     end
 
-    if tabType == RoleDialogTabType.RoleDialogTypeBag then
-        self._pPanelExchange  = true
-        self._pExchangeUi_Button:setTitleText("查看\n属性")
-        self._pBagView:setVisible(true)
-        self._pDetailInfoView:setVisible(false)
-    else
-        self._pPanelExchange = false
-        self._pExchangeUi_Button:setTitleText("切回\n背包")
-        self._pBagView:setVisible(false)
-        self._pDetailInfoView:setVisible(true)
-    end	
+    local ontouchTabChangeButton = function(sender, eventType)
+        if eventType == ccui.TouchEventType.ended then
+            local pTag = sender:getTag()
+            self._pCurSelectRoleType = pTag
+            --设置按钮选中状态
+            setBagBtnState()
+        elseif eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("ButtonClick") 
 
-    self._pExchangeUi_Button:addTouchEventListener(onTouchChangeUi)
-    self._pExchangeUi_Button:setZoomScale(nButtonZoomScale)
-    self._pExchangeUi_Button:setPressedActionEnabled(true)
-    --self._pExchangeUi_Button:getTitleRenderer():enableOutline(cc.c4b(0, 0, 0, 255), 2)
-    --self._pExchangeUi_Button:getTitleRenderer():enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
+        end
+    end
+
+     --包裹按钮
+    self._pBagBtn:addTouchEventListener(ontouchTabChangeButton)
+    self._pBagBtn:setTag(1)
+    --人物信息按钮
+    self._pRoleDetailBtn:addTouchEventListener(ontouchTabChangeButton)
+    self._pRoleDetailBtn:setTag(2)
+    --设置按钮选中状态
+    setBagBtnState()
+
 end
-
 
 --设置人物的基本属性信息 攻击力等级等
 function RolesInfoDialog:setRoleBaseAttr()
     self._pRoleName:setString(self._tRoleInfo.roleName)
     self._pRoleLevel:setString("Lv"..self._tRoleInfo.level)
-   -- self._pRoleLevel:setAdditionalKerning(-2)
-    --self._pRoleLevel:enableOutline(cc.c4b(16, 61, 38, 255), 2)
-    --self._pRoleLevel:enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
-    if TableLevel[self._tRoleInfo.level].Exp == 0 then   --玩家满级
-        self._pExpBar:setPercent(100)  --角色经验进度条 bar
-        self._pExpNumber:setString("")                     --角色经验比例   label
-    else
-        local nPercent = TableLevel[self._tRoleInfo.level].Exp == 0 and self._tRoleInfo.exp or TableLevel[self._tRoleInfo.level].Exp
-        self._pExpBar:setPercent(self._tRoleInfo.exp/nPercent*100)  --角色经验进度条 bar
-        self._pExpNumber:setString( self._tRoleInfo.exp.."/"..nPercent)                     --角色经验比例   label
-    end
-    
-    --self._pExpNumber:enableOutline(cc.c4b(0, 0, 0, 255), 0.5)
-    --self._pExpNumber:enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
     self._pFightingPower:setString(self._tRoleInfo.roleAttrInfo.fightingPower)
-    self._pVip_Number:setString(self._tRoleInfo.vipInfo.vipLevel)
+    self._pAttack_number:setString(self._tRoleInfo.roleAttrInfo.attack)        --人物的攻击力
+    self._pHp_number:setString(self._tRoleInfo.roleAttrInfo.hp)                --人物的血
+    self._pDefend_number:setString(self._tRoleInfo.roleAttrInfo.defend)        --人物的防御
 end
 
 function RolesInfoDialog:updateEquipWarning(event)
@@ -417,40 +360,18 @@ end
 
 --初始化角色的装备信息
 function RolesInfoDialog:initRoleEquInfo()
-    --点击时装按钮
-    local onTouchFashion = function(tag,pSende)
-        if self._pCheckBoxHasVis[tag] == false then --如果是false说明该部位没有装备
-           return  
-        end
-        print("tag is " .. tag)
-        self._nClickIndex = tag
-        self._pCheckBoxTable[tag] =  not self._pCheckBoxTable[tag]
-        EquipmentCGMessage:sendMessageFashionOpt20110(tag,self._pCheckBoxTable[tag])
 
+    --创建10个背景框
+    for k,v in pairs(self._tEquALlNode) do
+       local cell = require("BagItemCell"):create(kCalloutSrcType.kCalloutSrcEquip)
+       cell:setPosition(cc.p(0,0))
+       cell:openSelectedState()
+       cell:setTouchEnabled(false)
+       cell:setEquipDefIconByPart(k) 
+       v:addChild(cell)
+       table.insert( self._pArrayTableSprite,cell)
     end
 
-    --创建11个背景框
-    for i=1,table.getn(self._tEquALlPostion) do
-        local cell = require("BagItemCell"):create(kCalloutSrcType.kCalloutSrcEquip)
-        cell:setPosition(self._tEquALlPostion[i])
-      
-        cell:openSelectedState()
-        self._pPlayer:addChild(cell,5)
-        if i~=8 then --武宠不添加到表里面
-            table.insert(self._pArrayTableSprite,cell)
-          else
-          cell:setVisible(false)
-        end
-    end
-    
-    --设置默认装备信息
-    for i=1, table.getn(self._pArrayTableSprite) do
-        self._pArrayTableSprite[i]:setTouchEnabled(false)
-        self._pArrayTableSprite[i]:setEquipDefIconByPart(i) 
-        
-    end
-    
-   
     --给装备设置数据
     for i=1,table.getn(self._tRoleInfo.equipemts) do
         local pPart = GetCompleteItemInfo(self._tRoleInfo.equipemts[i]).dataInfo.Part -- 部位
@@ -460,9 +381,22 @@ function RolesInfoDialog:initRoleEquInfo()
 
     self:updateEquipWarning({})
 
+
+        --点击时装按钮
+    local onTouchFashion = function(tag,pSende)
+        if self._pCheckBoxHasVis[tag] == false then --如果是false说明该部位没有装备
+           return  
+        end
+        print("tag is " .. tag)
+        self._nClickIndex = tag
+        self._pCheckBoxTable[tag] =  not self._pCheckBoxTable[tag]
+        EquipmentCGMessage:sendMessageFashionOpt20110(tag,self._pCheckBoxTable[tag])
+    end
+
+
     --创建三个时装的复选框
     for i=1,3 do
-        local pMenuItem = cc.MenuItemSprite:create(cc.Sprite:createWithSpriteFrameName("PlayerRolesDialogRes/jsjm_013_normal.png"),cc.Sprite:createWithSpriteFrameName("PlayerRolesDialogRes/jsjm_013_press.png"))
+        local pMenuItem = cc.MenuItemSprite:create(cc.Sprite:createWithSpriteFrameName("PlayerRolesDialogRes/jsjm_013_normal.png"),cc.Sprite:createWithSpriteFrameName("PlayerRolesDialogRes/jsjm_013_normal.png"))
         pMenuItem:registerScriptTapHandler(onTouchFashion)
         pMenuItem:setTag(i)
         local pMenu = cc.Menu:create(pMenuItem)
@@ -550,8 +484,8 @@ function RolesInfoDialog:createRoleModel()
     self._pRolePlayer:stopAllActions()
     self._pRoleAnimation = cc.Animation3D:create(pRoleModelAni..".c3b")
     local actionOverCallBack = function ()
-        local pRunActAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.StandActFrameRegion[1],self._tTempletetInfo.StandActFrameRegion[2])
-        pRunActAnimate:setSpeed(self._tTempletetInfo.StandActFrameRegion[3])
+        local pRunActAnimate = cc.Animate3D:createWithFrames(self._pRoleAnimation, self._tTempletetInfo.ReadyFightActFrameRegion[1],self._tTempletetInfo.ReadyFightActFrameRegion[2])
+        pRunActAnimate:setSpeed(self._tTempletetInfo.ReadyFightActFrameRegion[3])
         self._pRolePlayer:runAction(cc.RepeatForever:create(pRunActAnimate))
     end
 
@@ -876,7 +810,9 @@ function RolesInfoDialog:updateCacheWithData(args)
     self._pRolePlayer:setRotation3D(cc.vec3(0,0,0))
     RolesManager:getInstance():setForceMinPositionZ(true,-10000)
     PetsManager:getInstance():setForceMinPositionZ(true,-10000)
-    self:initLoadUiByType(args[1])
+    self._pCurSelectRoleType = args[1]
+    self:setTabBtnState()
+    self._pDeatilInfoLeftView:refreshRoleInfo()
 
     self._pBagView:showCache()
 end

@@ -67,8 +67,6 @@ function RectsManager:createRectsOnMap(bDebug)
     local pEntitysBottomLayer = pTmxMap:getObjectGroup("EntitysBottomLayer")
     local pEntitysBodyLayer = pTmxMap:getObjectGroup("EntitysBodyLayer")
     local pEntitysUndefLayer = pTmxMap:getObjectGroup("EntitysUndefLayer")
-    local pNpcsBottomLayer = pTmxMap:getObjectGroup("NpcsBottomLayer")
-    local pNpcsBodyLayer = pTmxMap:getObjectGroup("NpcsBodyLayer")
     local pRectsBottomLayer = pTmxMap:getObjectGroup("RectsBottomLayer")
     local pRectsBodyLayer = pTmxMap:getObjectGroup("RectsBodyLayer")
     local pRectsUndefLayer = pTmxMap:getObjectGroup("RectsUndefLayer")
@@ -181,86 +179,6 @@ function RectsManager:createRectsOnMap(bDebug)
         if ((index4 ~= 0) and (index1 ~= index4) and (index2 ~= index4) and (index3 ~= index4)) == true then
             table.insert(self._ttUndefRects[index4],rectUndef)
             self._pHelper:insertUndefRect(index4, rectUndef)
-        end
-
-        -- 检测例子特效动画
-        if v["Particle"] ~= nil then
-            MapManager:getInstance():createParticle(v["Particle"],v.x,v.y)
-        end
-        -- 检测序列帧动画
-        if v["Ani"] ~= nil then
-            MapManager:getInstance():createAni2D(v["Ani"],v.x,v.y)
-        end
-
-    end
-    --------------------NPC bottom矩形----------------------------------
-    local npcBottomRects = pNpcsBottomLayer:getObjects()
-    for k,v in pairs(npcBottomRects) do
-        -- 给矩形分区
-        local rectBottom = cc.rect(v.x, v.y, v.width, v.height)
-
-        local index1 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBottom.x, rectBottom.y))
-        if index1 ~= 0 then
-            table.insert(self._ttBottomRects[index1],rectBottom)
-	        self._pHelper:insertBottomRect(index1, rectBottom)
-        end
-        
-        local index2 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBottom.x + rectBottom.width, rectBottom.y))
-        if ((index2 ~= 0) and (index1 ~= index2)) == true then
-            table.insert(self._ttBottomRects[index2],rectBottom)
-	        self._pHelper:insertBottomRect(index2, rectBottom)
-        end
-        
-        local index3 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBottom.x, rectBottom.y + rectBottom.height))
-        if ((index3 ~= 0) and (index1 ~= index3) and (index2 ~= index3)) == true then
-            table.insert(self._ttBottomRects[index3],rectBottom)
-	        self._pHelper:insertBottomRect(index3, rectBottom)
-        end
-        
-        local index4 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBottom.x + rectBottom.width, rectBottom.y + rectBottom.height))
-        if ((index4 ~= 0) and (index1 ~= index4) and (index2 ~= index4) and (index3 ~= index4)) == true then
-            table.insert(self._ttBottomRects[index4],rectBottom)
-	        self._pHelper:insertBottomRect(index4, rectBottom)
-        end
-
-        -- 检测例子特效动画
-        if v["Particle"] ~= nil then
-            MapManager:getInstance():createParticle(v["Particle"],v.x,v.y)
-        end
-        -- 检测序列帧动画
-        if v["Ani"] ~= nil then
-            MapManager:getInstance():createAni2D(v["Ani"],v.x,v.y)
-        end
-
-    end
-    --------------------NPC body矩形----------------------------------
-    local npcBodyRects = pNpcsBodyLayer:getObjects()
-    for k,v in pairs(npcBodyRects) do
-        -- 给矩形分区
-        local rectBody = cc.rect(v.x, v.y, v.width, v.height)
-
-        local index1 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBody.x, rectBody.y))
-        if index1 ~= 0 then
-            table.insert(self._ttBodyRects[index1],rectBody)
-	        self._pHelper:insertBodyRect(index1, rectBody)
-        end
-        
-        local index2 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBody.x + rectBody.width, rectBody.y))
-        if ((index2 ~= 0) and (index1 ~= index2)) == true then
-            table.insert(self._ttBodyRects[index2],rectBody)
-	        self._pHelper:insertBodyRect(index2, rectBody)
-        end
-        
-        local index3 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBody.x, rectBody.y + rectBody.height))
-        if ((index3 ~= 0) and (index1 ~= index3) and (index2 ~= index3)) == true then
-            table.insert(self._ttBodyRects[index3],rectBody)
-	        self._pHelper:insertBodyRect(index3, rectBody)
-        end
-        
-        local index4 = MapManager:getInstance():getMapAreaIndexByPos(cc.p(rectBody.x + rectBody.width, rectBody.y + rectBody.height))
-        if ((index4 ~= 0) and (index1 ~= index4) and (index2 ~= index4) and (index3 ~= index4)) == true then
-            table.insert(self._ttBodyRects[index4],rectBody)
-	        self._pHelper:insertBodyRect(index4, rectBody)
         end
 
         -- 检测例子特效动画

@@ -17,6 +17,7 @@ function FriendRole:ctor()
     ------------ 人物参数相关 ---------------------------------------
     self._strName = "FriendRole"                    -- 角色名字
     self._kRoleType = kType.kRole.kFriend           -- 角色对象类型
+    self._strCharTag = ""                           -- 角色tag（主角：main PVP对手：pvp）
     self._pRoleInfo = nil                           -- 角色信息
     self._pTempleteInfo = nil                       -- 模板信息
     self._fAngle3D = 0                              -- 角色模型的角度
@@ -27,35 +28,37 @@ function FriendRole:ctor()
     self._strBackTexturePvrName = ""                -- 时装-背纹理名称
     self._strWeaponTexturePvrName = ""              -- 武器纹理名称
     self._pName = ""                                -- 头顶名签
-    ----------- 人物属性相关 ----------------------------------------
-    self._nLevel = 0                                -- 角色等级
-    self._pSkill = nil                              -- 角色技能
-    self._nFireAttackValue = 0                      -- 角色火属性攻击值
-    self._nIceAttackValue = 0                       -- 角色冰属性攻击值
-    self._nThunderAttackValue = 0                   -- 角色雷属性攻击值
-    self._nAbilityPowerValue = 0                    -- 角色属性强化值
     ----------- 人物特效相关 -------------------------------------------
     self._pFriendAppearEffectAni = nil              -- 人物出场特效Ani
     self._pCriticalHitEffectAni = nil               -- 角色暴击特效动画
     self._pBlockHitEffectAni = nil                  -- 角色格挡特效动画
-    self._pMissHitEffectAni = nil                   -- 角色闪避特效动画                
+    self._pMissHitEffectAni = nil                   -- 角色闪避特效动画 
+    ----------- 人物属性相关 ----------------------------------------
+    self._nLevel = 0                                -- 角色等级
+    self._pSkill = nil                              -- 角色出场技能
+    self._tSkills = {}                              -- 角色技能集合（实际上只有一个普通攻击）
+    self._nFireAttackValue = 0                      -- 角色火属性攻击值
+    self._nIceAttackValue = 0                       -- 角色冰属性攻击值
+    self._nThunderAttackValue = 0                   -- 角色雷属性攻击值
+    self._nAbilityPowerValue = 0                    -- 角色属性强化值
+    self._nCurSpeed = 0                             -- 角色移动速度
     ----------- ref引用计数 --------------------------------------------
     self._pRefGhostOpacity = nil                    -- 角色虚影半透的引用计数，其他正常（可以应值等等）
-    
+
 end
 
 -- 创建函数
-function FriendRole:create(pRoleInfo)
+function FriendRole:create(pRoleInfo,charTag)
     local role = FriendRole.new()
-    role:dispose(pRoleInfo)
+    role:dispose(pRoleInfo,charTag)
     return role
 end
 
 -- 处理函数
-function FriendRole:dispose(pRoleInfo)    
+function FriendRole:dispose(pRoleInfo,charTag)   
     ------------------- 初始化 ----------------------
     -- 设置角色信息
-    self:initInfo(pRoleInfo)
+    self:initInfo(pRoleInfo,charTag)
     
     -- 初始化动画
     self:initAni()
@@ -106,7 +109,7 @@ function FriendRole:updateFriendRole(dt)
 end
 
 -- 初始化信息
-function FriendRole:initInfo(pRoleInfo)
+function FriendRole:initInfo(pRoleInfo, charTag)
     self._pRoleInfo = pRoleInfo
     
     -- 数据表中的参数项与从服务器获得的数据进行合并
@@ -119,7 +122,9 @@ function FriendRole:initInfo(pRoleInfo)
     self._pRoleInfo.LightningRecover = dataFromTable.LightningRecover
     
     self._nLevel = self._pRoleInfo.level
+    self._strCharTag = charTag
     self._pTempleteInfo = TableTempleteCareers[self._pRoleInfo.roleCareer]
+    self._nCurSpeed = self:getAttriValueByType(kAttribute.kSpeed)
     self._nFireAttackValue = self:getAttriValueByType(kAttribute.kFireAttack)
     self._nIceAttackValue = self:getAttriValueByType(kAttribute.kColdAttack)
     self._nThunderAttackValue = self:getAttriValueByType(kAttribute.kLightningAttack)
@@ -134,12 +139,10 @@ function FriendRole:initAni()
     local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kWeapon].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
     local tWeaponTempleteInfo = TableTempleteEquips[templeteID]
 
-
- --先初始化人物信息
+    --先初始化人物信息
     for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
         GetCompleteItemInfo(self._pRoleInfo.equipemts[i],self._pRoleInfo.roleCareer)
     end
-
 
     -- 判断是否加载时装身
     if self._pRoleInfo.fashionOptions and self._pRoleInfo.fashionOptions[2] == true then -- 时装身        
@@ -155,10 +158,10 @@ function FriendRole:initAni()
     if tBodyTempleteInfo ~= nil then
         self._kAniType = tBodyTempleteInfo.AniType
         self._strAniName = tBodyTempleteInfo.Model1
-
         -- 3D模型
         local fullAniName = self._strAniName..".c3b"
         local fullTextureName = tBodyTempleteInfo.Texture..".pvr.ccz"
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tBodyTempleteInfo.Texture)
         self._strBodyTexturePvrName = tBodyTempleteInfo.Texture
         self._pAni = cc.Sprite3D:create(fullAniName)
         self._pAni:setTexture(fullTextureName)
@@ -170,6 +173,7 @@ function FriendRole:initAni()
            pWeaponLC3bName = tWeaponTempleteInfo.Model2..".c3b"
         end
         local pWeaponTextureName = tWeaponTempleteInfo.Texture..".pvr.ccz"
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tWeaponTempleteInfo.Texture)
         self._strWeaponTexturePvrName = tWeaponTempleteInfo.Texture
         if pWeaponRC3bName then
             self._pWeaponR = cc.Sprite3D:create(pWeaponRC3bName)
@@ -208,6 +212,7 @@ function FriendRole:initAni()
     if tFashionBackTempleteInfo then
         local fullAniName = tFashionBackTempleteInfo.Model1..".c3b"
         local fullTextureName = tFashionBackTempleteInfo.Texture..".pvr.ccz"
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tFashionBackTempleteInfo.Texture)
         self._strBackTexturePvrName = tFashionBackTempleteInfo.Texture
         self._pBack = cc.Sprite3D:create(fullAniName)
         self._pBack:setTexture(fullTextureName)
@@ -231,6 +236,7 @@ function FriendRole:initAni()
     end
     if tFashionHaloTempleteInfo then
         local fullAniName = tFashionHaloTempleteInfo.Model1..".csb"
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tFashionHaloTempleteInfo.Texture)
         self._pHalo = cc.CSLoader:createNode(fullAniName)
         self:addChild(self._pHalo,-1)
         local act = cc.CSLoader:createTimeline(fullAniName)
@@ -244,6 +250,8 @@ function FriendRole:initAni()
 
     -- 头顶字：Lv. X 姓名
     self._pName = cc.Label:createWithTTF("Lv."..self._pRoleInfo.level.." "..self._pRoleInfo.roleName, strCommonFontName, 18)
+    self._pName:setTextColor(cFontWhite)
+    self._pName:enableOutline(cFontOutline,2)
     self._pName:setPosition(cc.p(0,self:getHeight()+5))
     self:addChild(self._pName)
     if OptionManager:getInstance()._bPlayersNameShowOrNot == true then
@@ -251,16 +259,41 @@ function FriendRole:initAni()
     else
         self._pName:setVisible(false)
     end
-    
+
+    --设置材质特效信息
+    self:setMaterialInfo()
+
+    -- 叠色
+    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
+        if self:getMapManager()._kCurSkyType == kType.kSky.kNightSunShine or 
+            self:getMapManager()._kCurSkyType == kType.kSky.kNightCloudy or 
+            self:getMapManager()._kCurSkyType == kType.kSky.kNightRainy or 
+            self:getMapManager()._kCurSkyType == kType.kSky.kNightCloudyRainy then
+            
+            self._pAni:setColor(cPeopleNight)
+            if self._pWeaponR then
+                self._pWeaponR:setColor(cPeopleNight)
+            end
+            if self._pWeaponL then
+                self._pWeaponL:setColor(cPeopleNight)
+            end
+            if self._pBack then
+                self._pBack:setColor(cPeopleNight)
+            end
+            if self._pHalo then
+                self._pHalo:setColor(cPeopleNight)
+            end
+        end
+    end
+
 end
 
 -- 初始化特效
 function FriendRole:initEffects()
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then        
         self._pFriendAppearEffectAni = cc.CSLoader:createNode("FriendStart.csb")
-        self._pFriendAppearEffectAni:setPosition(cc.p(0,self:getHeight()/2))
+        self:getMapManager()._pTmxMap:addChild(self._pFriendAppearEffectAni)
         self._pFriendAppearEffectAni:setVisible(false)
-        self:addChild(self._pFriendAppearEffectAni)
         
         -- 暴击，格挡，闪避 特效
         self._pCriticalHitEffectAni = cc.CSLoader:createNode("CriticalHitEffect.csb")
@@ -292,7 +325,7 @@ end
 function FriendRole:initRefs()
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then  
         -- 角色虚影半透的引用计数 
-        self._pRefGhostOpacity = require("RoleGhostRef"):create(self)   
+        self._pRefGhostOpacity = require("RoleGhostRef"):create(self)     
     end
 end
 
@@ -398,10 +431,7 @@ end
 
 -- 创建人物角色控制机
 function FriendRole:initControllerMachine()
-    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
 
-    end
-    
 end
 
 -- 设置3D模型的角度
@@ -416,6 +446,11 @@ end
 function FriendRole:getAngle3D()
     local fAngle3D = (math.modf(self._fAngle3D-90))%360
     return math.abs(fAngle3D)
+end
+
+-- 复位角色速度
+function FriendRole:resetSpeed()
+    self._nCurSpeed = self._pRoleInfo.roleAttrInfo.speed
 end
 
 -- 播放出场动作
@@ -446,29 +481,33 @@ end
 
 -- 播放站立动作
 function FriendRole:playStandAction()
-    -- 站立动作
-    if self._pTempleteInfo.StandActFrameRegion ~= nil then
-        local fullAniName = self._strAniName..".c3b"
-        local animation = cc.Animation3D:create(fullAniName)
-        local fStartFrame = self._pTempleteInfo.StandActFrameRegion[1]
-        local fEndFrame = self._pTempleteInfo.StandActFrameRegion[2]
-        local temp = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
-        temp:setSpeed(self._pTempleteInfo.StandActFrameRegion[3])
-        local stand = cc.RepeatForever:create(temp)
-        self._pAni:stopActionByTag(nRoleActAction)
-        stand:setTag(nRoleActAction)
-        self._pAni:runAction(stand)
+    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
+        -- 战斗里的站立动作
+        if self._pTempleteInfo.ReadyFightActFrameRegion ~= nil then
+            local fullAniName = self._strAniName..".c3b"
+            local animation = cc.Animation3D:create(fullAniName)
+            local fStartFrame = self._pTempleteInfo.ReadyFightActFrameRegion[1]
+            local fEndFrame = self._pTempleteInfo.ReadyFightActFrameRegion[2]
+            local temp = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
+            temp:setSpeed(self._pTempleteInfo.ReadyFightActFrameRegion[3])
+            local stand = cc.RepeatForever:create(temp)
+            self._pAni:stopActionByTag(nRoleActAction)
+            stand:setTag(nRoleActAction)
+            self._pAni:runAction(stand)
+        end
     end
 
 end
 
 -- 获取站立动作的时间间隔（单位：秒）
 function FriendRole:getStandActionTime()
-    local duration = (self._pTempleteInfo.StandActFrameRegion[2] - self._pTempleteInfo.StandActFrameRegion[1])/30
-    local speed = self._pTempleteInfo.StandActFrameRegion[3]
-    --local time = duration + (1.0 - speed)*duration
-    local time = duration * (1/speed)
-    return time
+    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
+        local duration = (self._pTempleteInfo.ReadyFightActFrameRegion[2] - self._pTempleteInfo.ReadyFightActFrameRegion[1])/30
+        local speed = self._pTempleteInfo.ReadyFightActFrameRegion[3]
+        --local time = duration + (1.0 - speed)*duration
+        local time = duration * (1/speed)
+        return time
+    end
 end
 
 -- 播放奔跑动作
@@ -493,132 +532,6 @@ end
 function FriendRole:getRunActionTime()
     local duration = (self._pTempleteInfo.RunActFrameRegion[2] - self._pTempleteInfo.RunActFrameRegion[1])/30
     local speed = self._pTempleteInfo.RunActFrameRegion[3]
-    --local time = duration + (1.0 - speed)*duration
-    local time = duration * (1/speed)
-    return time
-end
-
--- 播放受击动作
-function FriendRole:playBeatenAction()
-    -- 受击动作
-    if self._pTempleteInfo.BeatenActFrameRegion ~= nil then
-        local fullAniName = self._strAniName..".c3b"
-        local animation = cc.Animation3D:create(fullAniName)
-        local fStartFrame = self._pTempleteInfo.BeatenActFrameRegion[1]
-        local fEndFrame = self._pTempleteInfo.BeatenActFrameRegion[2]
-        local beaten = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
-        beaten:setSpeed(self._pTempleteInfo.BeatenActFrameRegion[3])
-        self._pAni:stopActionByTag(nRoleActAction)
-        beaten:setTag(nRoleActAction)
-        self._pAni:runAction(beaten)
-    end
-end
-
--- 获取受击动作的时间间隔（单位：秒）
-function FriendRole:getBeatenActionTime()
-    local duration = (self._pTempleteInfo.BeatenActFrameRegion[2] - self._pTempleteInfo.BeatenActFrameRegion[1])/30
-    local speed = self._pTempleteInfo.BeatenActFrameRegion[3]
-    --local time = duration + (1.0 - speed)*duration
-    local time = duration * (1/speed)
-    return time
-end
-
--- 播放倒地动作
-function FriendRole:playFallGroundAction()
-    -- 倒地动作
-    if self._pTempleteInfo.FallGroundActFrameRegion ~= nil then
-        local fullAniName = self._strAniName..".c3b"
-        local animation = cc.Animation3D:create(fullAniName)
-        local fStartFrame = self._pTempleteInfo.FallGroundActFrameRegion[1]
-        local fEndFrame = self._pTempleteInfo.FallGroundActFrameRegion[2]
-        local fallGround = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
-        fallGround:setSpeed(self._pTempleteInfo.FallGroundActFrameRegion[3])
-        self._pAni:stopActionByTag(nRoleActAction)
-        fallGround:setTag(nRoleActAction)
-        self._pAni:runAction(fallGround)
-    end
-end
-
--- 获取倒地动作的时间间隔（单位：秒）
-function FriendRole:getFallGroundActionTime()
-    local duration = (self._pTempleteInfo.FallGroundActFrameRegion[2] - self._pTempleteInfo.FallGroundActFrameRegion[1])/30
-    local speed = self._pTempleteInfo.FallGroundActFrameRegion[3]
-    --local time = duration + (1.0 - speed)*duration
-    local time = duration * (1/speed)
-    return time
-end
-
--- 播放起身动作
-function FriendRole:playUpGroundAction()
-    -- 起身动作
-    if self._pTempleteInfo.UpGroundActFrameRegion ~= nil then
-        local fullAniName = self._strAniName..".c3b"
-        local animation = cc.Animation3D:create(fullAniName)
-        local fStartFrame = self._pTempleteInfo.UpGroundActFrameRegion[1]
-        local fEndFrame = self._pTempleteInfo.UpGroundActFrameRegion[2]
-        local upGround = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
-        upGround:setSpeed(self._pTempleteInfo.UpGroundActFrameRegion[3])
-        self._pAni:stopActionByTag(nRoleActAction)
-        upGround:setTag(nRoleActAction)
-        self._pAni:runAction(upGround)
-    end
-end
-
--- 获取起身动作的时间间隔（单位：秒）
-function FriendRole:getUpGroundActionTime()
-    local duration = (self._pTempleteInfo.UpGroundActFrameRegion[2] - self._pTempleteInfo.UpGroundActFrameRegion[1])/30
-    local speed = self._pTempleteInfo.UpGroundActFrameRegion[3]
-    --local time = duration + (1.0 - speed)*duration
-    local time = duration * (1/speed)
-    return time
-end
-
--- 播放眩晕动作
-function FriendRole:playDizzyAction()
-    -- 眩晕动作
-    if self._pTempleteInfo.DizzyActFrameRegion ~= nil then
-        local fullAniName = self._strAniName..".c3b"
-        local animation = cc.Animation3D:create(fullAniName)
-        local fStartFrame = self._pTempleteInfo.DizzyActFrameRegion[1]
-        local fEndFrame = self._pTempleteInfo.DizzyActFrameRegion[2]
-        local temp = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
-        temp:setSpeed(self._pTempleteInfo.DizzyActFrameRegion[3])
-        local dizzy = cc.RepeatForever:create(temp)
-        self._pAni:stopActionByTag(nRoleActAction)
-        dizzy:setTag(nRoleActAction)
-        self._pAni:runAction(dizzy)
-    end
-end
-
--- 获取眩晕动作的时间间隔（单位：秒）
-function FriendRole:getDizzyActionTime()
-    local duration = (self._pTempleteInfo.DizzyActFrameRegion[2] - self._pTempleteInfo.DizzyActFrameRegion[1])/30
-    local speed = self._pTempleteInfo.DizzyActFrameRegion[3]
-    --local time = duration + (1.0 - speed)*duration
-    local time = duration * (1/speed)
-    return time
-end
-
--- 播放死亡动作
-function FriendRole:playDeadAction()
-    -- 死亡动作
-    if self._pTempleteInfo.DeadActFrameRegion ~= nil then
-        local fullAniName = self._strAniName..".c3b"
-        local animation = cc.Animation3D:create(fullAniName)
-        local fStartFrame = self._pTempleteInfo.DeadActFrameRegion[1]
-        local fEndFrame = self._pTempleteInfo.DeadActFrameRegion[2]
-        local dead = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
-        dead:setSpeed(self._pTempleteInfo.DeadActFrameRegion[3])
-        self._pAni:stopActionByTag(nRoleActAction)
-        dead:setTag(nRoleActAction)
-        self._pAni:runAction(dead)
-    end 
-end
-
--- 获取死亡动作的时间间隔（单位：秒）
-function FriendRole:getDeadActionTime()
-    local duration = (self._pTempleteInfo.DeadActFrameRegion[2] - self._pTempleteInfo.DeadActFrameRegion[1])/30
-    local speed = self._pTempleteInfo.DeadActFrameRegion[3]
     --local time = duration + (1.0 - speed)*duration
     local time = duration * (1/speed)
     return time
@@ -659,15 +572,7 @@ end
 
 -- 是否为异常状态（如死亡、眩晕、冻结、出场、应值等）
 function FriendRole:isUnusualState()
-    local state = self:getStateMachineByTypeID(kType.kStateMachine.kBattleFriendRole)._pCurState
-    if state._kTypeID ~= kType.kState.kBattleFriendRole.kDead and
-       state._kTypeID ~= kType.kState.kBattleFriendRole.kBeaten and
-       state._kTypeID ~= kType.kState.kBattleFriendRole.kAppear and 
-       state._kTypeID ~= kType.kState.kBattleFriendRole.kFrozen and 
-       state._kTypeID ~= kType.kState.kBattleFriendRole.kDizzy then
-        return false
-    end
-    return true
+    return false
 end
 
 -- 获取战斗中的属性值
@@ -726,6 +631,11 @@ function FriendRole:getCurDefenseLevel()
     return self._pCurDefLevel + self._nDefenseLevelOffset
 end
 
+-- 刷新头顶字
+function FriendRole:refreshName()
+    self._pName:setString("Lv."..self._pRoleInfo.level.." "..self._pRoleInfo.roleName)
+end
+
 -- 技能影响到的受击接口
 function FriendRole:beHurtedBySkill(skill, intersection)
 
@@ -738,8 +648,11 @@ end
 
 -- 显示出现特效
 function FriendRole:showAppearEffect()
-    local action = cc.CSLoader:createTimeline("FriendStart.csb")
-    action:gotoFrameAndPlay(0, action:getDuration(), false)
+    -- 刷新zorder
+    self._pFriendAppearEffectAni:setPosition(self:getPositionX(), self:getPositionY() + self:getHeight()*0.5)
+    self._pFriendAppearEffectAni:setLocalZOrder(self:getLocalZOrder()+1)
+    local action = cc.CSLoader:createTimeline("FriendStart.csb")   
+    action:gotoFrameAndPlay(0, action:getDuration(), false)   
     self._pFriendAppearEffectAni:stopAllActions()
     self._pFriendAppearEffectAni:setVisible(true)
     self._pFriendAppearEffectAni:runAction(action)
@@ -747,14 +660,16 @@ function FriendRole:showAppearEffect()
         self._pAni:setVisible(true)
         self._pShadow:setVisible(true)
     end
-    self._pFriendAppearEffectAni:runAction(cc.Sequence:create(cc.DelayTime:create(action:getDuration()*cc.Director:getInstance():getAnimationInterval()*0.6), cc.CallFunc:create(show), cc.DelayTime:create(action:getDuration()*cc.Director:getInstance():getAnimationInterval()*0.4), cc.Hide:create()))
-    
+    self._pFriendAppearEffectAni:runAction(cc.Sequence:create(cc.DelayTime:create(action:getDuration()*cc.Director:getInstance():getAnimationInterval()*0.6), cc.CallFunc:create(show), cc.DelayTime:create(action:getDuration()*cc.Director:getInstance():getAnimationInterval()*0.4), cc.Hide:create()))    
 end
 
 -- 显示出现特效
 function FriendRole:showDisAppearEffect()
-    local action = cc.CSLoader:createTimeline("FriendStart.csb")
-    action:gotoFrameAndPlay(0, action:getDuration(), false)
+    -- 刷新zorder
+    self._pFriendAppearEffectAni:setPosition(self:getPositionX(), self:getPositionY() + self:getHeight()*0.5)
+    self._pFriendAppearEffectAni:setLocalZOrder(self:getLocalZOrder()+1)
+    local action = cc.CSLoader:createTimeline("FriendStart.csb")   
+    action:gotoFrameAndPlay(0, action:getDuration(), false)   
     self._pFriendAppearEffectAni:stopAllActions()
     self._pFriendAppearEffectAni:setVisible(true)
     self._pFriendAppearEffectAni:runAction(action)
@@ -775,6 +690,28 @@ end
 -- 刷新头顶字
 function FriendRole:refreshName()
     self._pName:setString("Lv."..self._pRoleInfo.level.." "..self._pRoleInfo.roleName)
+end
+
+--设置材质特效信息
+function FriendRole:setMaterialInfo()
+    for k, v in pairs(self._pRoleInfo.equipemts) do
+        local pEquInfo = GetCompleteItemInfo(v,self._pRoleInfo.roleCareer)
+        local nPart = pEquInfo.dataInfo.Part -- 部位
+        local ptempleteInfo  = pEquInfo.templeteInfo
+        if nPart == kEqpLocation.kBody then -- 身
+            setSprite3dMaterial(self._pAni,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kWeapon then  -- 武器
+            setSprite3dMaterial(self._pWeaponR,ptempleteInfo.Material)
+            setSprite3dMaterial(self._pWeaponL,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation.kFashionBody then --时装身可能会影响人物模型
+            setSprite3dMaterial(self._pAni,ptempleteInfo.Material)
+        elseif nPart == kEqpLocation._pBack then  --时装背（翅膀）
+            setSprite3dMaterial(self._pBack,ptempleteInfo.Material)
+
+        elseif nPart == kEqpLocation.kFashionHalo then  --时装光环
+
+        end
+    end
 end
 
 return FriendRole

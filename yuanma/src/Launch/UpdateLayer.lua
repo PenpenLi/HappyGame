@@ -51,31 +51,42 @@ function UpdateLayer:dispose()
     self:addChild(pBg)
     
     -- 进度条
-    self._pProgressBarFrame = cc.Sprite:createWithSpriteFrameName("downBarFrame.png")
-    self._pProgressBarFrame:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2)
-    self._pProgressBarFrame:setScaleX(-1)
-    self:addChild(self._pProgressBarFrame)
+    self._pProgressBarFrame = ccui.Scale9Sprite:createWithSpriteFrameName("downBarFrame.png",cc.rect(30, 0, 40, 33))
     local progressSprite = cc.Sprite:createWithSpriteFrameName("downBar.png")
-    self._pProgressBar = cc.ProgressTimer:create(progressSprite)        
+    self._pProgressBar = cc.ProgressTimer:create(progressSprite)
+    self._pProgressBarFrame:setContentSize(cc.size(self._pProgressBar:getContentSize().width+17,33))
+    self._pProgressBarFrame:setPosition(mmo.VisibleRect:width()/2,self._pProgressBarFrame:getContentSize().height/2)
+    self:addChild(self._pProgressBarFrame,1)
+
     self._pProgressBar:setType(cc.PROGRESS_TIMER_TYPE_BAR)
-    self._pProgressBar:setMidpoint(cc.p(1,0))
+    self._pProgressBar:setMidpoint(cc.p(0,0))
     self._pProgressBar:setBarChangeRate(cc.p(1,0))
-    self._pProgressBar:setPosition(self._pProgressBarFrame:getBoundingBox().width/2,self._pProgressBarFrame:getBoundingBox().height/2)
+    self._pProgressBar:setPosition(self._pProgressBarFrame:getContentSize().width/2,self._pProgressBarFrame:getContentSize().height/2-1)
     self._pProgressBar:setPercentage(0)
     self._pProgressBarFrame:addChild(self._pProgressBar)
 
     -- 进度文字提示
-    self._pProgressText = cc.Label:createWithTTF("正在检查更新......","res/fonts/simhei.ttf",18)
+    self._pProgressText = ccui.Text:create()
+    self._pProgressText:setFontName("res/fonts/simhei.ttf")
+    self._pProgressText:setFontSize(18)
+    self._pProgressText:setString("正在检查更新......")
+    self._pProgressText:setTextColor(cc.c4b(255, 255, 255, 255))
+    self._pProgressText:enableOutline(cc.c4b(87, 63, 60, 255),2)
     self._pProgressText:setAnchorPoint(cc.p(0, 0))
     self._pProgressText:setPosition(cc.p(self._pProgressBarFrame:getPositionX() - self._pProgressBarFrame:getBoundingBox().width/2 + 50, self._pProgressBarFrame:getPositionY() + self._pProgressBarFrame:getBoundingBox().height/2 + 3))
-    self:addChild(self._pProgressText)
+    self:addChild(self._pProgressText,1)
 
     -- 进度数字
-    self._pProgressNum = cc.Label:createWithTTF("0%","res/fonts/simhei.ttf",18)
+    self._pProgressNum = ccui.Text:create()
+    self._pProgressNum:setFontName("res/fonts/simhei.ttf")
+    self._pProgressNum:setFontSize(18)
+    self._pProgressNum:setString("0%")
+    self._pProgressNum:setTextColor(cc.c4b(255, 255, 255, 255))
+    self._pProgressNum:enableOutline(cc.c4b(87, 63, 60, 255),2)
     self._pProgressNum:setAnchorPoint(cc.p(1.0, 0))
     self._pProgressNum:setPosition(cc.p(self._pProgressBarFrame:getPositionX() + self._pProgressBarFrame:getBoundingBox().width/2 - 20, self._pProgressBarFrame:getPositionY() + self._pProgressBarFrame:getBoundingBox().height/2 + 3))
-    self:addChild(self._pProgressNum)
-    
+    self:addChild(self._pProgressNum,1)
+
     -- 无限旋转的菊花
     self._pCircle = cc.Sprite:createWithSpriteFrameName("circle.png")
     self._pCircle:setScale(0.13)
@@ -83,7 +94,7 @@ function UpdateLayer:dispose()
     self._pCircle:stopAllActions()
     self._pCircle:setRotation(0)
     self._pCircle:runAction(cc.RepeatForever:create(cc.RotateBy:create(0.2,35.0)))
-    self:addChild(self._pCircle)
+    self:addChild(self._pCircle,1)
 
     self._pCircle2 = cc.Sprite:createWithSpriteFrameName("circle.png")
     self._pCircle2:setPosition(cc.p(self._pProgressText:getPositionX() - self._pCircle:getBoundingBox().width/2 - 5, self._pProgressBarFrame:getPositionY() + self._pProgressBarFrame:getBoundingBox().height/2 + self._pCircle:getBoundingBox().height/2 + 11))
@@ -91,7 +102,7 @@ function UpdateLayer:dispose()
     self._pCircle2:setRotation(90)
     self._pCircle2:setScale(0.3)
     self._pCircle2:runAction(cc.RepeatForever:create(cc.RotateBy:create(0.35,-35.0)))
-    self:addChild(self._pCircle2)
+    self:addChild(self._pCircle2,1)
 
     self._pCircle3 = cc.Sprite:createWithSpriteFrameName("circle.png")
     self._pCircle3:setPosition(cc.p(self._pProgressText:getPositionX() - self._pCircle:getBoundingBox().width/2 - 5, self._pProgressBarFrame:getPositionY() + self._pProgressBarFrame:getBoundingBox().height/2 + self._pCircle:getBoundingBox().height/2 + 11))
@@ -99,7 +110,7 @@ function UpdateLayer:dispose()
     self._pCircle3:setRotation(180)
     self._pCircle3:setScale(0.3)
     self._pCircle3:runAction(cc.RepeatForever:create(cc.RotateBy:create(0.5,-35.0)))
-    self:addChild(self._pCircle3)
+    self:addChild(self._pCircle3,1)
     
     -- 平台获取
     self._platformType = cc.Application:getInstance():getTargetPlatform()
@@ -163,82 +174,138 @@ function UpdateLayer:initAssetsManager(urlPackage)
     local function onError(errorCode)
         if errorCode == cc.ASSETSMANAGER_NO_NEW_VERSION then
             self._pProgressText:setString("无新版本需要更新！")
-            
-            -- 重试按钮
-            self._bRetryButton = ccui.Button:create("buttonNormal.png","buttonPress.png","buttonPress.png",ccui.TextureResType.plistType)
-            self._bRetryButton:setTitleFontSize(25)
-            self._bRetryButton:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2 - 200)
-            self:addChild(self._bRetryButton)
-            self._bRetryButton:setTitleText("点击重试")
-            local function retryCallBack(sender, eventType)
-                if eventType == ccui.TouchEventType.began then
-                    AudioManager:getInstance():playEffect("ButtonClick")
-                    self._pProgressText:setString("正在重试，请稍后......")
-                elseif eventType == ccui.TouchEventType.canceled then
-                    self._pProgressText:setString("无新版本需要更新！")
-                elseif eventType == ccui.TouchEventType.ended then
-                    local needUpdate = self:checkUpdate()
-                    self:show(needUpdate,true)
+            if self._bRetryButton == nil then
+                self._pProgressBarFrame:setVisible(false)
+                local aniOver = function()
+                    self._pProgressText:setFontSize(30)
+                    self._pProgressText:setPosition((mmo.VisibleRect:width() - self._pProgressText:getContentSize().width)/2, (mmo.VisibleRect:height() - self._pProgressText:getContentSize().height)/2)
                 end
+                local frame = cc.Sprite:createWithSpriteFrameName("textFrame.png")
+                frame:setScaleX(mmo.VisibleRect:width()/frame:getContentSize().width)
+                frame:setScaleY(0)
+                frame:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2)
+                frame:runAction(cc.Sequence:create(cc.ScaleTo:create(0.5,mmo.VisibleRect:width()/frame:getContentSize().width,1.5),cc.CallFunc:create(aniOver)))
+                self:addChild(frame)
+                -- 重试按钮
+                self._bRetryButton = ccui.Button:create("buttonNormal.png","buttonPress.png","buttonPress.png",ccui.TextureResType.plistType)
+                self._bRetryButton:setZoomScale(-0.1)  
+                self._bRetryButton:setPressedActionEnabled(true)
+                self._bRetryButton:setTitleFontName("res/fonts/simhei.ttf")
+                self._bRetryButton:getTitleRenderer():setTextColor(cc.c4b(255, 255, 255, 255))
+                self._bRetryButton:getTitleRenderer():enableOutline(cc.c4b(87, 63, 60, 255),2)
+                self._bRetryButton:setTitleFontSize(25)
+                self._bRetryButton:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2 - 100)
+                self:addChild(self._bRetryButton)
+                self._bRetryButton:setTitleText("点击重试")
+                local function retryCallBack(sender, eventType)
+                    if eventType == ccui.TouchEventType.began then
+                        self._pProgressText:setString("正在重试，请稍后......")
+                    elseif eventType == ccui.TouchEventType.canceled then
+                        self._pProgressText:setString("无新版本需要更新！")
+                    elseif eventType == ccui.TouchEventType.ended then
+                        self._bRetryButton:setVisible(false)
+                        local needUpdate = self:checkUpdate()
+                        self:show(needUpdate,true)
+                    end
+                end
+                self._bRetryButton:addTouchEventListener(retryCallBack)
+            else
+                self._bRetryButton:setVisible(true)
             end
-            self._bRetryButton:addTouchEventListener(retryCallBack)
-            
+
         elseif errorCode == cc.ASSETSMANAGER_NETWORK then
             self._pProgressText:setString("网络异常，请检查网络环境！")
-        
-            -- 重试按钮
-            self._bRetryButton = ccui.Button:create("buttonNormal.png","buttonPress.png","buttonPress.png",ccui.TextureResType.plistType)
-            self._bRetryButton:setTitleFontSize(25)
-            self._bRetryButton:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2 - 200)
-            self:addChild(self._bRetryButton)
-            self._bRetryButton:setTitleText("点击重试")
-            local function retryCallBack(sender, eventType)
-                if eventType == ccui.TouchEventType.began then
-                    AudioManager:getInstance():playEffect("ButtonClick")
-                    self._pProgressText:setString("正在重试，请稍后......")
-                elseif eventType == ccui.TouchEventType.canceled then
-                    self._pProgressText:setString("网络异常，请检查网络环境！")
-                elseif eventType == ccui.TouchEventType.ended then
-                    local needUpdate = self:checkUpdate()
-                    self:show(needUpdate, true)
+            if self._bRetryButton == nil then
+                self._pProgressBarFrame:setVisible(false)
+                local aniOver = function()
+                    self._pProgressText:setFontSize(30)
+                    self._pProgressText:setPosition((mmo.VisibleRect:width() - self._pProgressText:getContentSize().width)/2, (mmo.VisibleRect:height() - self._pProgressText:getContentSize().height)/2)
                 end
+                local frame = cc.Sprite:createWithSpriteFrameName("textFrame.png")
+                frame:setScaleX(mmo.VisibleRect:width()/frame:getContentSize().width)
+                frame:setScaleY(0)
+                frame:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2)
+                frame:runAction(cc.Sequence:create(cc.ScaleTo:create(0.5,mmo.VisibleRect:width()/frame:getContentSize().width,1.5),cc.CallFunc:create(aniOver)))
+                self:addChild(frame)
+                -- 重试按钮
+                self._bRetryButton = ccui.Button:create("buttonNormal.png","buttonPress.png","buttonPress.png",ccui.TextureResType.plistType)
+                self._bRetryButton:setZoomScale(-0.1)  
+                self._bRetryButton:setPressedActionEnabled(true)
+                self._bRetryButton:setTitleFontName("res/fonts/simhei.ttf")
+                self._bRetryButton:getTitleRenderer():setTextColor(cc.c4b(255, 255, 255, 255))
+                self._bRetryButton:getTitleRenderer():enableOutline(cc.c4b(87, 63, 60, 255),2)
+                self._bRetryButton:setTitleFontSize(25)
+                self._bRetryButton:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2 - 100)
+                self:addChild(self._bRetryButton)
+                self._bRetryButton:setTitleText("点击重试")
+                local function retryCallBack(sender, eventType)
+                    if eventType == ccui.TouchEventType.began then
+                        self._pProgressText:setString("正在重试，请稍后......")
+                    elseif eventType == ccui.TouchEventType.canceled then
+                        self._pProgressText:setString("网络异常，请检查网络环境！")
+                    elseif eventType == ccui.TouchEventType.ended then
+                        self._bRetryButton:setVisible(false)
+                        local needUpdate = self:checkUpdate()
+                        self:show(needUpdate, true)
+                    end
+                end
+                self._bRetryButton:addTouchEventListener(retryCallBack)
+            else
+                self._bRetryButton:setVisible(true)
             end
-            self._bRetryButton:addTouchEventListener(retryCallBack)
             
         elseif errorCode == 4 then
             self._pProgressText:setString("您的游戏版本过低，请下载安装最新版本游戏包后再运行游戏！")
-            
-            -- 先清空本地缓存
-            local strPathToSave = createDownloadDir()
-            deleteDownloadDir(strPathToSave)
-            cc.UserDefault:getInstance():setIntegerForKey("current-version-code",0)
-            cc.UserDefault:getInstance():setIntegerForKey("downloaded-version-code",0)
-            createDownloadDir()
-            
-            -- 超链接按钮
-            self._pHyperlinkButton = ccui.Button:create("buttonNormal.png","buttonPress.png","buttonPress.png",ccui.TextureResType.plistType)
-            self._pHyperlinkButton:setTitleFontSize(25)
-            self._pHyperlinkButton:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2 - 200)
-            self:addChild(self._pHyperlinkButton)
-            if (cc.PLATFORM_OS_IPHONE == self._platformType) or (cc.PLATFORM_OS_IPAD == self._platformType) then
-                self._pHyperlinkButton:setTitleText("点击跳转")
-            elseif (cc.PLATFORM_OS_ANDROID == self._platformType) then        -- android开始下载最新apk
-                self._pHyperlinkButton:setTitleText("点击下载")
-            else
-                self._pHyperlinkButton:setVisible(false)
-            end
-            local function hyperlinkCallBack(sender, eventType)
-                if eventType == ccui.TouchEventType.ended then
-                    if (cc.PLATFORM_OS_IPHONE == self._platformType) or (cc.PLATFORM_OS_IPAD == self._platformType) then  -- ios直接打开url
-                        cc.Application:getInstance():openURL(strForceDownloadIPAHyperlink)
-                    elseif (cc.PLATFORM_OS_ANDROID == self._platformType) then        -- android开始下载渠道最新apk
-                        cc.Application:getInstance():openURL(strForceDownloadApkHyperlink[mmo.HelpFunc:getPlatform()])
-                    end
-                  elseif eventType == ccui.TouchEventType.began then
-                         AudioManager:getInstance():playEffect("ButtonClick")
+            if self._pHyperlinkButton == nil then
+                self._pProgressBarFrame:setVisible(false)
+                local aniOver = function()
+                    self._pProgressText:setFontSize(30)
+                    self._pProgressText:setPosition((mmo.VisibleRect:width() - self._pProgressText:getContentSize().width)/2, (mmo.VisibleRect:height() - self._pProgressText:getContentSize().height)/2)
                 end
+                local frame = cc.Sprite:createWithSpriteFrameName("textFrame.png")
+                frame:setScaleX(mmo.VisibleRect:width()/frame:getContentSize().width)
+                frame:setScaleY(0)
+                frame:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2)
+                frame:runAction(cc.Sequence:create(cc.ScaleTo:create(0.5,mmo.VisibleRect:width()/frame:getContentSize().width,1.5),cc.CallFunc:create(aniOver)))
+                self:addChild(frame)
+
+                -- 先清空本地缓存
+                local strPathToSave = createDownloadDir()
+                deleteDownloadDir(strPathToSave)
+                cc.UserDefault:getInstance():setIntegerForKey("current-version-code",0)
+                cc.UserDefault:getInstance():setIntegerForKey("downloaded-version-code",0)
+                createDownloadDir()
+                
+                -- 超链接按钮
+                self._pHyperlinkButton = ccui.Button:create("buttonNormal.png","buttonPress.png","buttonPress.png",ccui.TextureResType.plistType)
+                self._pHyperlinkButton:setZoomScale(-0.1)  
+                self._pHyperlinkButton:setPressedActionEnabled(true)
+                self._pHyperlinkButton:setTitleFontName("res/fonts/simhei.ttf")
+                self._pHyperlinkButton:getTitleRenderer():setTextColor(cc.c4b(255, 255, 255, 255))
+                self._pHyperlinkButton:getTitleRenderer():enableOutline(cc.c4b(87, 63, 60, 255),2)
+                self._pHyperlinkButton:setTitleFontSize(25)
+                self._pHyperlinkButton:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2 - 100)
+                self:addChild(self._pHyperlinkButton)
+                if (cc.PLATFORM_OS_IPHONE == self._platformType) or (cc.PLATFORM_OS_IPAD == self._platformType) then
+                    self._pHyperlinkButton:setTitleText("点击跳转")
+                elseif (cc.PLATFORM_OS_ANDROID == self._platformType) then        -- android开始下载最新apk
+                    self._pHyperlinkButton:setTitleText("点击下载")
+                else
+                    self._pHyperlinkButton:setTitleText("PC测试")
+                end
+                local function hyperlinkCallBack(sender, eventType)
+                    if eventType == ccui.TouchEventType.ended then
+                        if (cc.PLATFORM_OS_IPHONE == self._platformType) or (cc.PLATFORM_OS_IPAD == self._platformType) then  -- ios直接打开url
+                            cc.Application:getInstance():openURL(strForceDownloadIPAHyperlink)
+                        elseif (cc.PLATFORM_OS_ANDROID == self._platformType) then        -- android开始下载渠道最新apk
+                            cc.Application:getInstance():openURL(strForceDownloadApkHyperlink[mmo.HelpFunc:getPlatform()])
+                        else
+                            cc.Application:getInstance():openURL("http://www.cfanim.cn")
+                        end
+                    end
+                end
+                self._pHyperlinkButton:addTouchEventListener(hyperlinkCallBack)
             end
-            self._pHyperlinkButton:addTouchEventListener(hyperlinkCallBack)
             
         end
         self._pProgressNum:setVisible(false)
@@ -258,12 +325,19 @@ function UpdateLayer:initAssetsManager(urlPackage)
         local goingDownloadVersion = cc.UserDefault:getInstance():getIntegerForKey("downloaded-version-code")
         
         if goingDownloadVersion == theirPackageVersion then -- 版本号已经相同，则可以进入游戏
+            local showLoadingText = function()
+                local pLoadingText = cc.Label:createWithTTF("玩命加载中，请稍后......", "res/fonts/simhei.ttf", 40)
+                pLoadingText:setTextColor(cc.c4b(255, 255, 255, 255))
+                pLoadingText:enableOutline(cc.c4b(87, 63, 60, 255),2)
+                pLoadingText:setPosition(cc.p(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/2))
+                self:addChild(pLoadingText,9999)
+            end
             local blackOver = function()
                 self:entryGame()
             end
             -- 渐黑
             self._pMask:setOpacity(0)
-            self._pMask:runAction( cc.Sequence:create(cc.EaseInOut:create(cc.FadeTo:create(1.0, 255), 5.0), cc.CallFunc:create(blackOver)) )
+            self._pMask:runAction(cc.Sequence:create(cc.EaseInOut:create(cc.FadeTo:create(1.0, 255), 5.0), cc.CallFunc:create(showLoadingText), cc.DelayTime:create(0.1), cc.CallFunc:create(blackOver)) )
             self._pProgressText:setString("更新完成！正在玩命加载中，请稍后......")
 
         else    -- 仍旧需要继续更新

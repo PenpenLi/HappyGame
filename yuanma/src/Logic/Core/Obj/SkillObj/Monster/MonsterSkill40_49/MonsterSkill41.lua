@@ -18,7 +18,7 @@ function MonsterSkill41:ctor()
     self._kTypeID = kType.kSkill.kID.kMonsterSkill41            -- 技能对象类型
     self._pCurState = nil                                       -- 技能当前的状态机状态
     self._nRoleAttackActionIndex = 6                            -- 角色攻击动作index
-    self._fChantDelayTime = 0.42                                -- 吟唱动作持续时间s
+    self._fChantDelayTime = 1.07                                -- 吟唱动作持续时间s
     
 end
 

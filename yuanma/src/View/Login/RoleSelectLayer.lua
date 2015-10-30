@@ -288,10 +288,10 @@ function RoleSelectLayer:initRoles()
         -- 动作初始化
         local animation = cc.Animation3D:create(tRoleTempleteInfo.Model1..".c3b")
         local function helloOver()
-            local actStand = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, TableTempleteCareers[v.roleCareer].StandActFrameRegion[1], TableTempleteCareers[v.roleCareer].StandActFrameRegion[2]))
+            local actStand = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, TableTempleteCareers[v.roleCareer].ReadyFightActFrameRegion[1], TableTempleteCareers[v.roleCareer].ReadyFightActFrameRegion[2]))
             pRole:runAction(actStand)
         end
-        local actHello = cc.Animate3D:createWithFrames(animation, TableTempleteCareers[v.roleCareer].AppearActFrameRegion[1], TableTempleteCareers[v.roleCareer].AppearActFrameRegion[2])
+        local actHello = cc.Animate3D:createWithFrames(animation, TableTempleteCareers[v.roleCareer].LoginAppearActFrameRegion[1], TableTempleteCareers[v.roleCareer].LoginAppearActFrameRegion[2])
         local act = cc.Sequence:create(actHello, cc.CallFunc:create(helloOver))
         act:retain()
         table.insert(self._tSRRoleActions,act)
@@ -380,12 +380,12 @@ function RoleSelectLayer:disposeWidget()
             -- 创建登录层
             self:getGameScene():showLayer(require("LoginLayer"):create())
             local loginLayer = self:getGameScene():getLayerByName("LoginLayer")
-            loginLayer:setPositionX(-loginLayer._pBg:getContentSize().width)
+            loginLayer:setPositionX(-loginLayer._pBg:getBoundingBox().width)
             loginLayer:hideAllAccountWidgets()
             -- 创建动画过度
-            local act = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(loginLayer._pBg:getContentSize().width, 0))), cc.CallFunc:create(self.close))
-            local actCopy1 = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(loginLayer._pBg:getContentSize().width, 0))), cc.CallFunc:create(self.close))
-            local actCopy2 = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(loginLayer._pBg:getContentSize().width, 0))))
+            local act = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(loginLayer._pBg:getBoundingBox().width, 0))), cc.CallFunc:create(self.close))
+            local actCopy1 = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(loginLayer._pBg:getBoundingBox().width, 0))), cc.CallFunc:create(self.close))
+            local actCopy2 = cc.Sequence:create(cc.EaseExponentialInOut:create(cc.MoveBy:create(1.0, cc.p(loginLayer._pBg:getBoundingBox().width, 0))))
             self:runAction(act)
             self:getGameScene():getLayerByName("RoleLayer"):runAction(actCopy1)
             loginLayer:runAction(actCopy2)
@@ -448,12 +448,12 @@ function RoleSelectLayer:showSRRoleInfo(index)
     
     -- 角色等级+名称
     self._pSRLvInfText:setString("Lv"..LoginManager:getInstance()._tRoleDisplayInfosList[index].level)
-    self._pSRLvInfText:setColor(cGreen)
+    --self._pSRLvInfText:setColor(cGreen)
     --self._pSRLvInfText:enableShadow(cc.c4b(0, 0, 0, 255))
     --self._pSRLvInfText:enableOutline(cc.c4b(0, 0, 0, 255), 1)
     
     self._pSRNameInfText:setString(LoginManager:getInstance()._tRoleDisplayInfosList[index].roleName)
-    self._pSRNameInfText:setColor(cWhite)
+    --self._pSRNameInfText:setColor(cWhite)
     --self._pSRNameInfText:enableShadow(cc.c4b(0, 0, 0, 255))
     --self._pSRNameInfText:enableOutline(cc.c4b(0, 0, 0, 255), 1)
     
@@ -587,6 +587,9 @@ function RoleSelectLayer:entryBattleCopy(event)
     args._nMainPlayerRoleCurHp = nil      -- 从副本进入时，这里为无效值
     args._nMainPlayerRoleCurAnger = nil   -- 从副本进入时，这里为无效值
     args._nMainPetRoleCurHp = nil         -- 从副本进入时，这里为无效值
+    args._tOtherPlayerRolesCurHp = {}      -- 从副本进入时，这里为无效值
+    args._tOtherPlayerRolesCurAnger = {}   -- 从副本进入时，这里为无效值
+    args._tOtherPetRolesCurHp = {}         -- 从副本进入时，这里为无效值
     args._nCurCopyType =TableStoryCopys[1].CopysType
     args._nCurStageID = TableStoryCopys[1].ID
     args._nCurStageMapID = TableStoryCopys[1].MapID
@@ -601,6 +604,13 @@ function RoleSelectLayer:entryBattleCopy(event)
     args._tPvpRoleMountActvSkills = {}
     args._tPvpPasvSkills = {}
     args._tPvpPetRoleInfosInQueue = {}
+    args._tPvpPetCooperates = {}
+    args._tOtherPlayerRolesInfosOnBattleMap = {}
+    args._tOtherPlayerRolesMountAngerSkillsInfos = {}
+    args._tOtherPlayerRolesMountActvSkillsInfos = {}
+    args._tOtherPlayerRolesPasvSkillsInfos = {}
+    args._tOtherPetCooperates = {}
+    args._bIsFirstBattleOfNewbie = false
 
     --切换战斗场景
     isFirstLoginMain = false
@@ -644,7 +654,9 @@ function RoleSelectLayer:enterToWordUiLayer()
     MessageGameInstance:sendMessageQueryStoryBattleList21008(0)
     TaskCGMessage:sendMessageQueryTasks21700()
     MessageCommonUtil:sendMessageQueryNewerPro21310()
-
+    ActivityMessage:QueryActivityListReq22500()
+  
+    
     local canEnter =  LoginManager:getInstance()._nIsService
     if canEnter ~= 0 then   -- 允许进入
         -- 记录玩家主角详细信息

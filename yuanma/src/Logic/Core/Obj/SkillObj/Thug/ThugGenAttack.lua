@@ -161,7 +161,7 @@ function ThugGenAttack:procActionsFrameEvents()
         --self:getActionManager():pauseAllRunningActions()
     elseif self._strFrameEventName == "end1" then
         self:clearCurAttackFrameEventInfo()
-        if self:getMaster()._strCharTag == "main" then
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer and self:getMaster()._strCharTag == "main" then
             -- 如果当前正在长按攻击按钮，则自动关联下一击
             -- 如果当前属于自动攻击模式且摇杆非工作模式，则自动关联下一击
             local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
@@ -170,7 +170,7 @@ function ThugGenAttack:procActionsFrameEvents()
                     self._fComboIndexBuff = self._nComboIndex + 1
                 end
             end
-        elseif self:getMaster()._strCharTag == "pvp" then
+        else
             self._fComboIndexBuff = self._nComboIndex + 1                
         end
         if self._fComboIndexBuff == self._nComboIndex + 1 and self:getMaster():isUnusualState() == false then  -- 有缓存，且不为特殊状态
@@ -190,7 +190,7 @@ function ThugGenAttack:procActionsFrameEvents()
         self:getAIManager():skillCollidingOnEnemysAndHurt(self:getMaster(), self)
     elseif self._strFrameEventName == "end2" then
         self:clearCurAttackFrameEventInfo()           
-        if self:getMaster()._strCharTag == "main" then
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer and self:getMaster()._strCharTag == "main" then
             -- 如果当前正在长按攻击按钮，则自动关联下一击
             -- 如果当前属于自动攻击模式且摇杆非工作模式，则自动关联下一击
             local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
@@ -199,7 +199,7 @@ function ThugGenAttack:procActionsFrameEvents()
                     self._fComboIndexBuff = self._nComboIndex + 1
                 end
             end
-        elseif self:getMaster()._strCharTag == "pvp" then
+        else
             self._fComboIndexBuff = self._nComboIndex + 1                
         end
         if self._fComboIndexBuff == self._nComboIndex + 1 and self:getMaster():isUnusualState() == false then  -- 有缓存，且不为特殊状态
@@ -222,7 +222,7 @@ function ThugGenAttack:procActionsFrameEvents()
         self:getAIManager():skillCollidingOnEnemysAndHurt(self:getMaster(), self)
     elseif self._strFrameEventName == "end3" then
         self:clearCurAttackFrameEventInfo()
-        if self:getMaster()._strCharTag == "main" then
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer and self:getMaster()._strCharTag == "main" then
             -- 如果当前正在长按攻击按钮，则自动关联下一击
             -- 如果当前属于自动攻击模式且摇杆非工作模式，则自动关联下一击
             local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
@@ -231,7 +231,7 @@ function ThugGenAttack:procActionsFrameEvents()
                     self._fComboIndexBuff = self._nComboIndex + 1
                 end
             end
-        elseif self:getMaster()._strCharTag == "pvp" then
+        else
             self._fComboIndexBuff = self._nComboIndex + 1
         end
         if self._fComboIndexBuff == self._nComboIndex + 1 and self:getMaster():isUnusualState() == false then  -- 有缓存，且不为特殊状态
@@ -254,7 +254,7 @@ function ThugGenAttack:procActionsFrameEvents()
         self:getAIManager():skillCollidingOnEnemysAndHurt(self:getMaster(), self)
     elseif self._strFrameEventName == "end4" then
         self:clearCurAttackFrameEventInfo()
-        if self:getMaster()._strCharTag == "main" then
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer and self:getMaster()._strCharTag == "main" then
             -- 如果当前正在长按攻击按钮，则自动关联下一击
             -- 如果当前属于自动攻击模式且摇杆非工作模式，则自动关联下一击
             local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
@@ -263,7 +263,7 @@ function ThugGenAttack:procActionsFrameEvents()
                     self._fComboIndexBuff = self._nComboIndex + 1
                 end
             end
-        elseif self:getMaster()._strCharTag == "pvp" then
+        else
             self._fComboIndexBuff = self._nComboIndex + 1
         end
         if self._fComboIndexBuff == self._nComboIndex + 1 and self:getMaster():isUnusualState() == false then  -- 有缓存，且不为特殊状态
@@ -289,7 +289,7 @@ function ThugGenAttack:procActionsFrameEvents()
         self:getAIManager():skillCollidingOnEnemysAndHurt(self:getMaster(), self)
     elseif self._strFrameEventName == "end5" then
         self:clearCurAttackFrameEventInfo()
-        if self:getMaster()._strCharTag == "main" then
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer and self:getMaster()._strCharTag == "main" then
             -- 如果当前正在长按攻击按钮，则自动关联下一击
             -- 如果当前属于自动攻击模式且摇杆非工作模式，则自动关联下一击
             local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
@@ -298,7 +298,7 @@ function ThugGenAttack:procActionsFrameEvents()
                     self._fComboIndexBuff = self._nComboIndex + 1
                 end
             end
-        elseif self:getMaster()._strCharTag == "pvp" then
+        else
             self._fComboIndexBuff = self._nComboIndex + 1
         end
         if self._fComboIndexBuff == self._nComboIndex + 1 and self:getMaster():isUnusualState() == false then  -- 有缓存，且不为特殊状态
@@ -386,10 +386,25 @@ function ThugGenAttack:onEnterIdleDo(state)
     
     -- 技能结束后复位，人物重新回到站立状态
     if self:getMaster():isUnusualState() == false then
-        if self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole)._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kSkillAttack and 
-           self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole)._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kAngerAttack and
-           self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole)._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kRun then
-            self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+        if self:getMaster()._kRoleType == kType.kRole.kPlayer then
+            if self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole)._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kSkillAttack and 
+               self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole)._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kAngerAttack and
+               self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole)._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kRun then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kStand)
+            end
+        elseif self:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            if self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole)._pCurState._kTypeID ~= kType.kState.kBattleOtherPlayerRole.kSkillAttack and 
+               self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole)._pCurState._kTypeID ~= kType.kState.kBattleOtherPlayerRole.kAngerAttack and
+               self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole)._pCurState._kTypeID ~= kType.kState.kBattleOtherPlayerRole.kRun then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleOtherPlayerRole):setCurStateByTypeID(kType.kState.kBattleOtherPlayerRole.kStand)
+            end
+        elseif self:getMaster()._kRoleType == kType.kRole.kFriend then
+            if self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleFriendRole)._pCurState._kTypeID ~= kType.kState.kBattleFriendRole.kSkillAttack and 
+               self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleFriendRole)._pCurState._kTypeID ~= kType.kState.kBattleFriendRole.kRun and
+               self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleFriendRole)._pCurState._kTypeID ~= kType.kState.kBattleFriendRole.kSuspend and
+               self._pMaster:getStateMachineByTypeID(kType.kStateMachine.kBattleFriendRole)._pCurState._kTypeID ~= kType.kState.kBattleFriendRole.kDisAppear then
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleFriendRole):setCurStateByTypeID(kType.kState.kBattleFriendRole.kStand)
+            end 
         end
     end
 

@@ -28,12 +28,12 @@ end
 
 -- 为0的时候要进行的操作（需要重载）
 function RoleSkillButtonRef:doWhenIsZero()
-    if self._pMaster._strCharTag == "main" then
+    if self._pMaster._kRoleType == kType.kRole.kPlayer and self._pMaster._strCharTag == "main" then
         -- print("技能按钮"..self._nSkillIndex.."恢复使用！")
         local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
         if pUILayer then
-            pUILayer._pSkillAttackButtons[self._nSkillIndex]:setTouchEnabled(true)
-            pUILayer._pSkillAttackButtons[self._nSkillIndex]:setBright(true)
+            pUILayer._tSkillAttackButtons[self._nSkillIndex]:setTouchEnabled(true)
+            pUILayer._tSkillAttackButtons[self._nSkillIndex]:setBright(true)
         end
     end
     return
@@ -41,12 +41,12 @@ end
 
 -- 不为0的时候要进行的操作（需要重载）
 function RoleSkillButtonRef:doWhenIsNotZero()
-    if self._pMaster._strCharTag == "main" then
+    if self._pMaster._kRoleType == kType.kRole.kPlayer and self._pMaster._strCharTag == "main" then
         --  print("技能按钮"..self._nSkillIndex.."禁用！")
         local pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
         if pUILayer then
-            pUILayer._pSkillAttackButtons[self._nSkillIndex]:setTouchEnabled(false)
-            pUILayer._pSkillAttackButtons[self._nSkillIndex]:setBright(false)
+            pUILayer._tSkillAttackButtons[self._nSkillIndex]:setTouchEnabled(false)
+            pUILayer._tSkillAttackButtons[self._nSkillIndex]:setBright(false)
         end
     end
     return

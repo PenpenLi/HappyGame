@@ -54,23 +54,16 @@ function WorldUILayer:ctor()
     self._pRightArrowLeft = nil
     self._nRightUpState = 2
     -- cocos studio 功能按钮对应的容器 
-    self._tHorizontalMap = {}
-    self._tVerticalMap = {}
-    self._nVerticalShowIndex = 0
-    self._nHorizontalShowIndex = 0
-    self._tFuncBtnMap = {}
+    self._pWorldMainFuncMenu = nil
 
-    -- 活动按钮集合
-    self._nActivityShowIndex = 0
-    self._tActivityFuncMap = {}
-    self._tActivityFuncBtnMap = {}
-    
     self._pTalkFrame = nil                      -- 剧情对话背景框
     self._tTalkHeaders = {}                     -- 剧情对话头像，按照当前对话Contents数据中的角色顺序存放
+    self._tTalkNames = {}                       -- 剧情对话头像的名称
     self._pTalkArrow = nil                      -- 剧情对话箭头
+    self._pTalkArrowPlot = nil                  -- 剧情对话箭头底座
     self._pTalkTextArea = nil                   -- 剧情对话文字区域
     self._bTalkTouchStart = false               -- 剧情对话触摸是否开始
-    
+
     self.leveldd = RolesManager:getInstance()._pMainRoleInfo.level
     --需要播放特效的功能开启集合
     self._tMainFuncOpenArray = {}
@@ -87,8 +80,8 @@ function WorldUILayer:ctor()
     self._tOutSideIsVis = false                 -- 聊天的提示开关
     self._pChatElementText = nil
 
-    self._pMainTaskParams = nil                 -- 主线任务提示
     self._pNewEquipPanel = nil                  -- 新获得装备面板
+    self._pFastTaskPanel = nil                  -- 快速任务
 
     self._pNewFuncOpenCCs = nil                 --新功能开启
     self._nRoleLevel = 0
@@ -122,7 +115,6 @@ function WorldUILayer:dispose()
     NetRespManager:getInstance():addEventListener(kNetCmd.kHomeRemoveBuff ,handler(self, self.homeRemoveBuffInform))
     NetRespManager:getInstance():addEventListener(kNetCmd.kChatOutSide,handler(self, self.homeChatOutSide))
     NetRespManager:getInstance():addEventListener(kNetCmd.kSetStickLocked,handler(self, self.handleStickLocked))
-    NetRespManager:getInstance():addEventListener(kNetCmd.kMainTaskChange,handler(self, self.handleMainTaskchange))
     NetRespManager:getInstance():addEventListener(kNetCmd.kWorldLayerTouch,handler(self, self.handleTouchable))
     NetRespManager:getInstance():addEventListener(kNetCmd.kNewEquipShow,handler(self, self.handleNewEquipShow))
     NetRespManager:getInstance():addEventListener(kNetCmd.kDisPlayNotice ,handler(self, self.marqueeEvent)) --跑马灯公告通知
@@ -166,6 +158,12 @@ function WorldUILayer:dispose()
         NetRespManager:dispatchEvent(kNetCmd.kFuncWarning,{Desc = "装备按钮" , value = true})
         NetRespManager:dispatchEvent(kNetCmd.kFuncWarning,{Desc = "背包按钮" , value = true})
     end
+    -- 检查是否可以领取首充奖励
+    if ActivityManager:getInstance():isShowFirstChargeWarn() == true then 
+        NetRespManager:dispatchEvent(kNetCmd.kFuncWarning,{Desc = "首充按钮" , value = true})
+    end
+    
+
     CDManager:getInstance():insertCD({cdType.kNpcWaiting,TableConstants.NpcTalkDelay.Value})  
     self:handleMsgWarning({})
     ------------------- 结点事件------------------------
@@ -174,31 +172,10 @@ function WorldUILayer:dispose()
             self:onExitWorldUILayer()
         end
         if event == "enter" then
-            --初始化功能按钮开启情况
-            local upIsHasOpen = false
-            local downIsHasOpen = false
             NewbieManager:getInstance():getMainFuncLevel()
             -- 第一次登陆默认不显示 （新功能开启 二阶段引导）
             if isFirstLoginMain == true then
                 NewbieManager:getInstance():setMainFuncLevel(self.leveldd)
-            end
-            
-            if self.leveldd ~= NewbieManager:getInstance()._nCurOpenLevel then
-                for i=1,table.getn(TableMainUIFunc) do
-                   if TableMainUIFunc[i].OpenConditions > NewbieManager:getInstance()._nCurOpenLevel and
-                    TableMainUIFunc[i].OpenConditions <= self.leveldd then
-                        table.insert(self._tMainFuncOpenArray,TableMainUIFunc[i])
-                        downIsHasOpen = false
-                   end
-                end
-                
-                for i=1,table.getn(TableMainActivityFunc) do
-                    if TableMainActivityFunc[i].OpenConditions > NewbieManager:getInstance()._nCurOpenLevel and
-                        TableMainActivityFunc[i].OpenConditions <= self.leveldd then
-                        table.insert(self._tMainFuncOpenArray,TableMainActivityFunc[i])
-                        upIsHasOpen = false
-                    end
-                end
             end
             
             -- 二阶段新手引导
@@ -207,20 +184,20 @@ function WorldUILayer:dispose()
                     if TableNewFunction[i].Level > NewbieManager:getInstance()._nCurOpenLevel and
                         TableNewFunction[i].Level <= self.levelNewbie and
                         TableNewFunction[i].GuideId ~= nil then
-                        table.insert(self._tNewbieOpenArray,TableNewFunction[i].GuideId)
+                        table.insert(self._tNewbieOpenArray,TableNewFunction[i])
                     end
                 end
             end
             
             -- 二阶段新手引导
-            if table.getn(self._tMainFuncOpenArray) <= 0 and NewbieManager:getInstance()._bSkipGuide == false then
+            if NewbieManager:getInstance()._bSkipGuide == false then
                 if table.getn(self._tNewbieOpenArray) > 0 then
                     self:showNewbieByRoleLevel()
                 end
             end
 
             -- 弹活动幻灯片公告
-            if isFirstLoginMain == true and NewbieManager:getInstance()._bSkipGuide == true and table.getn(self._tMainFuncOpenArray) <= 0 then 
+            if isFirstLoginMain == true and NewbieManager:getInstance()._bSkipGuide == true then 
                 -- 弹活动幻灯片公告
                 --if RolesManager._pMainRoleInfo.level >= 10 then 
                 --    DialogManager:getInstance():showDialog("SlideDialog")
@@ -230,7 +207,7 @@ function WorldUILayer:dispose()
             end
 
             -- 读取新手引导起始
-            if NewbieManager:getInstance()._bSkipGuide == false and table.getn(self._tMainFuncOpenArray) <= 0 then
+            if NewbieManager:getInstance()._bSkipGuide == false then
                 if isFirstLoginMain == true then
                     local temp = NewbieManager:getInstance():loadMainID()
                     if temp ~= nil and temp ~= "" and TableNewbie[temp].IsHomeScene == 1 then
@@ -273,17 +250,12 @@ function WorldUILayer:dispose()
                 NetRespManager:getInstance():dispatchEvent(kNetCmd.kNewEquip,{})
             end
             
-            if table.getn(self._tMainFuncOpenArray) > 0 then
-                self:showNewMainFuncAni(downIsHasOpen , upIsHasOpen)
-            end
-            
             -- 主线任务提示
             
             if TasksManager:getInstance()._pMainTaskInfo == nil then
-                --self._pMainTaskParams._pCCS:setVisible(false)
                 TaskCGMessage:sendMessageQueryTasks21700()
             else
-                self:updateMainTask()
+                self._pFastTaskPanel:updateMainTask()
             end
             
             -- 更新播放等级
@@ -326,9 +298,7 @@ function WorldUILayer:doWhenShowOver()
     -- 刚进入家园，每次都要检测邮件是否有new
     local hasNewEmail = EmailManager:getInstance():hasNewEmail()
     self:showNewEmail(hasNewEmail)
-    
-    
-    
+
     return
 end
 
@@ -340,7 +310,7 @@ end
 function WorldUILayer:initUI()
     -- 创建摇杆
     self._pStick = mmo.Stick:createWithFrameName("com_003.png","com_002.png")
-    self._pStick:setStartPosition(cc.p(self._pStick:getFrameSize().width/2 + 20, self._pStick:getFrameSize().height/2 + 44))
+    self._pStick:setStartPosition(cc.p(self._pStick:getFrameSize().width/2 + 20, self._pStick:getFrameSize().height/2 + 20))
     self._pStick:setLocked(OptionManager:getInstance()._bStickLock)  -- 默认为不锁定
     self:addChild(self._pStick)
     
@@ -375,17 +345,6 @@ function WorldUILayer:initUI()
     self._pExperieceProgressBarBg = params._pExpBarBg
     self._pExperieceProgressBar = params._pExpBar 
     self._pExperieceProgNode = params._pExpPoint
-    self._pSetButton = params._pSetButton
-    
-    self._pSetButton:setZoomScale(nButtonZoomScale)
-    self._pSetButton:setPressedActionEnabled(true)
-    self._pSetButton:addTouchEventListener(function( sender, eventType )
-        if eventType == ccui.TouchEventType.ended then
-            DialogManager:getInstance():showDialog("OptionDialog",{kOptionType.MainOption})
-        elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
-        end
-    end)
 
     local sScreen = mmo.VisibleRect:getVisibleSize()
     local bgScreen = self._pExperieceProgressBarBg:getContentSize()
@@ -401,7 +360,7 @@ function WorldUILayer:initUI()
     self._pDiamondValueText = params._pRmbText 
     --self._pDiamondValueText:enableOutline(cc.c4b(0, 0, 0, 255), 2)
     --self._pDiamondValueText:enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
-    self._pVipLevelText = params._pVipLevelText 
+    self._pVipLevelText = params._pBitmapFontLabel_2 
     self._pPlayerIconButton = params._pJsButton 
 
     self._pBuyPhysicalButton = params._pBuyButton1 
@@ -410,9 +369,9 @@ function WorldUILayer:initUI()
     -- 玩家购买体力的逻辑 
     self._pBuyPhysicalButton:addTouchEventListener(function (sender,eventType) 
         if eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("FunctionButton")
         elseif eventType == ccui.TouchEventType.ended then
-            DialogManager:getInstance():showDialog("BuyStrengthDialog",{1})
+            DialogManager:getInstance():showDialog("BuyStrengthDialog",{kBuyThingsType.kBuyStrength})
         end
     end)
 
@@ -442,72 +401,110 @@ function WorldUILayer:initUI()
     self._pChatButton = pChatParams._pChat  --聊天button
     self._pChatNotice = pChatParams._pNotice --聊天新提示
     
-    
-    self._pMainTaskParams = require("FastMissionTipsParams"):create() 
-    self._pMainTaskParams._pCCS:setPosition(mmo.VisibleRect:left().x + 65,mmo.VisibleRect:left().y-60)
-    
     -- 我要变强按钮
-    self._pStrongerBtn = ccui.Button:create("icon_0002.png","icon_0002.png","icon_0002.png",ccui.TextureResType.plistType)
+    self._pStrongerBtn = ccui.Button:create("MainIcon/PowerLvUpIcon.png","MainIcon/PowerLvUpIcon.png","MainIcon/PowerLvUpIcon.png",ccui.TextureResType.plistType)
     self._pStrongerBtn:setPosition(mmo.VisibleRect:left().x + 65,mmo.VisibleRect:left().y-160)   
     self._pStrongerBtn:addTouchEventListener(function (sender,eventType) 
         if eventType == ccui.TouchEventType.ended then
             DialogManager:getInstance():showDialog("StrongerDialog")
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("FunctionButton")
         end
     end) 
-    self:addChild(self._pStrongerBtn)                                                                                                                                            
+    self._pStrongerBtn:setScale(0.7)
+    self._pStrongerBtn:setVisible(false)
+    self:addChild(self._pStrongerBtn)        
+
+    -- 战灵按钮
+    self._pPetBgSprite = cc.Sprite:createWithSpriteFrameName("MainUiPanelRes/zjm26.png")
+    self._pPetBgSprite:setPosition(mmo.VisibleRect:left().x + 71,mmo.VisibleRect:left().y-260-30)
+    self._pPetBgSprite:setAnchorPoint(cc.p(0.5, 0.5))
+    self:addChild(self._pPetBgSprite)
+
+    self._pPetsBtn = ccui.Button:create("MainIcon/PetIcon01.png","MainIcon/PetIcon01.png","MainIcon/PetIcon01.png",ccui.TextureResType.plistType)
+    self._pPetsBtn:setPosition(mmo.VisibleRect:left().x + 65,mmo.VisibleRect:left().y-260)   
+    self._pPetsBtn:addTouchEventListener(function (sender,eventType) 
+        if eventType == ccui.TouchEventType.ended then
+            DialogManager:showDialog("PetDialog",{})
+        elseif eventType == ccui.TouchEventType.began then
+            AudioManager:getInstance():playEffect("FunctionButton")
+        end
+    end) 
+    self._pPetsBtn:setScale(1.0)
+    if TableNewFunction[5].Level > self.leveldd then
+        self._pPetsBtn:setVisible(false)
+        self._pPetBgSprite:setVisible(false)
+    else
+        self._pPetsBtn:setVisible(true)
+        self._pPetBgSprite:setVisible(true)
+    end
+    self:addChild(self._pPetsBtn)                                                                                                                                        
 
     -- 活动入口
     self._pActivityBtn = ccui.Button:create("icon_0002.png","icon_0002.png","icon_0002.png",ccui.TextureResType.plistType)
-    self._pActivityBtn:setPosition(mmo.VisibleRect:left().x + 65,mmo.VisibleRect:left().y-260)   
+    self._pActivityBtn:setPosition(mmo.VisibleRect:left().x + 65,mmo.VisibleRect:left().y-180)   
     self._pActivityBtn:addTouchEventListener(function (sender,eventType) 
         if eventType == ccui.TouchEventType.ended then
+            if #ActivityManager:getInstance()._tActivityStateInfoList <= 0 then 
+                ActivityMessage:QueryActivityListReq22500()
+               
+                return
+            end
             DialogManager:getInstance():showDialog("ActivityDialog")
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("FunctionButton")
         end
     end) 
-    self._pActivityBtn:setTitleText("活动")
+
+    --self._pActivityBtn:setVisible(false)
     self:addChild(self._pActivityBtn)       
 
     --初始化聊天信息
     self:createChatFunc()
 
     -- 创建按钮集合
-    self:createFuncBtns()
+    --self:createFuncBtns()
+    self._pWorldMainFuncMenu = require("WorldMainFuncMenu"):create()
+    self._pLayerNode:addChild(self._pWorldMainFuncMenu)
+
 
     -- 创建活动按钮集合
-    self:createActivityFuncDataArray()
+    --self:createActivityFuncDataArray()
+    self._pWorldActivityFuncMenu = require("WorldActivityFuncMenu"):create()
+    self._pLayerNode:addChild(self._pWorldActivityFuncMenu)
+
+    -- 任务提示框
+    self._pFastTaskPanel = require("FastTaskPanel"):create()
+    self._pLayerNode:addChild(self._pFastTaskPanel)
 
     -- 设置角色头像节点在屏幕的左上角 
     self._pHeadNode:setPosition(mmo.VisibleRect:leftTop())
     
     -- 设置活动按钮节点在屏幕的右上角 
-    self._pTopRightCornnerNode:setPosition(mmo.VisibleRect:rightTop()) 
+    self._pTopRightCornnerNode:setPosition(mmo.VisibleRect:rightTop().x , mmo.VisibleRect:rightTop().y - 70 ) 
     
     -- 设置功能按钮节点在屏幕的右下角 
     self._pBottomRightCornerNode:setPosition(mmo.VisibleRect:rightBottom().x,mmo.VisibleRect:rightBottom().y+20) 
     
     -- 设置经验条节点在屏幕的左下方 
-    self._pExperieceProgNode:setPosition(mmo.VisibleRect:leftBottom())
-
+    self._pExperieceProgNode:setPosition(mmo.VisibleRect:leftBottom().x,mmo.VisibleRect:leftBottom().y)
+    self._pExperieceProgNode:setVisible(true)
     --设置聊天按钮在屏幕左方
     self._pChatPanelCCS:setPosition(mmo.VisibleRect:left())
 
     -- 右下角箭头
-    self._pArrowLeft = ccui.ImageView:create("MainUiPanelRes/ArrowLeft.png",ccui.TextureResType.plistType)
-    self._pArrowLeft:setPosition(cc.p(self._pBottomRightCornerNode:getPositionX()-60,self._pBottomRightCornerNode:getPositionY()+55))
-    self._pLayerNode:addChild(self._pArrowLeft)
+    --self._pArrowLeft = ccui.ImageView:create("MainUiPanelRes/ArrowLeft.png",ccui.TextureResType.plistType)
+    --self._pArrowLeft:setPosition(cc.p(self._pBottomRightCornerNode:getPositionX()-60,self._pBottomRightCornerNode:getPositionY()+55))
+    --self._pLayerNode:addChild(self._pArrowLeft)
 
-    self._pArrowUp = ccui.ImageView:create("MainUiPanelRes/ArrowUp.png",ccui.TextureResType.plistType)
-    self._pArrowUp:setPosition(cc.p(self._pBottomRightCornerNode:getPositionX()-48,self._pBottomRightCornerNode:getPositionY()+68))
-    self._pLayerNode:addChild(self._pArrowUp)
+    --self._pArrowUp = ccui.ImageView:create("MainUiPanelRes/ArrowUp.png",ccui.TextureResType.plistType)
+    --self._pArrowUp:setPosition(cc.p(self._pBottomRightCornerNode:getPositionX()-48,self._pBottomRightCornerNode:getPositionY()+68))
+    --self._pLayerNode:addChild(self._pArrowUp)
 
     -- 右上角箭头
-    self._pRightArrowLeft = ccui.ImageView:create("MainUiPanelRes/ArrowLeft.png",ccui.TextureResType.plistType)
-    self._pRightArrowLeft:setPosition(cc.p(self._pTopRightCornnerNode:getPositionX()-60,self._pTopRightCornnerNode:getPositionY()-55))
-    self._pLayerNode:addChild(self._pRightArrowLeft)
+    --self._pRightArrowLeft = ccui.ImageView:create("MainUiPanelRes/ArrowLeft.png",ccui.TextureResType.plistType)
+    --self._pRightArrowLeft:setPosition(cc.p(self._pTopRightCornnerNode:getPositionX()-60,self._pTopRightCornnerNode:getPositionY()-55))
+    --self._pLayerNode:addChild(self._pRightArrowLeft)
     
     self._pWarningSpriteUpArrow = cc.Sprite:createWithSpriteFrameName("MainIcon/mail03.png")
     self._pWarningSpriteUpArrow:setPosition(90,90)
@@ -539,8 +536,8 @@ function WorldUILayer:initUI()
     -- 右下角图标按钮事件
     self._pBottomRightCornnerButton:loadTextures(
         "MainUiPanelRes/OutButton.png",
-        "MainUiPanelRes/OutButton02.png",
-        "MainUiPanelRes/OutButton02.png",
+        "MainUiPanelRes/OutButton.png",
+        "MainUiPanelRes/OutButton.png",
         ccui.TextureResType.plistType)
     self._pBottomRightCornnerButton:addTouchEventListener(function( sender, eventType )
         if eventType == ccui.TouchEventType.ended then
@@ -549,35 +546,41 @@ function WorldUILayer:initUI()
                 cc.DelayTime:create(0.3),
                 cc.CallFunc:create(function() self._pBottomRightCornnerButton:setTouchEnabled(true) end)
             ))
-        
+
             NewbieManager:showOutAndRemoveWithRunTime()
-            for i=1,table.getn(self._tFuncBtnMap) do
-                self._tFuncBtnMap[i]:changeState()
-            end
+            self._pWorldMainFuncMenu:changeState()
             self:changeRightArrowState()
-            local temp = self._tFuncBtnMap[1]:getState()
+            local temp = self._pWorldMainFuncMenu:getState()
             if temp == 1 then
                 self._pBottomRightCornnerButton:loadTextures(
-                    "MainUiPanelRes/RetractButton.png",
-                    "MainUiPanelRes/RetractButton02.png",
-                    "MainUiPanelRes/RetractButton02.png",
+                    "MainUiPanelRes/OutButton.png",
+                    "MainUiPanelRes/OutButton.png",
+                    "MainUiPanelRes/OutButton.png",
                     ccui.TextureResType.plistType)
+
+                self._pBottomRightCornnerButton:runAction(cc.Sequence:create(
+                    cc.RotateBy:create(0.2,45.0)
+                ))
             else
                 self._pBottomRightCornnerButton:loadTextures(
                     "MainUiPanelRes/OutButton.png",
-                    "MainUiPanelRes/OutButton02.png",
-                    "MainUiPanelRes/OutButton02.png",
+                    "MainUiPanelRes/OutButton.png",
+                    "MainUiPanelRes/OutButton.png",
                     ccui.TextureResType.plistType)
+
+                self._pBottomRightCornnerButton:runAction(cc.Sequence:create(
+                     cc.RotateBy:create(0.2,-45.0)
+                 ))
             end 
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("MainUiButton")
         end
     end)
     -- 右上角图标按钮事件
     self._pTopRightCornnerButton:loadTextures(
-        "MainUiPanelRes/OutButton.png",
-        "MainUiPanelRes/OutButton02.png",
-        "MainUiPanelRes/OutButton02.png",
+        "MainUiPanelRes/zjm18.png",
+        "MainUiPanelRes/zjm18.png",
+        "MainUiPanelRes/zjm18.png",
         ccui.TextureResType.plistType)
     self._pTopRightCornnerButton:addTouchEventListener(function( sender, eventType )
         if eventType == ccui.TouchEventType.ended then
@@ -588,29 +591,26 @@ function WorldUILayer:initUI()
             ))
         
             NewbieManager:showOutAndRemoveWithRunTime()
-            local temp = self._pHeadNode:isVisible()
-            if temp == false then
-                self._pHeadNode:setVisible(true)
+            local temp = self._nRightUpState
+            if temp == 1 then
+                --self._pHeadNode:setVisible(true)
 
                 self._pTopRightCornnerButton:loadTextures(
-                    "MainUiPanelRes/OutButton.png",
-                    "MainUiPanelRes/OutButton02.png",
-                    "MainUiPanelRes/OutButton02.png",
+                    "MainUiPanelRes/zjm18.png",
+                    "MainUiPanelRes/zjm18.png",
+                    "MainUiPanelRes/zjm18.png",
                     ccui.TextureResType.plistType)
             else
-                self._pHeadNode:setVisible(false)
+                --self._pHeadNode:setVisible(false)
 
                 self._pTopRightCornnerButton:loadTextures(
-                    "MainUiPanelRes/RetractButton.png",
-                    "MainUiPanelRes/RetractButton02.png",
-                    "MainUiPanelRes/RetractButton02.png",
+                    "MainUiPanelRes/zjm19.png",
+                    "MainUiPanelRes/zjm19.png",
+                    "MainUiPanelRes/zjm19.png",
                     ccui.TextureResType.plistType)
             end
 
-            for i=1,table.getn(self._tActivityFuncBtnMap) do
-                self._tActivityFuncBtnMap[i]:changeState()
-            end
-
+            self._pWorldActivityFuncMenu:changeState()
             self:changeRightUpArrowState()
             
             -- 创建按钮集合 --test 
@@ -623,15 +623,16 @@ function WorldUILayer:initUI()
             --RolesManager._pMainRoleInfo.level = 80
             --self:updateRoleInfoWidgets()
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("MainUiButton")
         end
     end)
     -- 左上角角色icon图标按钮事件
     self._pPlayerIconButton:addTouchEventListener(function( sender, eventType )
         if eventType == ccui.TouchEventType.ended then
+            --self:getRolesManager():createNpcRoleOnWorldMapByFinishedTaskID(1)  -- test
             DialogManager:getInstance():showDialog("RolesInfoDialog",{RoleDialogTabType.RoleDialogTypeDetail})
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+            AudioManager:getInstance():playEffect("FunctionButton")
         end
     end)
     
@@ -643,7 +644,6 @@ function WorldUILayer:initUI()
 
     self._pLayerNode:addChild(self._pWorldUIPanelCCS,1) 
     self._pLayerNode:addChild(self._pChatPanelCCS)
-    self._pLayerNode:addChild(self._pMainTaskParams._pCCS)
 
     ---------------------测试用-------------------------
     -------------------显示游戏ID------------------------
@@ -662,19 +662,28 @@ function WorldUILayer:initUI()
     self:addChild(self._pNewEquipPanel,19)
     self._pNewEquipPanel:setVisible(false)
 
-    -- 购买钻石点击事件
-    self._pBuyDiamondButton:addTouchEventListener(function( sender, eventType )
+
+    --购买货币的按钮
+    local BuyFinanceButtonCallBack = function(sender, eventType)
         if eventType == ccui.TouchEventType.ended then
-            --DialogManager:getInstance():showDialog("ChargeDialog")
-            ShopSystemCGMessage:queryChargeListReq20506()
+            local nTag = sender:getTag()
+            if nTag == kFinance.kCoin then     --金币
+               DialogManager:getInstance():showDialog("CashTreeDialog")
+            elseif nTag == kFinance.kDiamond then  --钻石
+                ShopSystemCGMessage:queryChargeListReq20506()
+            end
+        
         elseif eventType == ccui.TouchEventType.began then
-            AudioManager:getInstance():playEffect("ButtonClick")
+           AudioManager:getInstance():playEffect("FunctionButton")
         end
-    end)
-    
-    -- 需求屏蔽
-    self._pBuyDiamondButton:setVisible(false)
-    self._pBuyGoldCoinButton:setVisible(false)
+    end
+
+
+    self._pBuyGoldCoinButton:setTag(kFinance.kCoin)
+    self._pBuyGoldCoinButton:addTouchEventListener(BuyFinanceButtonCallBack)
+    self._pBuyDiamondButton:setTag(kFinance.kDiamond)
+    self._pBuyDiamondButton:addTouchEventListener(BuyFinanceButtonCallBack)
+        
 end
 
 -- 初始化触摸机制
@@ -690,6 +699,15 @@ function WorldUILayer:initTouches()
         self._pCursor:setRotation(0)
         self._pCursor:runAction(cc.Spawn:create(cc.FadeOut:create(0.5),cc.ScaleTo:create(0.5,1.0),cc.RotateBy:create(0.5,90)))
         self._pCursor:setPosition(location.x, location.y)
+
+        if StoryGuideManager:getInstance()._bIsStory == true then --正在进行剧情动画
+            if self._pTalkFrame:isVisible() == true and location.y <= self._pTalkFrame:getContentSize().height*2 then
+                self._bTalkTouchStart = true
+                return true
+            end
+            return false
+        end
+
         if self._pStick:getIsWorking() == true then
             return false
         end
@@ -699,19 +717,25 @@ function WorldUILayer:initTouches()
         end
         
         --家园界面判断是否点击到人物的身上（点击多个的时候只响应第一个）
+        --当前正在剧情动画
+        if StoryGuideManager:getInstance()._bIsStory == true or (StoryGuideManager:getInstance()._bIsStory == false and StoryGuideManager:getInstance()._bActionHasStop == false) then --正在进行剧情动画。所有的战斗逻辑暂停
+           return false
+        end
         local _tOtherPlayerRoles = RolesManager:getInstance()._tOtherPlayerRoles
         for k,v in pairs(_tOtherPlayerRoles) do
            local pRoleBox = v._pAni:getBoundingBox()
            local pLocal = self:convertTouchToNodeSpace(touch)
-           if cc.rectContainsPoint(pRoleBox,pLocal) == true then
-                 DialogManager:getInstance():showDialog("PlayRoleTipsDialog",{v._pRoleInfo})
+           if cc.rectContainsPoint(pRoleBox,pLocal) == true then --如果点击到其他玩家身上就记录下其他玩家当时的坐标
+               self._pTouchOtherPlayerLoc = location
+               self._pTouchOtherPlayer = v
                 break
            end
         end
- 
-        
         if self:getRolesManager()._pMainPlayerRole and self._pStick:onTouchBegan(location) == true then
             return true
+        end
+        if self._pTouchOtherPlayerLoc then
+           return true
         end
         return false
     end
@@ -719,6 +743,15 @@ function WorldUILayer:initTouches()
         local location = touch:getLocation()
         if self._pTalkFrame:isVisible() == true then
             return
+        end
+        if StoryGuideManager:getInstance()._bIsStory == true then --正在进行剧情动画
+            return
+        end
+        if self._pTouchOtherPlayerLoc then
+           if math.abs(self._pTouchOtherPlayerLoc.x - location.x) > 100 or math.abs(self._pTouchOtherPlayerLoc.y - location.y) > 100 then
+              self._pTouchOtherPlayerLoc = nil
+              self._pTouchOtherPlayer = nil
+           end
         end
         self._pStick:onTouchMoved(location)
     end
@@ -738,11 +771,22 @@ function WorldUILayer:initTouches()
             end
             return
         end
+        if StoryGuideManager:getInstance()._bIsStory == true then --正在进行剧情动画
+            return
+        end
+        if self._pTouchOtherPlayerLoc then
+           DialogManager:getInstance():showDialog("PlayRoleTipsDialog",{self._pTouchOtherPlayer._pRoleInfo})
+           self._pTouchOtherPlayerLoc = nil 
+           self._pTouchOtherPlayer = nil
+        end     
         self._pStick:onTouchEnded(location)   
 
     end
     local function onTouchCancelled(touch,event)
         local location = touch:getLocation()
+        if StoryGuideManager:getInstance()._bIsStory == true then --正在进行剧情动画
+            return
+        end
         self._pStick:onTouchEnded(location)
     end
 
@@ -767,249 +811,79 @@ end
 -- 进行二阶段新手
 function WorldUILayer:showNewbieByRoleLevel()
     if table.getn(self._tNewbieOpenArray) > 0 and NewbieManager._bSkipGuide == false then
-        DialogManager:closeDialogByName("TaskDialog") 
-        DialogManager:closeDialogByName("DrunkeryDialog") 
-        self:openUpAndDownMenu()
+        --DialogManager:closeDialogByName("TaskDialog") 
+        --DialogManager:closeDialogByName("DrunkeryDialog") 
+        --self:openUpAndDownMenu()
     
-        NewbieManager:getInstance():showNewbieByID(self._tNewbieOpenArray[1])
+        --NewbieManager:getInstance():showNewbieByID(self._tNewbieOpenArray[1])
+        self._pFastTaskPanel:setCurGuide(self._tNewbieOpenArray[1])
         table.remove(self._tNewbieOpenArray, 1)
     end
 end
 
 -- 上下按钮进入打开状态
 function WorldUILayer:openUpAndDownMenu()
-    local temp = self._nRightBottomState
+            local temp = self._pWorldMainFuncMenu:getState()
+            self._pWorldMainFuncMenu:changeState()
+            self:changeRightArrowState()
+            
+            if temp == 1 then
+                self._pWorldMainFuncMenu:changeState()
+                self:changeRightArrowState()
 
-    if temp == 1 then
-        self._pBottomRightCornnerButton:loadTextures(
-            "MainUiPanelRes/RetractButton.png",
-            "MainUiPanelRes/RetractButton02.png",
-            "MainUiPanelRes/RetractButton02.png",
-            ccui.TextureResType.plistType)
-    else
-        for i=1,table.getn(self._tFuncBtnMap) do
-            self._tFuncBtnMap[i]:changeState()
-        end
-        self:changeRightArrowState()
-
-        self._pBottomRightCornnerButton:loadTextures(
-            "MainUiPanelRes/OutButton.png",
-            "MainUiPanelRes/OutButton02.png",
-            "MainUiPanelRes/OutButton02.png",
-            ccui.TextureResType.plistType)
-    end
+                self._pBottomRightCornnerButton:runAction(cc.Sequence:create(
+                    cc.RotateBy:create(0.2,45.0)
+                ))
+            end
     
     temp = self._nRightUpState
-
-    temp = self._pHeadNode:isVisible()
-    if temp == true then
-        for i=1,table.getn(self._tActivityFuncBtnMap) do
-            self._tActivityFuncBtnMap[i]:changeState()
-        end
+    if temp == 1 then
+        
         self:changeRightUpArrowState()
-        self._pHeadNode:setVisible(false)
+        self._pWorldActivityFuncMenu:changeState()
 
         self._pTopRightCornnerButton:loadTextures(
-            "MainUiPanelRes/OutButton.png",
-            "MainUiPanelRes/OutButton02.png",
-            "MainUiPanelRes/OutButton02.png",
+            "MainUiPanelRes/zjm18.png",
+            "MainUiPanelRes/zjm18.png",
+            "MainUiPanelRes/zjm18.png",
             ccui.TextureResType.plistType)
     else
         self._pTopRightCornnerButton:loadTextures(
-            "MainUiPanelRes/RetractButton.png",
-            "MainUiPanelRes/RetractButton02.png",
-            "MainUiPanelRes/RetractButton02.png",
+            "MainUiPanelRes/zjm19.png",
+            "MainUiPanelRes/zjm19.png",
+            "MainUiPanelRes/zjm19.png",
             ccui.TextureResType.plistType)
     end
-end
-
--- 播放获取开启新功能按钮的动画
-function WorldUILayer:showNewMainFuncAni(downIsOpen,upIsOpen)
-    self:setTouchEnableInDialog(true)
-    --展开状态
-    if downIsOpen == true then
-        local temp = self._nRightBottomState
-        
-        if temp == 1 then
-            self._pBottomRightCornnerButton:loadTextures(
-                "MainUiPanelRes/RetractButton.png",
-                "MainUiPanelRes/RetractButton02.png",
-                "MainUiPanelRes/RetractButton02.png",
-                ccui.TextureResType.plistType)
-        else
-            for i=1,table.getn(self._tFuncBtnMap) do
-                self._tFuncBtnMap[i]:changeState()
-            end
-            self:changeRightArrowState()
-
-            self._pBottomRightCornnerButton:loadTextures(
-                "MainUiPanelRes/OutButton.png",
-                "MainUiPanelRes/OutButton02.png",
-                "MainUiPanelRes/OutButton02.png",
-                ccui.TextureResType.plistType)
-        end
-    end
-    if upIsOpen == true then
-        local temp = self._nRightUpState
-        
-        local temp = self._pHeadNode:isVisible()
-        if temp == true then
-            for i=1,table.getn(self._tActivityFuncBtnMap) do
-                self._tActivityFuncBtnMap[i]:changeState()
-            end
-            self:changeRightUpArrowState()
-            self._pHeadNode:setVisible(false)
-
-            self._pTopRightCornnerButton:loadTextures(
-                "MainUiPanelRes/OutButton.png",
-                "MainUiPanelRes/OutButton02.png",
-                "MainUiPanelRes/OutButton02.png",
-                ccui.TextureResType.plistType)
-        else
-            
-            --self._pHeadNode:setVisible(true)
-
-            self._pTopRightCornnerButton:loadTextures(
-                "MainUiPanelRes/RetractButton.png",
-                "MainUiPanelRes/RetractButton02.png",
-                "MainUiPanelRes/RetractButton02.png",
-                ccui.TextureResType.plistType)
-        end
-    end
-    
-    -----------------
-    local temp = -1
-    if table.getn(self._tMainFuncOpenArray) > 0 then
-        
-        for i=1,table.getn(self._tMainFuncOpenArray) do
-            temp = temp + 1
-            if i == table.getn(self._tMainFuncOpenArray) then
-                --最后一个
-                local sprAction = cc.Sequence:create(
-                    cc.DelayTime:create(temp * 2.2),
-                    cc.CallFunc:create(function()
-                        local temp = i
-                        NoticeManager:showNewFuncIconAni(self._tMainFuncOpenArray[temp])
-                        local funcBtn = self:getFuncBtnByDesc(self._tMainFuncOpenArray[temp].Desc)
-                        local posX = funcBtn:getPositionX()+50 
-                        local posY = funcBtn:getPositionY()+50 
-                        --NoticeManager:showNewFuncAni(posX,posY)
-                        funcBtn:showNewFuncAni()
-                    end),
-                    cc.CallFunc:create(function()
-                        --判断是否进入新手
-                        if NewbieManager:getInstance()._bSkipGuide == false then
-                            if isFirstLoginMain == true then
-                                local temp = NewbieManager:getInstance():loadMainID()
-                                if temp ~= nil and temp ~= "" and TableNewbie[temp].IsHomeScene == 1 then
-                                    -- 直接登录
-                                    if RolesManager._pMainRoleInfo.level < 10 then
-                                        if temp == "Guide_2_1" then
-                                            NewbieManager:getInstance():showNewbieByID("Guide_2_1")
-                                        elseif temp == "Guide_2_10" and TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.state == 2 then
-                                            NewbieManager:getInstance():showNewbieByID("Guide_3_1")
-                                        elseif temp == "Guide_3_14" and TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.state == 2 then
-                                            NewbieManager:getInstance():showNewbieByID("Guide_4_22")
-                                        elseif temp == "Guide_4_31" and TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.state == 2 then
-                                            NewbieManager:getInstance():showNewbieByID("Guide_5_1")
-                                        elseif temp == "Guide_5_17" and TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.state == 2 then
-                                            NewbieManager:getInstance():showNewbieByID("Guide_6_52")
-                                        elseif temp == "Guide_6_1" and TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.state == 2 then
-                                            NewbieManager:getInstance():showNewbieByID("Guide_6_52")
-                                        elseif temp == "Guide_7_1" and TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.state == 2 then
-                                            NewbieManager:getInstance():showNewbieByID("Guide_7_13")     
-                                        else
-                                            NewbieManager:getInstance():showNewbieByID(temp)
-                                        end
-                                    end
-                                end
-                                -- 弹活动幻灯片公告
-                                if RolesManager._pMainRoleInfo.level >= 10 then 
-                                    DialogManager:getInstance():showDialog("SlideDialog")
-                                end
-                                isFirstLoginMain = false
-                            else
-                                if TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.taskId < 10007 then
-                                    local index = TasksManager:getInstance()._pMainTaskInfo.taskId - 10000
-                                    if RolesManager._pMainRoleInfo.level < 10 then
-                                        
-                                    
-                                        NewbieManager:getInstance():showNewbieByID("Guide_"..(index+1).."_1")
-                                    end
-                                end
-                            end
-                            isFirstLoginMain = false
-                        else
-                            if isFirstLoginMain == true then
-                                DialogManager:getInstance():showDialog("SlideDialog")
-                                isFirstLoginMain = false
-                            end
-                        end
-                        self._tMainFuncOpenArray = {}
-                        self:setTouchEnableInDialog(false)
-                        
-                        -- 二阶段新手引导
-                        if table.getn(self._tMainFuncOpenArray) <= 0 and NewbieManager:getInstance()._bSkipGuide == false then
-                            if table.getn(self._tNewbieOpenArray) > 0 then
-                                self:showNewbieByRoleLevel()
-                            end
-                        end
-                        
-                        NetRespManager:getInstance():dispatchEvent(kNetCmd.kNewEquip,{})
-                    end)
-                )
-
-                self:runAction(sprAction)
-            else
-                local sprAction = cc.Sequence:create(
-                    cc.DelayTime:create(temp * 2.2),
-                    cc.CallFunc:create(function()
-                        local temp = i
-                        NoticeManager:showNewFuncIconAni(self._tMainFuncOpenArray[temp])
-                        local funcBtn = self:getFuncBtnByDesc(self._tMainFuncOpenArray[temp].Desc)
-                        local posX = funcBtn:getPositionX()+50 
-                        local posY = funcBtn:getPositionY()+50 
-                        --NoticeManager:showNewFuncAni(posX,posY)
-                        funcBtn:showNewFuncAni()
-                    end)
-                )
-
-                self:runAction(sprAction)
-            end
-        end
-    end
-    
-    
-    
 end
 
 -- 初始化剧情对话UI
 function WorldUILayer:initTalksUI()
     -- 初始化剧情对话背景框
     self._pTalkFrame = cc.Sprite:createWithSpriteFrameName("ccsComRes/talksFrame.png")
-    self._pTalkFrame:setScaleX(1024/self._pTalkFrame:getContentSize().width)
-    self._pTalkFrame:setAnchorPoint(0.5,0.01)
+    self._pTalkFrame:setAnchorPoint(0.5,0.015)
     self._pTalkFrame:setPosition(mmo.VisibleRect:bottom())
-    self._pTalkFrame:setVisible(false)    
-    self:addChild(self._pTalkFrame,20)
+    self._pTalkFrame:setVisible(false)
+    self:addChild(self._pTalkFrame,200)
     -- 初始化剧情对话箭头
+    self._pTalkArrowPlot = cc.Sprite:createWithSpriteFrameName("ccsComRes/talksArrowPlot.png")
+    self._pTalkArrowPlot:setAnchorPoint(0.5,0)
+    self._pTalkArrowPlot:setVisible(false)  
+    self:addChild(self._pTalkArrowPlot,200)
     self._pTalkArrow = cc.Sprite:createWithSpriteFrameName("ccsComRes/talksArrow.png")
     self._pTalkArrow:setAnchorPoint(0.5,0)
-    self._pTalkArrow:setVisible(false)
-    self._pTalkArrow:setPosition(self._pTalkFrame:getPositionX()+512-100,0)  
-    self:addChild(self._pTalkArrow,20)
-    self._pTalkArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(0.3,cc.p(0,30))),cc.EaseSineInOut:create(cc.MoveBy:create(0.3,cc.p(0,-30))))))
+    self._pTalkArrow:setVisible(false)  
+    self:addChild(self._pTalkArrow,200)
     -- 初始化剧情对话文本区域
-    self._pTalkTextArea = cc.Label:createWithTTF("", strCommonFontName, 24, cc.size(600, 150), cc.TEXT_ALIGNMENT_LEFT)
-    self._pTalkTextArea:setPosition(cc.p((mmo.VisibleRect:width()-600)/2, (self._pTalkFrame:getContentSize().height - 150)/2))
+    self._pTalkTextArea = cc.Label:createWithTTF("", strCommonFontName, 24, cc.size(mmo.VisibleRect:width()*4/6-50, 150), cc.TEXT_ALIGNMENT_LEFT)
+    self._pTalkTextArea:setTextColor(cFontLightYellow)
     self._pTalkTextArea:setAnchorPoint(cc.p(0, 0))
     self._pTalkTextArea:setVisible(false) 
-    --self._pTalkTextArea:enableShadow(cc.c4b(0, 0, 0, 255))
-    self:addChild(self._pTalkTextArea,20)
+    self:addChild(self._pTalkTextArea,200)
     
-    self._pTalkArrow:setPositionZ(4100)
-    self._pTalkFrame:setPositionZ(4100)
-    self._pTalkTextArea:setPositionZ(4100)
+    self._pTalkArrowPlot:setPositionZ(-1)
+    self._pTalkArrow:setPositionZ(-1)
+    self._pTalkFrame:setPositionZ(-1)
+    self._pTalkTextArea:setPositionZ(-1)
 
 end
 
@@ -1022,6 +896,11 @@ function WorldUILayer:procStick(dt)
     if MapManager:getInstance()._bIsCameraMoving == true then
         return
     end
+    --如果当前正在播放剧情动画，暂不做结算处理
+    if StoryGuideManager:getInstance()._bIsStory == true then
+       return
+    end
+
     if self._pStick:needUpdate() == true then
         local pRole = self:getRolesManager()._pMainPlayerRole
         if pRole then
@@ -1050,73 +929,21 @@ end
 function WorldUILayer:changeRightUpArrowState()
 	if self._nRightUpState == 1 then
         self._nRightUpState = 2
-        self._pRightArrowLeft:runAction(cc.Sequence:create(
-            cc.MoveTo:create(0.1,cc.p(self._pTopRightCornnerNode:getPositionX()-60,self._pTopRightCornnerNode:getPositionY()-55)),
-            cc.CallFunc:create(function()
-                self._pRightArrowLeft:setVisible(false)
-            end
-            )
-        ))
     else
         self._nRightUpState = 1
-        
-        self._pRightArrowLeft:runAction(cc.Sequence:create(
-            cc.MoveTo:create(0.1,cc.p(self._pTopRightCornnerNode:getPositionX()-100,self._pTopRightCornnerNode:getPositionY()-55)),
-            cc.CallFunc:create(function()
-                self._pRightArrowLeft:setVisible(true)
-            end
-            )
-        ))
     end
 end
 
 function WorldUILayer:changeRightArrowState()
     if self._nRightBottomState == 1 then
         self._nRightBottomState = 2
-        self._pArrowLeft:runAction(cc.Sequence:create(
-            cc.MoveTo:create(0.1,cc.p(self._pBottomRightCornerNode:getPositionX()-60,self._pBottomRightCornerNode:getPositionY()+55)),
-            cc.CallFunc:create(function()
-                self._pArrowLeft:setVisible(fasle)
-            end
-            )
-        ))
-        
-        self._pArrowUp:runAction(cc.Sequence:create(
-            cc.MoveTo:create(0.1,cc.p(self._pBottomRightCornerNode:getPositionX()-48,self._pBottomRightCornerNode:getPositionY()+68)),
-            cc.CallFunc:create(function()
-                self._pArrowUp:setVisible(fasle)
-            end
-            )
-        ))
     else
         self._nRightBottomState = 1
-        
-        self._pArrowLeft:runAction(cc.Sequence:create(
-            cc.MoveTo:create(0.1,cc.p(self._pBottomRightCornerNode:getPositionX()-100,self._pBottomRightCornerNode:getPositionY()+55)),
-            cc.CallFunc:create(function()
-                self._pArrowLeft:setVisible(true)
-            end
-            )
-        ))
-
-        self._pArrowUp:runAction(cc.Sequence:create(
-            cc.MoveTo:create(0.1,cc.p(self._pBottomRightCornerNode:getPositionX()-48,self._pBottomRightCornerNode:getPositionY()+108)),
-            cc.CallFunc:create(function()
-                self._pArrowUp:setVisible(true)
-            end
-            )
-        ))
     end
 end
 
 function WorldUILayer:changeRightArrowIn()
-    self._pArrowLeft = ccui.ImageView:create("MainUiPanelRes/ArrowLeft.png",ccui.TextureResType.plistType)
-    self._pArrowLeft:setPosition(cc.p(self._pBottomRightCornerNode:getPositionX()-100,self._pBottomRightCornerNode:getPositionY()+55))
-    self:addChild(self._pArrowLeft)
-
-    self._pArrowLeft = ccui.ImageView:create("MainUiPanelRes/ArrowUp.png",ccui.TextureResType.plistType)
-    self._pArrowLeft:setPosition(cc.p(self._pBottomRightCornerNode:getPositionX()-48,self._pBottomRightCornerNode:getPositionY()+108))
-    self:addChild(self._pArrowLeft)
+    
 end
 
 function WorldUILayer:updateRoleInfoWidgets()
@@ -1135,7 +962,7 @@ function WorldUILayer:updateRoleInfoWidgets()
     self._pPhysicalValueText:setString(roleInfo.strength.."/"..TableConstants.PowerNumLimit.Value)
     self._pGoldCoinValueText:setString(FinanceManager:getValueByFinanceType(kFinance.kCoin))
     self._pDiamondValueText:setString(FinanceManager:getValueByFinanceType(kFinance.kDiamond))   
-    self._pVipLevelText:setString(RolesManager:getInstance()._pMainRoleInfo.vipInfo.vipLevel)
+    --self._pVipLevelText:setString(RolesManager:getInstance()._pMainRoleInfo.vipInfo.vipLevel)
     
     self._pPhysicalValueProgressBar:setPercent(roleInfo.strength/TableConstants.PowerNumLimit.Value * 100)
     if TableLevel[roleInfo.level].Exp ~= 0 then
@@ -1150,9 +977,12 @@ function WorldUILayer:updateRoleInfoWidgets()
         self._pExperieceProgressBar:setPercent(100)
     end
     
+    -- 判断我要变强是否显示
+    self._pStrongerBtn:setVisible(roleInfo.level >= TableNewFunction[28].Level)
+
     self.leveldd = RolesManager:getInstance()._pMainRoleInfo.level
     self.levelNewbie = RolesManager:getInstance()._pMainRoleInfo.level
-    
+
     --初始化功能按钮开启情况
     --self._tMainFuncOpenArray = {}
     local upIsHasOpen = false
@@ -1186,7 +1016,7 @@ function WorldUILayer:updateRoleInfoWidgets()
             if TableNewFunction[i].Level > NewbieManager:getInstance()._nCurOpenLevel and
                 TableNewFunction[i].Level <= self.levelNewbie and
                 TableNewFunction[i].GuideId ~= nil then
-                table.insert(self._tNewbieOpenArray,TableNewFunction[i].GuideId)
+                table.insert(self._tNewbieOpenArray,TableNewFunction[i])
             end
         end
     end
@@ -1195,416 +1025,23 @@ function WorldUILayer:updateRoleInfoWidgets()
     NewbieManager:getInstance():setMainFuncLevel(self.leveldd)
     
     -- 二阶段新手引导
-    if table.getn(self._tMainFuncOpenArray) <= 0 then
+    
         if table.getn(self._tNewbieOpenArray) > 0 then
-            DialogManager:closeDialogByName("TaskDialog") 
-            DialogManager:closeDialogByName("DrunkeryDialog") 
+            --DialogManager:closeDialogByName("TaskDialog") 
+            --DialogManager:closeDialogByName("DrunkeryDialog") 
         
             self:showNewbieByRoleLevel()
         end
-    end
+    
 
     if table.getn(self._tMainFuncOpenArray) > 0 then
-        -- 创建按钮集合 --test 
-        self:createFuncBtns()
-        for i=1,table.getn(self._tFuncBtnMap) do
-            self._tFuncBtnMap[i]:resetPos()
-        end
-        
-        -- 创建活动按钮集合 --test 
-        self:createActivityFuncDataArray()
-        for i=1,table.getn(self._tActivityFuncBtnMap) do
-            self._tActivityFuncBtnMap[i]:resetPos()
-        end
-        self:showNewMainFuncAni(downIsHasOpen,upIsHasOpen)
+        self._pWorldMainFuncMenu:refreshMenus()
+        self._pWorldActivityFuncMenu:refreshMenus()
     end
-end
-
-function WorldUILayer:createActivityDatas()
-    self._tActivityFuncMap = {}
-
-    for i=1,table.getn(TableMainActivityFunc) do
-        if TableMainActivityFunc[i].OpenConditions <= self.leveldd then
-            table.insert(self._tActivityFuncMap,TableMainActivityFunc[i])
-        end
-    end
-
-    table.sort(self._tActivityFuncMap,function(a,b)
-        return a.ButtonOrder > b.ButtonOrder -- 从大到小排序
-    end)
-
-    self._nActivityShowIndex = 1
-
-    for i=1,table.getn(self._tActivityFuncMap) do
-        if self._tActivityFuncMap[i].InsideOrOut == 1 then
-            self._nActivityShowIndex = self._nActivityShowIndex + 1
-        else
-            break
-        end
-    end
-end
-
-function WorldUILayer:createActivityFuncDataArray(  )
-    --初始化数据
-    self:createActivityDatas()
-    --初始化按钮集合
-    local sScreen = mmo.VisibleRect:getVisibleSize()
-    local disPointX = sScreen.width - 120      -- 隐藏点x坐标
-    local disPointY = sScreen.height - 100     -- 隐藏点y坐标
-    local ablePointX = sScreen.width - 120     -- 可视点点x坐标
-    local ablePointY = sScreen.height - 120    -- 可视点点y坐标
-    local offset = 80  
-    local actionFunc = {}
-    
-    --------------------------------------------- 寻宝： 金钱+材料  --------------------------------------------------------------
-    local goldStuffMazeCopysFunc = function() 
-        if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[13].Level then --等级不足
-            NoticeManager:getInstance():showSystemMessage("寻宝功能(内含： 金钱+材料）"..TableNewFunction[13].Level.."级开放")
-            return 
-        end
-        if BagCommonManager:getInstance():isBagItemsEnough() then
-            NoticeManager:getInstance():showSystemMessage("背包已满")
-            return 
-        end
-        local posIndex = RolesManager:getInstance()._pMainPlayerRole:getPositionIndex()
-        local npcID = self:getNpcIdByDesc("寻宝按钮")
-        local npc = RolesManager:getInstance()._tNpcRoles[npcID]
-        local targetPosIndex = MapManager:getInstance():convertPiexlToIndex(cc.p(npc:getPositionX(), npc:getPositionY()))
-        targetPosIndex.y = targetPosIndex.y + 1
-        local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)
-        local callBackFunc = function()
-            MessageGameInstance:sendMessageQueryBattleList21000({kType.kCopy.kGold,kType.kCopy.kStuff})
-        end
-        RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kWorldPlayerRole):setCurStateByTypeID(kType.kState.kWorldPlayerRole.kRun, true, {moveDirections = path, func = callBackFunc})
-    end
-    actionFunc["寻宝按钮"] = goldStuffMazeCopysFunc
-    
-    
-    --------------------------------------------- 历练： 挑战+爬塔+地图BOSS副本 +迷宫 --------------------------------------------------------------        
-    local challengeTowerMapBossCopysFunc = function() 
-        if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[20].Level then --等级不足
-            NoticeManager:getInstance():showSystemMessage("历练功能(内含： 挑战副本+迷宫副本+爬塔副本）"..TableNewFunction[20].Level.."级开放")
-            return 
-        end
-        if BagCommonManager:getInstance():isBagItemsEnough() then
-            NoticeManager:getInstance():showSystemMessage("背包已满")
-            return 
-        end
-        local posIndex = RolesManager:getInstance()._pMainPlayerRole:getPositionIndex()
-        local npcID = self:getNpcIdByDesc("历练按钮")
-        local npc = RolesManager:getInstance()._tNpcRoles[npcID]
-        local targetPosIndex = MapManager:getInstance():convertPiexlToIndex(cc.p(npc:getPositionX(), npc:getPositionY()))
-        targetPosIndex.y = targetPosIndex.y + 1
-        local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)
-        local callBackFunc = function()
-            --MessageGameInstance:sendMessageQueryBattleList21000()
-            DialogManager:getInstance():showDialog("CopysPortalDialog")
-            
-        end
-        RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kWorldPlayerRole):setCurStateByTypeID(kType.kState.kWorldPlayerRole.kRun, true, {moveDirections = path, func = callBackFunc})
-    end
-    actionFunc["历练按钮"] = challengeTowerMapBossCopysFunc
-   
-    
-    --------------------------------------------- 历练： 剧情副本  --------------------------------------------------------------
-    local storyCopysFunc = function() 
-        if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[1].Level then --等级不足
-            NoticeManager:getInstance():showSystemMessage("剧情副本"..TableNewFunction[1].Level.."级开放")
-            return 
-        end
-        if BagCommonManager:getInstance():isBagItemsEnough() then
-            NoticeManager:getInstance():showSystemMessage("背包已满")
-            return 
-        end
-        local posIndex = RolesManager:getInstance()._pMainPlayerRole:getPositionIndex()
-        local npcID = self:getNpcIdByDesc("剧情按钮")
-        local npc = RolesManager:getInstance()._tNpcRoles[npcID]
-        local targetPosIndex = MapManager:getInstance():convertPiexlToIndex(cc.p(npc:getPositionX(), npc:getPositionY()))
-        targetPosIndex.y = targetPosIndex.y + 1
-        local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)
-        local callBackFunc = function()
-            self:runAction(cc.Sequence:create(
-                cc.DelayTime:create(1.0),
-                cc.CallFunc:create(function() 
-                    DialogManager:getInstance():showDialog("StoryCopyDialog")
-                end)
-            ))
-        end
-        RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kWorldPlayerRole):setCurStateByTypeID(kType.kState.kWorldPlayerRole.kRun, true, {moveDirections = path, func = callBackFunc})
-    end
-    actionFunc["剧情按钮"] = storyCopysFunc
-    
-    
-    --------------------------------------------- 竞技场： PVP  --------------------------------------------------------------
-    local pvpHuashanCopysFunc = function() 
-        if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[9].Level then --等级不足
-            NoticeManager:getInstance():showSystemMessage("竞技场"..TableNewFunction[9].Level.."级开放")
-            return 
-        end
-        if BagCommonManager:getInstance():isBagItemsEnough() then
-            NoticeManager:getInstance():showSystemMessage("背包已满")
-            return 
-        end
-        local posIndex = RolesManager:getInstance()._pMainPlayerRole:getPositionIndex()
-        local npcID = self:getNpcIdByDesc("竞技场按钮")
-        local npc = RolesManager:getInstance()._tNpcRoles[npcID]
-        local targetPosIndex = MapManager:getInstance():convertPiexlToIndex(cc.p(npc:getPositionX(), npc:getPositionY()))
-        targetPosIndex.y = targetPosIndex.y + 1
-        local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)
-        local callBackFunc = function()
-            ArenaCGMessage:queryArenaInfoReq21600()  
-            --NewbieManager:showOutAndRemoveWithRunTime()
-            --DialogManager:getInstance():showDialog("ArenaDialog")
-        end
-        
-        RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kWorldPlayerRole):setCurStateByTypeID(kType.kState.kWorldPlayerRole.kRun, true, {moveDirections = path, func = callBackFunc})
-    end
-    actionFunc["竞技场按钮"] = pvpHuashanCopysFunc
-    
-    
-    --------------------------------------------- 华山论剑  --------------------------------------------------------------
-    local huashanCopysFunc = function() 
-        if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[25].Level then --等级不足
-            NoticeManager:getInstance():showSystemMessage("斗神殿"..TableNewFunction[25].Level.."级开放")
-            return 
-        end
-        if BagCommonManager:getInstance():isBagItemsEnough() then
-            NoticeManager:getInstance():showSystemMessage("背包已满")
-            return 
-        end
-        local posIndex = RolesManager:getInstance()._pMainPlayerRole:getPositionIndex()
-        local npcID = self:getNpcIdByDesc("斗神殿按钮")
-        local npc = RolesManager:getInstance()._tNpcRoles[npcID]
-        local targetPosIndex = MapManager:getInstance():convertPiexlToIndex(cc.p(npc:getPositionX(), npc:getPositionY()))
-        targetPosIndex.y = targetPosIndex.y + 1
-        local path = mmo.AStarHelper:getInst():ComputeAStar(posIndex, targetPosIndex)
-        local callBackFunc = function()
-            HuaShanCGMessage:queryHSInfoReq21900()
-        end
-        RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kWorldPlayerRole):setCurStateByTypeID(kType.kState.kWorldPlayerRole.kRun, true, {moveDirections = path, func = callBackFunc})
-    end
-    actionFunc["斗神殿按钮"] = huashanCopysFunc
-    
-    
-    for i=1,table.getn(self._tActivityFuncMap) do
-        local funcBtn = self:getFuncBtnByDesc(self._tActivityFuncMap[i].Desc)
-        if funcBtn == nil then
-            funcBtn = require("WorldFuncBtn"):create( self._tActivityFuncMap[i] )
-            self._pLayerNode:addChild(funcBtn,0)
-            table.insert(self._tActivityFuncBtnMap , funcBtn)
-        end
-
-        if self._nRightUpState == 1 then
-            funcBtn:setStateAble()
-        end
-
-        funcBtn:setPoints(
-            cc.p(disPointX - (i) * offset , disPointY), 
-            (self._nActivityShowIndex > i) and cc.p(disPointX, disPointY) or cc.p(disPointX - (i-self._nActivityShowIndex+1)* offset, disPointY))
-        funcBtn:setCallback(actionFunc[self._tActivityFuncMap[i].Desc])
-    end
-end
-
-function WorldUILayer:getNpcIdByDesc(desc)
-	for i=1,table.getn(TableMainActivityFunc) do
-        if TableMainActivityFunc[i].Desc == desc then
-            return TableMainActivityFunc[i].NpcId
-		end
-	end
-	
-	return 0
-end
-
-function WorldUILayer:createFuncDataArray()
-    self._tHorizontalMap = {}
-    self._tVerticalMap = {}
-   
-    for i=1,table.getn(TableMainUIFunc) do
-        if TableMainUIFunc[i].OpenConditions <= self.leveldd then
-            if TableMainUIFunc[i].ButtonPos == 1 then
-                table.insert(self._tHorizontalMap,TableMainUIFunc[i])
-            else
-                table.insert(self._tVerticalMap,TableMainUIFunc[i])
-            end
-        end
-    end
-    
-    table.sort(self._tHorizontalMap,function(a,b)
-        return a.ButtonOrder > b.ButtonOrder -- 从大到小排序
-    end)
-    table.sort(self._tVerticalMap,function(a,b)
-        return a.ButtonOrder > b.ButtonOrder -- 从大到小排序
-    end)
-
-    self._nHorizontalShowIndex = 1
-    self._nVerticalShowIndex = 1
-
-    for i=1,table.getn(self._tHorizontalMap) do
-        if self._tHorizontalMap[i].InsideOrOut == 1 then
-            self._nHorizontalShowIndex = self._nHorizontalShowIndex + 1
-        else
-            break
-        end
-    end
-
-    for i=1,table.getn(self._tVerticalMap) do
-        if self._tVerticalMap[i].InsideOrOut == 1 then
-            self._nVerticalShowIndex = self._nVerticalShowIndex + 1
-        else
-            break
-        end
-    end
-end
-
---创建背包按钮
-function WorldUILayer:createFuncBtns()
-    local sScreen = mmo.VisibleRect:getVisibleSize()
-    self:createFuncDataArray()
-
-    local actionFunc = {
-        ["设置按钮"] = function() DialogManager:getInstance():showDialog("OptionDialog",{kOptionType.MainOption}) end,
-        ["好友按钮"] = function() DialogManager:showDialog("FriendsDialog",{}) end, 
-        ["剧情按钮"] = function()  end,
-        ["宠物按钮"] = function()
-            --[[PetsManager:getInstance()._tMainPetsInfos = {{petId = 1 , level = 1 , step = 2 , exp = 1},
-            {petId = 2 , level = 1 , step = 3 , exp = 1},
-            {petId = 3 , level = 5 , step = 1 , exp = 1},
-            {petId = 4 , level = 44 , step = 4 , exp = 1},
-            }
-            DialogManager:getInstance():showDialog("PetDialog",{{{petId = 1 , level = 1 , step = 2 , exp = 1},
-            {petId = 2 , level = 1 , step = 3 , exp = 1},
-            {petId = 3 , level = 5 , step = 1 , exp = 1},
-            {petId = 4 , level = 44 , step = 4 , exp = 1},
-            }})]]
-
-            -- 测试：
-            --TasksManager:getInstance():createMainTask()
-            --TasksManager:getInstance()._pMainTask:startOperateQueue()
-            --DialogManager:showDialog("FriendsDialog",{})
-            --PetCGMessage:sendMessageGetPetsList21500()
-            DialogManager:showDialog("PetDialog",{})
-        end,
-        ["技能按钮"] = function()
-            DialogManager:getInstance():showDialog("SkillDialog",{}) end,
-        ["背包按钮"] = function() DialogManager:getInstance():showDialog("RolesInfoDialog",{RoleDialogTabType.RoleDialogTypeBag}) end,
-        ["装备按钮"] = function()
-            if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[8].Level then
-                NoticeManager:getInstance():showSystemMessage("分解功能"..TableNewFunction[8].Level.."级开放")
-                return
-            end
-            DialogManager:getInstance():showDialog("EquipmentDialog",{EquipmentTabType.EquipmentTabTypeResolve,nil}) 
-        end,
-        ["任务按钮"] = function() 
-            DialogManager:getInstance():showDialog("TaskDialog",{false})
-
-        end,
-        ["邮件按钮"] = function() 
-            DialogManager:getInstance():showDialog("EmailDialog")
-        end,
-        ["剑灵按钮"] = function() 
-            if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[15].Level then --等级不足
-                NoticeManager:getInstance():showSystemMessage("剑灵"..TableNewFunction[15].Level.."级开放")
-                return 
-            end
-            BladeSoulCGMessage:sendMessageSelectBladeSoulInfo20700()end,
-        ["境界按钮"] = function()
-            if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[10].Level then --等级不足
-                NoticeManager:getInstance():showSystemMessage("境界"..TableNewFunction[10].Level.."级开放")
-                return 
-            end
-            FairyLandCGMessage:sendMessageSelectFairyInfo20600() end, 
-        ["商城按钮"] = function() DialogManager:getInstance():showDialog("ShopDialog",{kShopType.kDiamondShop}) end,
-        ["群芳阁按钮"] = function() 
-            -- if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[11].Level then --等级不足
-            --     NoticeManager:getInstance():showSystemMessage("群芳阁"..TableNewFunction[11].Level.."级开放")
-            --     return 
-            -- end
-            -- BeautyClubSystemCGMessage:queryBeautyInfoReq20800() 
-            SturaLibraryCGMessage:querySturaLibraryInfoReq22400()
-        end,
-        ["酒坊按钮"] = function ()
-            if RolesManager:getInstance()._pMainRoleInfo.level < TableNewFunction[18].Level then --等级不足
-                NoticeManager:getInstance():showSystemMessage("酒坊系统"..TableNewFunction[11].Level.."级开放")
-                return 
-            end
-            DrunkeryCGMessage:openDrunkeryDialog22100()
-        end,
-        ["家族按钮"] = function ()
-        if  FamilyManager:getInstance()._bOwnFamily == true then --有家族
-            DialogManager:getInstance():showDialog("FamilyDialog")
-
-        else
-            DialogManager:getInstance():showDialog("FamilyRegisterDialog")  
-            FamilyCGMessage:queryFamilyListReq22300(0,8)
-
-        end
-          
-        end,
-    }
-
-    local disPointX = sScreen.width - 100      -- 隐藏点x坐标
-    local disPointY = 30                      -- 隐藏点y坐标
-
-    local ablePointX = sScreen.width - 100     -- 可视点点x坐标
-    local ablePointY = 125                     -- 可视点点y坐标
-
-    local offset = 84                         --图标间距
-
-    for i=1,table.getn(self._tHorizontalMap) do
-        local funcBtn = self:getFuncBtnByDesc(self._tHorizontalMap[i].Desc)
-        if funcBtn == nil then
-            funcBtn = require("WorldFuncBtn"):create( self._tHorizontalMap[i] )
-            self._pLayerNode:addChild(funcBtn,0)
-            table.insert(self._tFuncBtnMap , funcBtn)
-        end
-        if self._nRightBottomState == 1 then
-            funcBtn:setStateAble()
-        end
-    
-        funcBtn:setPoints(
-            cc.p(disPointX+10, ablePointY + (i-1)* offset + 30), 
-            (self._nHorizontalShowIndex > i) and cc.p(disPointX+10, disPointY) or cc.p(disPointX+10, ablePointY + (i-self._nHorizontalShowIndex)* offset)
-        )
-        funcBtn:setCallback(actionFunc[self._tHorizontalMap[i].Desc])
-    end
-
-    for i=1,table.getn(self._tVerticalMap) do
-        local funcBtn = self:getFuncBtnByDesc(self._tVerticalMap[i].Desc)
-        if funcBtn == nil then
-        	funcBtn = require("WorldFuncBtn"):create( self._tVerticalMap[i] )
-            self._pLayerNode:addChild(funcBtn,0)
-            table.insert(self._tFuncBtnMap , funcBtn)
-        end
-        
-        if self._nRightBottomState == 1 then
-            funcBtn:setStateAble()
-        end
-
-        funcBtn:setPoints(
-            cc.p(disPointX - (i) * offset - 30, disPointY), 
-            (self._nVerticalShowIndex > i) and cc.p(disPointX, disPointY) or cc.p(ablePointX - (i-self._nVerticalShowIndex+1)* offset, disPointY))
-        funcBtn:setCallback(actionFunc[self._tVerticalMap[i].Desc])
-    end
-end
-
-function WorldUILayer:getFuncBtnByDesc(desc)
-    for i=1,table.getn(self._tFuncBtnMap) do
-        if self._tFuncBtnMap[i]._sKeyName == desc then
-            return self._tFuncBtnMap[i]
-    	end
-    end	
-    
-    for i=1,table.getn(self._tActivityFuncBtnMap) do
-        if self._tActivityFuncBtnMap[i]._sKeyName == desc then
-            return self._tActivityFuncBtnMap[i]
-        end
-    end
-    
-    return nil
 end
 
 -- 移除当前对话的头像集合
-function WorldUILayer:removeCurTalkHeaders()
+function WorldUILayer:removeCurTalkHeadersAndNames()
     local tBakObjs = {}
     for k,v in pairs(self._tTalkHeaders) do
         local bNeedBreak = false
@@ -1621,12 +1058,35 @@ function WorldUILayer:removeCurTalkHeaders()
     end
     self._tTalkHeaders = {}
     tBakObjs = nil
+
+    for k,v in pairs(self._tTalkNames) do
+        v:removeFromParent(true)
+    end
+    self._tTalkNames = {}
+
 end
 
 -- 创建指定的对话的头像集合
-function WorldUILayer:createTalkHeaders(talkID)
+function WorldUILayer:createTalkHeadersAndNames(talkID)
     local tContents = TableTalks[talkID].Contents
     for kInfo, vInfo in pairs(tContents) do
+        -- 创建名字
+        local name = ""
+        if vInfo.roleType == kType.kRole.kPlayer then
+            name = self:getRolesManager()._pMainRoleInfo.roleName
+        elseif vInfo.roleType == kType.kRole.kNpc then
+            name = TableTempleteNpcRoles[vInfo.roleTempleteID].Name
+        elseif vInfo.roleType == kType.kRole.kMonster then
+            name = TableTempleteMonster[vInfo.roleTempleteID].Name
+        end
+        local pName = cc.Label:createWithTTF(name, strCommonFontName, 20)
+        pName:setTextColor(cFontWhite)
+        pName:enableOutline(cFontOutline,2)
+        pName:setVisible(false)
+        pName:setPositionZ(-1)
+        self:addChild(pName,200)
+        table.insert(self._tTalkNames,pName)
+
         local pAni = nil
         -- 先查找角色头像是否已经在缓存中
         local needCreate = true
@@ -1812,7 +1272,7 @@ function WorldUILayer:createTalkHeaders(talkID)
 
             end
         end
-        pAni:setPositionZ(4000)
+        pAni:setPositionZ(0)
         table.insert(self._tTalkHeaders, pAni)
     end
     
@@ -1822,9 +1282,13 @@ function WorldUILayer:showCurTalks()
     -- 全部显示完毕
     if self:getTalksManager()._nCurTalkStep + 1 > table.getn(self:getTalksManager()._tCurContents) then
         self._pTalkFrame:setVisible(false)
+        self._pTalkArrowPlot:setVisible(false)
         self._pTalkArrow:setVisible(false)
         self._pTalkTextArea:setVisible(false)
         for k,v in pairs(self._tTalkHeaders) do 
+            v:setVisible(false)
+        end
+        for k,v in pairs(self._tTalkNames) do 
             v:setVisible(false)
         end
         self:getTalksManager():setCurTalksFinished()
@@ -1832,23 +1296,45 @@ function WorldUILayer:showCurTalks()
     end
 
     self._pTalkFrame:setVisible(true)
+    self._pTalkArrowPlot:setVisible(true)
     self._pTalkArrow:setVisible(true)
     self._pTalkTextArea:setVisible(true)
     for k,v in pairs(self._tTalkHeaders) do 
         v:setVisible(false)
     end
-    self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setVisible(true)
-    if self:getTalksManager()._tCurContents[self:getTalksManager()._nCurTalkStep + 1].posType == 1 then -- 左
-        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setPosition(self._pTalkFrame:getPositionX()-512 + 130,0)
-        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setRotation3D(cc.vec3(0,45,0))
-    elseif self:getTalksManager()._tCurContents[self:getTalksManager()._nCurTalkStep + 1].posType == 2 then -- 右
-        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setPosition(self._pTalkFrame:getPositionX()+512 - 130,0)
-        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setRotation3D(cc.vec3(0,-45,0))
+    for k,v in pairs(self._tTalkNames) do 
+        v:setVisible(false)
     end
-    
-    self._pTalkTextArea:setString(self:getTalksManager()._tCurContents[self:getTalksManager()._nCurTalkStep + 1].words)
-    self:getTalksManager()._nCurTalkStep = self:getTalksManager()._nCurTalkStep + 1
 
+    self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setVisible(true)
+    self._tTalkNames[self:getTalksManager()._nCurTalkStep + 1]:setVisible(true)
+    self._pTalkTextArea:setString(self:getTalksManager()._tCurContents[self:getTalksManager()._nCurTalkStep + 1].words)
+    if self:getTalksManager()._tCurContents[self:getTalksManager()._nCurTalkStep + 1].posType == 1 then -- 左
+        self._pTalkFrame:setScaleX(-1*mmo.VisibleRect:width()/(self._pTalkFrame:getContentSize().width-8))
+        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setPosition(mmo.VisibleRect:width()/2/3,5)
+        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setRotation3D(cc.vec3(0,45,0))
+        self._tTalkNames[self:getTalksManager()._nCurTalkStep + 1]:setPosition(mmo.VisibleRect:width()/2.20, 234)
+        self._pTalkArrowPlot:stopAllActions()
+        self._pTalkArrow:stopAllActions()
+        self._pTalkArrowPlot:setPosition(mmo.VisibleRect:width()/2/3+100,10)
+        self._pTalkArrow:setPosition(mmo.VisibleRect:width()/2/3+100,25)
+        self._pTalkArrowPlot:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.FadeTo:create(0.3,125)),cc.EaseSineInOut:create(cc.FadeTo:create(0.3,255)))))
+        self._pTalkArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(0.3,cc.p(0,30))),cc.EaseSineInOut:create(cc.MoveBy:create(0.3,cc.p(0,-30))))))
+        self._pTalkTextArea:setPosition(cc.p(mmo.VisibleRect:width()/2*2/3,13))
+    elseif self:getTalksManager()._tCurContents[self:getTalksManager()._nCurTalkStep + 1].posType == 2 then -- 右
+        self._pTalkFrame:setScaleX(mmo.VisibleRect:width()/(self._pTalkFrame:getContentSize().width-8))
+        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setPosition(mmo.VisibleRect:width()*5/6,5)
+        self._tTalkHeaders[self:getTalksManager()._nCurTalkStep + 1]:setRotation3D(cc.vec3(0,-45,0))
+        self._tTalkNames[self:getTalksManager()._nCurTalkStep + 1]:setPosition(mmo.VisibleRect:width()/1.83, 234)
+        self._pTalkArrowPlot:stopAllActions()
+        self._pTalkArrow:stopAllActions()
+        self._pTalkArrowPlot:setPosition(mmo.VisibleRect:width()*5/6-100,10)
+        self._pTalkArrow:setPosition(mmo.VisibleRect:width()*5/6-100,25)
+        self._pTalkArrowPlot:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.FadeTo:create(0.3,125)),cc.EaseSineInOut:create(cc.FadeTo:create(0.3,255)))))
+        self._pTalkArrow:runAction(cc.RepeatForever:create(cc.Sequence:create(cc.EaseSineInOut:create(cc.MoveBy:create(0.3,cc.p(0,30))),cc.EaseSineInOut:create(cc.MoveBy:create(0.3,cc.p(0,-30))))))
+        self._pTalkTextArea:setPosition(cc.p(50,13))
+    end
+    self:getTalksManager()._nCurTalkStep = self:getTalksManager()._nCurTalkStep + 1
 
 end
 
@@ -1856,22 +1342,11 @@ function WorldUILayer:setAllUIVisible(visible)
     self._pStick:setVisible(visible)
     self._pLayerNode:setVisible(visible)
     self._pChatPanelCCS:setVisible(visible)
+    self._pStrongerBtn:setVisible(visible)
+    self._pActivityBtn:setVisible(visible)  
     
-    if visible == true then
-        for i=1,table.getn(self._tFuncBtnMap) do
-            self._tFuncBtnMap[i]:setTouchAble(true)
-        end
-        for i=1 ,table.getn(self._tActivityFuncBtnMap) do
-            self._tActivityFuncBtnMap[i]:setTouchAble(true)
-        end
-    else
-        for i=1,table.getn(self._tFuncBtnMap) do
-            self._tFuncBtnMap[i]:setTouchAble(false)
-        end  
-        for i=1 ,table.getn(self._tActivityFuncBtnMap) do
-            self._tActivityFuncBtnMap[i]:setTouchAble(false)
-        end
-    end
+    self._pWorldMainFuncMenu:setVisible(visible)
+    self._pWorldActivityFuncMenu:setVisible(visible)
 end
 
 --添加buff图标
@@ -1942,7 +1417,7 @@ function WorldUILayer:createChatFunc()
         self._tNewMessage = {} --清空外面的提示队列
         DialogManager:getInstance():showDialog("ChatDialog")
     elseif eventType == ccui.TouchEventType.began then
-        AudioManager:getInstance():playEffect("ButtonClick")
+        AudioManager:getInstance():playEffect("ChatButton")
     end
 end
  self._pChatButton:addTouchEventListener(onTouchButton)
@@ -1972,89 +1447,6 @@ function WorldUILayer:homeChatOutSide(event)
     end
 end
 
-function WorldUILayer:updateMainTask()
-    local info = TasksManager:getInstance():getTaskInfoWithTaskInfo(TasksManager:getInstance()._pMainTaskInfo)
-    if TasksManager:getInstance()._pMainTaskInfo.state == 1 then
-        self._pMainTaskParams._pButton:setTitleText("前往")
-        
-        self._pMainTaskParams._pButton:addTouchEventListener(function( sender, eventType )
-            if eventType == ccui.TouchEventType.ended then
-                if TasksManager:getInstance()._pMainTaskInfo == nil then
-                    TaskCGMessage:sendMessageQueryTasks21700()
-                    return
-                end
-            
-                NewbieManager:showOutAndRemoveWithRunTime()
-                
-                self._pMainTaskParams._pButton:runAction(cc.Sequence:create(
-                    cc.DelayTime:create(1.0),
-                    cc.CallFunc:create(function() 
-                        if TasksManager:getInstance():getAllOperateBeOver() == true then
-                            TasksManager:getInstance():startOperateByTaskId(TasksManager:getInstance()._pMainTaskInfo.taskId)
-                        end
-                    end)
-                ))
-            elseif eventType == ccui.TouchEventType.began then
-                AudioManager:getInstance():playEffect("ButtonClick")
-            end
-        end)
-    elseif TasksManager:getInstance()._pMainTaskInfo.state == 2 then
-        self._pMainTaskParams._pButton:setTitleText("领取")
-        
-        self._pMainTaskParams._pButton:addTouchEventListener(function( sender, eventType )
-            if eventType == ccui.TouchEventType.ended then
-                if TasksManager:getInstance()._pMainTaskInfo == nil then
-                    TaskCGMessage:sendMessageQueryTasks21700()
-                    return
-                end
-            
-                TaskCGMessage:sendMessageGainTaskAward21702(TasksManager:getInstance()._pMainTaskInfo.taskId)
-            elseif eventType == ccui.TouchEventType.began then
-                AudioManager:getInstance():playEffect("ButtonClick")
-            end
-        end)
-    end
-
-    self._pMainTaskParams._pname02:setString(info.data.Title)
-    self._pMainTaskParams._ptext02:setString(info.data.Target)
-
-    for i=1,4 do
-        if table.getn(info.data.Reward) >= i then
-            self._pMainTaskParams["_picon0"..i]:setVisible(true)
-            local RewardInfo = info.data.Reward[i]
-            if RewardInfo[1] <= 99 then
-                local FinanceIcon = FinanceManager:getInstance():getIconByFinanceType(RewardInfo[1])
-                self._pMainTaskParams["_picon0"..i]:loadTexture(
-                    FinanceIcon.filename,
-                    ccui.TextureResType.plistType)
-                self._pMainTaskParams["_picontext0"..i]:setString(RewardInfo[2])
-            else
-                local pItemInfo = {id = RewardInfo[1], baseType = RewardInfo[3], value = RewardInfo[2]}
-                pItemInfo = GetCompleteItemInfo(pItemInfo)
-
-                self._pMainTaskParams["_picon0"..i]:loadTexture(
-                    pItemInfo.templeteInfo.Icon ..".png",
-                    ccui.TextureResType.plistType)
-                self._pMainTaskParams["_picontext0"..i]:setString(RewardInfo[2])
-            end
-        else
-            self._pMainTaskParams["_picon0"..i]:setVisible(false)
-            self._pMainTaskParams["_picontext0"..i]:setVisible(false)
-        end
-    end
-    
-    local aniPlayOver = function(frame)
-        self._pMainTaskParams._pNodeAll:setVisible(false)
-    end
-    
-    local action = cc.Sequence:create(
-        cc.DelayTime:create(5.2),
-        cc.DelayTime:create(0.1),
-        cc.CallFunc:create(aniPlayOver))
-        
-    self:runAction(action)
-end
-
 -- 新装备获得
 function WorldUILayer:handleNewEquipShow(event)
     if event.show == false then
@@ -2068,14 +1460,6 @@ end
 --跑马灯通知
 function WorldUILayer:marqueeEvent(event)
     NoticeManager:insertMarqueeMessage(event)
-end
-
-
--- 处理主线任务改变
-function WorldUILayer:handleMainTaskchange(event)
-    self._pMainTaskParams._pCCS:setVisible(true)
-    self._pMainTaskParams._pNodeAll:setVisible(true)
-    self:updateMainTask()
 end
 
 -- 处理(客户端自己推送的更新背包列表)
@@ -2120,19 +1504,19 @@ end
 
 -- 红点提示
 function WorldUILayer:handleMsgWarning(event)
-    self._pWarningSpriteDownArrow:setVisible(false)
-    self._pWarningSpriteUpArrow:setVisible(false)
-    for i=1,table.getn(self._tFuncBtnMap) do
-        if self._tFuncBtnMap[i]:isWarning() == true then
-    		self._pWarningSpriteDownArrow:setVisible(true)
-    	end
-    end
+    --self._pWarningSpriteDownArrow:setVisible(false)
+    --self._pWarningSpriteUpArrow:setVisible(false)
+    --for i=1,table.getn(self._tFuncBtnMap) do
+    --    if self._tFuncBtnMap[i]:isWarning() == true then
+    --		self._pWarningSpriteDownArrow:setVisible(true)
+    --	end
+    --end
     
-    for i=1,table.getn(self._tActivityFuncMap) do
-        if self._tActivityFuncBtnMap[i]:isWarning() == true then
-            self._pWarningSpriteUpArrow:setVisible(true)
-        end
-    end
+    --for i=1,table.getn(self._tActivityFuncMap) do
+    --    if self._tActivityFuncBtnMap[i]:isWarning() == true then
+    --        self._pWarningSpriteUpArrow:setVisible(true)
+    --    end
+    --end
 end
 
 --打开聊天提示框
@@ -2168,25 +1552,22 @@ end
 function WorldUILayer:initNewFuncOpen()
 
  if self._pNewFuncOpenCCs == nil then 
-        local proams = require("NewFuncOpParams"):create() 
+    local proams = require("NewFuncOpParams"):create() 
     self._pNewFuncOpenCCs = proams._pCCS
-    self._pNewFuncOpenCCs:setPosition(cc.p(mmo.VisibleRect:left().x+80,mmo.VisibleRect:left().y+180))
+    self._pNewFuncOpenCCs:setPosition(cc.p(mmo.VisibleRect:right().x-80,mmo.VisibleRect:right().y+270))
     self._pLayerNode:addChild(self._pNewFuncOpenCCs)
  end
  local pLevel =  RolesManager:getInstance()._pMainRoleInfo.level
- local pIcon = nil
  local pDesc = nil
  for i=1,table.getn(TableNewFuncOp) do
      local v = TableNewFuncOp[i]
      if pLevel~= nil and v.OpenConditions > pLevel then 
-        pIcon = v.ButtonResPos
         pDesc = v.Desc
         break
      end
  end
- if pIcon ~= nil and pDesc ~= nil then  --表里的字段必须有大于当前等级的时候
+ if pDesc ~= nil then  --表里的字段必须有大于当前等级的时候
     local pMountNode = self._pNewFuncOpenCCs:getChildByName("NodeNewFunc")
-    pMountNode:getChildByName("Icon"):loadTexture("MainIcon/"..pIcon..".png",ccui.TextureResType.plistType)
     pMountNode:getChildByName("FuncText"):setString(pDesc)
  else
     self._pNewFuncOpenCCs:setVisible(false)

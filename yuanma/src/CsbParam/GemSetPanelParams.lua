@@ -39,10 +39,10 @@ function GemSetPanelParams:ctor()
     self._pButtonBuy = self._pGemSetGg:getChildByName("Button_Buy")
    
     --装备喷射粒子特效1-4
-    self._pParticle01 = self._pGemSetGg:getChildByName("Particle02")
-    self._pParticle02 = self._pGemSetGg:getChildByName("Particle03")
-    self._pParticle03 = self._pGemSetGg:getChildByName("Particle04")
-    self._pParticle04 = self._pGemSetGg:getChildByName("Particle05")
+    --self._pParticle01 = self._pGemSetGg:getChildByName("Particle02")
+    --self._pParticle02 = self._pGemSetGg:getChildByName("Particle03")
+    --self._pParticle03 = self._pGemSetGg:getChildByName("Particle04")
+    --self._pParticle04 = self._pGemSetGg:getChildByName("Particle05")
 end
 
 function GemSetPanelParams:create()

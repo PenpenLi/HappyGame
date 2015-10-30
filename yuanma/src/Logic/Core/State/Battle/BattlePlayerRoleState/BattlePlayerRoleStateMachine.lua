@@ -19,7 +19,8 @@ function BattlePlayerRoleStateMachine:ctor()
     self._fNoHurtTimeCounter = 0                           -- 未被攻击持续时间的计数器
     self._fIgnorHurtTimeCounter = -1                       -- 忽略攻击持续时间的计数器（默认为-1不进行计数，为0时开始计数）
     self._nAutoHealTimeCounter = 0                         -- 自动回血时间计数器
-    self._fLifeCounter = 0                              -- 生命时间计数器（每1s清空一次）
+    self._fLifeCounter = 0                                 -- 生命时间计数器（每1s清空一次）
+    self._nPetCooperateCDCounter = 0                       -- 宠物共鸣的CD计数器
     
 end
 
@@ -68,6 +69,7 @@ function BattlePlayerRoleStateMachine:update(dt)
 
     if self:getMaster() then
         if self._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kDead and self:getMaster()._nCurHp > 0 then
+
             -- 每秒连击保户值的恢复(前提是：没有破甲buff的前提下)
             if self:getMaster():getBuffControllerMachine():isBuffExist(kType.kController.kBuff.kBattleSunderArmorBuff) == false then
                 self:getMaster()._nCurComboInterupt = self:getMaster()._nCurComboInterupt + dt * self:getMaster()._pRoleInfo.ComboInteruptRecover
@@ -140,11 +142,31 @@ function BattlePlayerRoleStateMachine:update(dt)
                 end
     
             end
+
+            -- 考虑宠物共鸣技能CD
+            if self:getMaster()._strCharTag == "pvp" then
+                if self:getMaster()._pCurPetRole and self:getMaster()._pCurPetRole._pCooperateInfo and self:getMaster()._pCurPetRole._pCooperateInfo.CD and self:getMaster()._pCurPetRole._nCurHp > 0 then  -- 存在共鸣
+                    self._nPetCooperateCDCounter = self._nPetCooperateCDCounter + dt
+                end
+            end
             
         end
     end
 
     return
+end
+
+-- 使用共鸣技能
+function BattlePlayerRoleStateMachine:usePetCooperateSkill()
+    if self:getMaster()._strCharTag == "pvp" then
+        if self:getMaster()._pCurPetRole and self:getMaster()._pCurPetRole._pCooperateInfo and self:getMaster()._pCurPetRole._pCooperateInfo.CD and self:getMaster()._pCurPetRole._nCurHp > 0 then  -- 存在共鸣
+            if self._nPetCooperateCDCounter >= self:getMaster()._pCurPetRole._pCooperateInfo.CD then
+                self._nPetCooperateCDCounter = 0
+                AIManager:getInstance():usePetCooperateSkillByCampType(kType.kCampType.kPvp)
+                cclog("PVP释放宠物共鸣")
+            end
+        end
+    end
 end
 
 return BattlePlayerRoleStateMachine

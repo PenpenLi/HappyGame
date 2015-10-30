@@ -59,6 +59,8 @@ function PlayerRole:ctor()
     self._pRefRoleIgnoreHurt = nil                  -- 角色是否无视伤害的引用计数
     self._pRefNotLoseHp = nil                       -- 角色不掉血引用计数
     self._pRefGhostOpacity = nil                    -- 角色虚影半透的引用计数，其他正常（可以应值等等）
+    ----------- 人物相关 ----------------------------------------------------
+    self._pCurPetRole = nil                         -- 当前宠物
     
 end
 
@@ -146,11 +148,6 @@ function PlayerRole:initInfo(pRoleInfo, charTag)
     self._nHpMax = self:getAttriValueByType(kAttribute.kHp)
     self._nCurHp = self:getAttriValueByType(kAttribute.kHp)
     self._nAngerMax = self._pRoleInfo.AngerMax
-    if NewbieManager:getInstance()._bSkipGuide == false then
-        if TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.taskId == 10005 then  -- 第五次进入战斗引导
-            self._nAngerMax = self._nAngerMax/10
-        end
-    end
     self._nCurAnger = 0
     self._pCurDefLevel = TableTempleteCareers[self._pRoleInfo.roleCareer].DefenseLevel
     self._nCurComboInterupt = self._pRoleInfo.ComboInterupt
@@ -186,7 +183,6 @@ function PlayerRole:initAni()
     local templeteID = TableEquips[self._pRoleInfo.equipemts[kEqpLocation.kWeapon].id - 100000].TempleteID[self._pRoleInfo.roleCareer]
     local tWeaponTempleteInfo = TableTempleteEquips[templeteID]
 
-
     --先初始化人物信息
     for i=1,table.getn(self._pRoleInfo.equipemts) do --遍历装备集合
         GetCompleteItemInfo(self._pRoleInfo.equipemts[i],self._pRoleInfo.roleCareer)
@@ -211,6 +207,7 @@ function PlayerRole:initAni()
         local fullAniName = self._strAniName..".c3b"
         local fullTextureName = tBodyTempleteInfo.Texture..".pvr.ccz"
         self._strBodyTexturePvrName = tBodyTempleteInfo.Texture
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tBodyTempleteInfo.Texture)
         self._pAni = cc.Sprite3D:create(fullAniName)
         self._pAni:setTexture(fullTextureName)
         self:addChild(self._pAni)
@@ -221,13 +218,14 @@ function PlayerRole:initAni()
            pWeaponLC3bName = tWeaponTempleteInfo.Model2..".c3b"
         end
         local pWeaponTextureName = tWeaponTempleteInfo.Texture..".pvr.ccz"
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tWeaponTempleteInfo.Texture)
         self._strWeaponTexturePvrName = tWeaponTempleteInfo.Texture
         if pWeaponRC3bName then
             self._pWeaponR = cc.Sprite3D:create(pWeaponRC3bName)
             self._pWeaponR:setTexture(pWeaponTextureName)
             self._pWeaponR:setScale(tWeaponTempleteInfo.ModelScale1)
             local animation = cc.Animation3D:create(pWeaponRC3bName)
-            local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()/cc.Director:getInstance():getAnimationInterval()))
+            local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()*30))
             self._pWeaponR:runAction(act)
             self._pAni:getAttachNode("boneRightHandAttach"):addChild(self._pWeaponR)
         end
@@ -236,7 +234,7 @@ function PlayerRole:initAni()
             self._pWeaponL:setTexture(pWeaponTextureName)
             self._pWeaponL:setScale(tWeaponTempleteInfo.ModelScale2)
             local animation = cc.Animation3D:create(pWeaponLC3bName)
-            local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()/cc.Director:getInstance():getAnimationInterval()))
+            local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()*30))
             self._pWeaponL:runAction(act)
             self._pAni:getAttachNode("boneLeftHandAttach"):addChild(self._pWeaponL)
         end
@@ -260,11 +258,12 @@ function PlayerRole:initAni()
         local fullAniName = tFashionBackTempleteInfo.Model1..".c3b"
         local fullTextureName = tFashionBackTempleteInfo.Texture..".pvr.ccz"
         self._strBackTexturePvrName = tFashionBackTempleteInfo.Texture
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tFashionBackTempleteInfo.Texture)
         self._pBack = cc.Sprite3D:create(fullAniName)
         self._pBack:setTexture(fullTextureName)
         self._pBack:setScale(tFashionBackTempleteInfo.ModelScale1)
         local animation = cc.Animation3D:create(fullAniName)
-        local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()/cc.Director:getInstance():getAnimationInterval()))
+        local act = cc.RepeatForever:create(cc.Animate3D:createWithFrames(animation, 0, animation:getDuration()*30))
         self._pBack:runAction(act)
         self._pAni:getAttachNode("boneBackAttach"):addChild(self._pBack)
     end
@@ -282,6 +281,7 @@ function PlayerRole:initAni()
     end
     if tFashionHaloTempleteInfo then
         local fullAniName = tFashionHaloTempleteInfo.Model1..".csb"
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tFashionHaloTempleteInfo.Texture)
         self._pHalo = cc.CSLoader:createNode(fullAniName)
         self:addChild(self._pHalo,-1)
         local act = cc.CSLoader:createTimeline(fullAniName)
@@ -295,6 +295,8 @@ function PlayerRole:initAni()
 
     -- 头顶字：Lv. X 姓名
     self._pName = cc.Label:createWithTTF("Lv."..self._pRoleInfo.level.." "..self._pRoleInfo.roleName, strCommonFontName, 18)
+    self._pName:setTextColor(cFontWhite)
+    self._pName:enableOutline(cFontOutline,2)
     self._pName:setPosition(cc.p(0,self:getHeight()+5))
     self:addChild(self._pName)
     if OptionManager:getInstance()._bPlayersNameShowOrNot == true then
@@ -508,14 +510,15 @@ function PlayerRole:setBattleUILayerDelegate( delegate )
     self._pBattleUIDelegate = delegate
 
     if self._strCharTag == "main" then
-        self._pBattleUIDelegate:setPlayerHpMax(self._nHpMax)
-        self._pBattleUIDelegate:setPlayerHpCur(self._nCurHp, true)
-        self._pBattleUIDelegate:setPlayerAngerMax(self._nAngerMax)
-        self._pBattleUIDelegate:setPlayerAngerCur(self._nCurAnger)
+        self._pBattleUIDelegate._pMainPlayerUINode:setMaxHp(self._nHpMax)
+        self._pBattleUIDelegate._pMainPlayerUINode:setCurHp(self._nHpMax,true)
+        self._pBattleUIDelegate._pAngerSkillUINode:setAngerMax(self._nAngerMax)
+        self._pBattleUIDelegate._pAngerSkillUINode:setAngerCur(self._nCurAnger)
     elseif self._strCharTag == "pvp" then
-        self._pBattleUIDelegate:setBossName(self._pRoleInfo.roleName)
-        self._pBattleUIDelegate:setBossHpMax(self._nHpMax)
-        self._pBattleUIDelegate:setBossHpCur(self._nCurHp, true)
+        self._pBattleUIDelegate._pBossHpNode:setBossName(self._pRoleInfo.roleName)
+        self._pBattleUIDelegate._pBossHpNode:setBossHpMax(self._nHpMax)
+        self._pBattleUIDelegate._pBossHpNode:setBossHpCur(self._nHpMax)
+        self._pBattleUIDelegate._pBossHpNode:setBossHpNum(1) --pvp人物一格血
     end
     
 end
@@ -644,6 +647,7 @@ function PlayerRole:refreshEquipsWithRoleInfo(roleInfo)
     end
     if tFashionHaloTempleteInfo then
         local fullAniName = tFashionHaloTempleteInfo.Model1..".csb"
+        ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(tFashionHaloTempleteInfo.Texture)
         --local fullTextureName = tFashionHaloTempleteInfo.Texture..".pvr.ccz"
         self._pHalo = cc.CSLoader:createNode(fullAniName)
         self:addChild(self._pHalo,-1)
@@ -767,8 +771,8 @@ function PlayerRole:setHp(value,maxValue)
     if self == self:getRolesManager()._pMainPlayerRole then
         if self:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole)._pCurState._kTypeID ~= kType.kState.kBattlePlayerRole.kDead then
             if self._pBattleUIDelegate then
-                self._pBattleUIDelegate:setPlayerHpMax(self._nHpMax)
-                self._pBattleUIDelegate:setPlayerHpCur(self._nCurHp, true)           
+                self._pBattleUIDelegate._pMainPlayerUINode:setMaxHp(self._nHpMax)
+                self._pBattleUIDelegate._pMainPlayerUINode:setCurHp(self._nCurHp, true)           
             end
 
         end
@@ -793,11 +797,11 @@ function PlayerRole:addHp(value)
     -- ui更新
     if self._strCharTag == "main" then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setPlayerHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pMainPlayerUINode:setCurHp(self._nCurHp)
         end
     elseif self._strCharTag == "pvp" then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setBossHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pBossHpNode:setBossHpCur(self._nCurHp)
         end
     end
     
@@ -853,11 +857,11 @@ function PlayerRole:loseHp(value, isCritical)
     -- ui更新
     if self._strCharTag == "main" then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setPlayerHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pMainPlayerUINode:setCurHp(self._nCurHp)
         end
     elseif self._strCharTag == "pvp" then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setBossHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pBossHpNode:setBossHpCur(self._nCurHp)
         end
     end
     
@@ -865,24 +869,21 @@ end
 
 -- 增长怒气
 function PlayerRole:addAnger(value)
+    if BattleManager:getInstance()._bIsFirstBattleOfNewbie == true then
+        if NewbieManager:getInstance()._nCurID ~= "Guide_1_4" then  -- 不为1_4时，怒气不长
+            return
+        end
+    end
     if self._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kAngerAttack] then
         value = math.ceil(value)
         self._nCurAnger = self._nCurAnger + value
         if self._nCurAnger >= self._nAngerMax then
-            self._nCurAnger = self._nAngerMax
-            if NewbieManager:getInstance()._bSkipGuide == false then
-                if TasksManager:getInstance()._pMainTaskInfo ~= nil and TasksManager:getInstance()._pMainTaskInfo.taskId == 10005 then  -- 第5次进入战斗引导
-                    if NewbieManager:getInstance()._pLastID == "Guide_5_19" then
-                        NewbieManager:getInstance():showNewbieByID("Guide_5_20")
-                    end
-                end
-            end
-            
+            self._nCurAnger = self._nAngerMax            
         end
         -- ui更新
         if self._strCharTag == "main" then
             if self._pBattleUIDelegate then
-                self._pBattleUIDelegate:setPlayerAngerCur(self._nCurAnger)
+                self._pBattleUIDelegate._pAngerSkillUINode:setAngerCur(self._nCurAnger)
             end
         end
     end    
@@ -894,7 +895,7 @@ function PlayerRole:clearAnger()
     -- ui更新
     if self._strCharTag == "main" then
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setPlayerAngerCur(self._nCurAnger)
+            self._pBattleUIDelegate._pAngerSkillUINode:clearAnger()
         end
     end
 
@@ -1058,29 +1059,53 @@ end
 
 -- 播放站立动作
 function PlayerRole:playStandAction()
-    -- 站立动作
-    if self._pTempleteInfo.StandActFrameRegion ~= nil then
-        local fullAniName = self._strAniName..".c3b"
-        local animation = cc.Animation3D:create(fullAniName)
-        local fStartFrame = self._pTempleteInfo.StandActFrameRegion[1]
-        local fEndFrame = self._pTempleteInfo.StandActFrameRegion[2]
-        local temp = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
-        temp:setSpeed(self._pTempleteInfo.StandActFrameRegion[3])
-        local stand = cc.RepeatForever:create(temp)
-        self._pAni:stopActionByTag(nRoleActAction)
-        stand:setTag(nRoleActAction)
-        self._pAni:runAction(stand)
+    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
+        -- 家园里的站立动作
+        if self._pTempleteInfo.StandActFrameRegion ~= nil then
+            local fullAniName = self._strAniName..".c3b"
+            local animation = cc.Animation3D:create(fullAniName)
+            local fStartFrame = self._pTempleteInfo.StandActFrameRegion[1]
+            local fEndFrame = self._pTempleteInfo.StandActFrameRegion[2]
+            local temp = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
+            temp:setSpeed(self._pTempleteInfo.StandActFrameRegion[3])
+            local stand = cc.RepeatForever:create(temp)
+            self._pAni:stopActionByTag(nRoleActAction)
+            stand:setTag(nRoleActAction)
+            self._pAni:runAction(stand)
+        end
+    elseif cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
+        -- 战斗里的站立动作
+        if self._pTempleteInfo.ReadyFightActFrameRegion ~= nil then
+            local fullAniName = self._strAniName..".c3b"
+            local animation = cc.Animation3D:create(fullAniName)
+            local fStartFrame = self._pTempleteInfo.ReadyFightActFrameRegion[1]
+            local fEndFrame = self._pTempleteInfo.ReadyFightActFrameRegion[2]
+            local temp = cc.Animate3D:createWithFrames(animation, fStartFrame, fEndFrame)
+            temp:setSpeed(self._pTempleteInfo.ReadyFightActFrameRegion[3])
+            local stand = cc.RepeatForever:create(temp)
+            self._pAni:stopActionByTag(nRoleActAction)
+            stand:setTag(nRoleActAction)
+            self._pAni:runAction(stand)
+        end
     end
 
 end
 
 -- 获取站立动作的时间间隔（单位：秒）
 function PlayerRole:getStandActionTime()
-    local duration = (self._pTempleteInfo.StandActFrameRegion[2] - self._pTempleteInfo.StandActFrameRegion[1])/30
-    local speed = self._pTempleteInfo.StandActFrameRegion[3]
-    --local time = duration + (1.0 - speed)*duration
-    local time = duration * (1/speed)
-    return time
+    if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
+        local duration = (self._pTempleteInfo.StandActFrameRegion[2] - self._pTempleteInfo.StandActFrameRegion[1])/30
+        local speed = self._pTempleteInfo.StandActFrameRegion[3]
+        --local time = duration + (1.0 - speed)*duration
+        local time = duration * (1/speed)
+        return time
+    elseif cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
+        local duration = (self._pTempleteInfo.ReadyFightActFrameRegion[2] - self._pTempleteInfo.ReadyFightActFrameRegion[1])/30
+        local speed = self._pTempleteInfo.ReadyFightActFrameRegion[3]
+        --local time = duration + (1.0 - speed)*duration
+        local time = duration * (1/speed)
+        return time
+    end
 end
 
 -- 播放奔跑动作
@@ -1382,6 +1407,9 @@ end
 -- 刷新头顶字
 function PlayerRole:refreshName()
     self._pName:setString("Lv."..self._pRoleInfo.level.." "..self._pRoleInfo.roleName)
+    if LayerManager:getInstance():getCurSenceLayerSessionId() == kSession.kBattle and self._strCharTag == "main" then
+        cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")._pMainPlayerUINode:setLevelAndName(self._pRoleInfo.level, self._pRoleInfo.roleName)
+    end
 end
 
 -- 激发passive时根据passiveTypeID添加相应passive
@@ -1486,7 +1514,7 @@ function PlayerRole:beHurtedBySkill(skill, intersection)
         if skill._pSkillInfo.ElementType then 
             -- 考虑属性积蓄值的累加
             if skill:getMaster()._kGameObjType == kType.kGameObj.kRole then 
-                if skill:getMaster()._kRoleType == kType.kRole.kMonster or skill:getMaster()._kRoleType == kType.kRole.kPet then    -- 攻击方为野怪或者宠物，则只考虑技能的积蓄值计算
+                if skill:getMaster()._kRoleType == kType.kRole.kMonster or skill:getMaster()._kRoleType == kType.kRole.kPet or skill:getMaster()._kRoleType == kType.kRole.kOtherPet then    -- 攻击方为野怪或者宠物，则只考虑技能的积蓄值计算
                     if skill._pSkillInfo.ElementType[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] == kType.kSkill.kElement.kFire then
                         local saving = skill._pSkillInfo.ElementalValue[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex]*(((skill:getMaster()._nFireAttackValue*TableConstants.SkillAttrMax.Value)/(skill:getMaster()._nFireAttackValue+TableConstants.SkillAttrReduce.Value))+1)*(((skill:getMaster()._nAbilityPowerValue*TableConstants.SkillAttrApMax.Value)/(skill:getMaster()._nAbilityPowerValue+TableConstants.SkillAttrApReduce.Value))+1)
                         self._nCurFireSaving = self._nCurFireSaving + saving
@@ -1498,7 +1526,7 @@ function PlayerRole:beHurtedBySkill(skill, intersection)
                         self._nCurThunderSaving = self._nCurThunderSaving + saving
                     end
                     self:playHurtedEffect(skill._pSkillInfo.ElementType[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex], intersection, isCritical, isBlock)
-                elseif skill:getMaster()._kRoleType == kType.kRole.kPlayer then  -- 攻击方为玩家，则需要分为普通攻击和技能攻击的积蓄值分别计算
+                elseif skill:getMaster()._kRoleType == kType.kRole.kPlayer or skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then  -- 攻击方为玩家，则需要分为普通攻击和技能攻击的积蓄值分别计算
                     if skill == skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] then
                         -- 普通攻击（先计算出现属性火冰雷物理的概率，然后判断是否触发）
                         local fireSavingRate = 1000*((skill:getMaster()._nFireAttackValue*TableConstants.GenAttrChanceMax.Value)/(skill:getMaster()._nFireAttackValue+TableLevel[self._nLevel].Flv*TableConstants.GenAttrChanceReduce.Value))*( ((skill:getMaster()._nAbilityPowerValue*TableConstants.GenAttrChanceApMax.Value)/(skill:getMaster()._nAbilityPowerValue+TableConstants.GenAttrChanceApReduce.Value))+1 )
@@ -1615,6 +1643,14 @@ function PlayerRole:beHurtedBySkill(skill, intersection)
             if skill:getMaster()._strCharTag == "main" then
                 self:getBattleManager():getBattleUILayer():showHitAni() -- 显示连击
             end
+        elseif skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            local angerValue = 0    -- 怒气值
+            if skill == skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] then -- 普通攻击
+                angerValue = TableConstants.GenAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+            elseif skill ~= skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kAngerAttack] then  -- 技能攻击
+                angerValue = TableConstants.SkillAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+            end
+            skill:getMaster():addAnger(angerValue)
         end
         
         -- 未被攻击持续时间清0（适用于被动技能【未被攻击x秒钟时passive】）
@@ -1641,7 +1677,7 @@ function PlayerRole:beHurtedBySkill(skill, intersection)
         if self._nCurHp == 0  then
             self:getStateMachineByTypeID(kType.kStateMachine.kBattlePlayerRole):setCurStateByTypeID(kType.kState.kBattlePlayerRole.kDead, true, {true, skill})
             -- 如果技能释放者是玩家角色或者宠物，则激活其【每杀死一个敌方单位】被动技能
-            if skill:getMaster()._kRoleType == kType.kRole.kPlayer then
+            if skill:getMaster()._kRoleType == kType.kRole.kPlayer or skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
                 skill:getMaster():addPassiveByTypeID(kType.kController.kPassive.kBattleDoWhenAnyEnemyDeadPassive)
             end
             return
@@ -1771,7 +1807,7 @@ end
 --设置材质特效信息
 function PlayerRole:setMaterialInfo()
     for k, v in pairs(self._pRoleInfo.equipemts) do
-        local pEquInfo = GetCompleteItemInfo(v)
+        local pEquInfo = GetCompleteItemInfo(v,self._pRoleInfo.roleCareer)
         local nPart = pEquInfo.dataInfo.Part -- 部位
         local ptempleteInfo  = pEquInfo.templeteInfo
         if nPart == kEqpLocation.kBody then -- 身
@@ -1782,7 +1818,7 @@ function PlayerRole:setMaterialInfo()
         elseif nPart == kEqpLocation.kFashionBody then --时装身可能会影响人物模型
             setSprite3dMaterial(self._pAni,ptempleteInfo.Material)
         elseif nPart == kEqpLocation._pBack then  --时装背（翅膀）
-            setSprite3dMaterial(self._pFashionBack,ptempleteInfo.Material)
+            setSprite3dMaterial(self._pBack,ptempleteInfo.Material)
 
         elseif nPart == kEqpLocation.kFashionHalo then  --时装光环
 

@@ -7,8 +7,6 @@ function LevelStarTipsParams:ctor()
     self._pBackGround = self._pCCS:getChildByName("BackGround")
     --充值start(工程里拼错了……别纠结)
     self._pstart = self._pBackGround:getChildByName("start")
-    --进度条背景
-    self._pLoadingBarBack = self._pBackGround:getChildByName("LoadingBarBack")
     --进度条
     self._pLoadingBar = self._pBackGround:getChildByName("LoadingBar")
     --时间文字

@@ -119,7 +119,7 @@ end
 
 --连接断开，超时，异常状态回调函数
 function socketOnEventCallback(event)
-    DialogManager:getInstance():showAlertDialog(event)
+    showSystemAlertDialog(event)
 end
 
 -- 收到 socket 链接中断的事件处理
@@ -132,7 +132,7 @@ function socketDisconnected(event)
     
     if info == nil then
         if LayerManager:getCurSenceLayerSessionId() == kSession.kLogin then
-            DialogManager:showAlertDialog("网络未连接，请检查网络设置。")
+            showSystemAlertDialog("网络未连接，请检查网络设置。")
         	return
         end
         
@@ -164,7 +164,7 @@ function socketTimeOut(event)
 
     if info == nil then
         if LayerManager:getCurSenceLayerSessionId() == kSession.kLogin then
-            DialogManager:showAlertDialog("网络未连接，请检查网络设置。")
+            showSystemAlertDialog("网络未连接，请检查网络设置。")
             return
         end
         

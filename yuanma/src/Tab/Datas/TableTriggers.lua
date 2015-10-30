@@ -98,4 +98,6 @@ TableTriggers=
 	{ ID = 93.0, Name = '迷宫副本3，跳转门2 13到12 13 15 16', IsRuntimeCheck = 2.0, Params = {{3.0, 3, 1, 0.5, {12,13,15,16}}}, },
 	{ ID = 94.0, Name = '迷宫副本3，跳转门3 13到12 13 14 16', IsRuntimeCheck = 2.0, Params = {{3.0, 4, 1, 0.5, {12,13,14,16}}}, },
 	{ ID = 95.0, Name = '迷宫副本3，跳转门4 13到13 14 15 16', IsRuntimeCheck = 2.0, Params = {{3.0, 5, 1, 0.5, {13,14,15,16}}}, },
+	{ ID = 96.0, Name = '剧情动画测试1', IsRuntimeCheck = 1.0, Params = {{7.0,1}}, },
+	{ ID = 97.0, Name = '金山寺剧情动画', IsRuntimeCheck = 1.0, Params = {{7.0,1}}, },
 }

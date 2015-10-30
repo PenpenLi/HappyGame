@@ -33,10 +33,10 @@ function GemInlayLayer:ctor()
 	self._nStoneId = 0  -- 最新镶嵌成功的宝石ID
 	self._strTempGemInfo = "" -- 最新宝石信息的临时变量
 	 --装备喷射粒子特效1-4
-    self._pParticle01 = nil
-    self._pParticle02 = nil
-    self._pParticle03 = nil
-    self._pParticle04 = nil
+    --self._pParticle01 = nil
+    --self._pParticle02 = nil
+    --self._pParticle03 = nil
+    --self._pParticle04 = nil
     self._showGemTabFunc = nil 
 end
 
@@ -62,14 +62,14 @@ function GemInlayLayer:dispose(callbackFunc,showGemTabFunc)
 	-- 装备图标不可显示
 	self._pEquipIcon:setVisible(false)
 	-- 装备图标的粒子效果
-	self._pParticle01 = params._pParticle01
-	self._pParticle01:setVisible(false)
-	self._pParticle02 = params._pParticle02
-	self._pParticle02:setVisible(false)
-	self._pParticle03 = params._pParticle03
-	self._pParticle03:setVisible(false)
-	self._pParticle04 = params._pParticle04
-	self._pParticle04:setVisible(false)
+	--self._pParticle01 = params._pParticle01
+	--self._pParticle01:setVisible(false)
+	--self._pParticle02 = params._pParticle02
+	--self._pParticle02:setVisible(false)
+	--self._pParticle03 = params._pParticle03
+	--self._pParticle03:setVisible(false)
+	--self._pParticle04 = params._pParticle04
+	--self._pParticle04:setVisible(false)
 	-- 装备槽图标
 	self._pEquipSlotIcon = params._pWeaponBg
 	self._pEquipItemCell = require("BagItemCell"):create()
@@ -98,7 +98,7 @@ function GemInlayLayer:dispose(callbackFunc,showGemTabFunc)
 		pGemItemCell:setNameLabelVisible(false)
 		-- 背景不显示
 		--pGemItemCell._pBg:setVisible(false)
-		pGemItemCell:setVisible(false)
+		--pGemItemCell:setVisible(false)
         local itemSize = pGemItemCell._pBg:getContentSize()
 		pGemItemCell:setPosition(v:getPositionX() - itemSize.width/2,v:getPositionY() - itemSize.height/2)
 		self._tGemSlotFrameArry[k]:addChild(pGemItemCell)
@@ -142,10 +142,10 @@ function GemInlayLayer:initUI()
 	-- 设置装备位的图标
 	self._pEquipItemCell:setItemInfo(self._pEquipItemInfo)
 	-- 显示粒子效果
-	self._pParticle01:setVisible(true)
-	self._pParticle02:setVisible(true)
-	self._pParticle03:setVisible(true)
-	self._pParticle04:setVisible(true)
+	--self._pParticle01:setVisible(true)
+	--self._pParticle02:setVisible(true)
+	--self._pParticle03:setVisible(true)
+	--self._pParticle04:setVisible(true)
 	-- 设置装备的名字
 	self._pEquipNameLbl:setString(self._pEquipItemInfo.templeteInfo.Name)
 	-- 设置装备的装备位
@@ -171,7 +171,7 @@ function GemInlayLayer:initUI()
         self._tGemSlotIconArry[i]:setSwallowTouches(false)
         self._tGemSlotIconArry[i]:setVisible(true)
         self._tGemSlotIconArry[i]:setTouchEnabled(true)
-		self._tGemSlotFrameArry[i]:setVisible(true)
+		--self._tGemSlotFrameArry[i]:setVisible(true)
 		self._tGemSlotInfoArry[i]:setVisible(true)
 	end
 	-- 获得当前装备已镶嵌宝石的id集合
@@ -233,10 +233,10 @@ function GemInlayLayer:clearUI()
 	self._tInlayGemInfoArry = {}
 	-- 初始化装备信息
 	self._pEquipItemCell:setItemInfo(nil)
-	self._pParticle01:setVisible(false)
-	self._pParticle02:setVisible(false)
-	self._pParticle03:setVisible(false)
-	self._pParticle04:setVisible(false)
+	--self._pParticle01:setVisible(false)
+	--self._pParticle02:setVisible(false)
+	--self._pParticle03:setVisible(false)
+	--self._pParticle04:setVisible(false)
 	-- 设置装备的名字
 	self._pEquipNameLbl:setString("")
 	-- 设置装备的装备位
@@ -244,15 +244,15 @@ function GemInlayLayer:clearUI()
 	-- 初始化宝石图标并隐藏显示
 	for k,gemSlotIcon in pairs(self._tGemSlotIconArry) do
 		gemSlotIcon:setVisible(false)
-		self._tGemSlotFrameArry[k]:setVisible(false)
+		--self._tGemSlotFrameArry[k]:setVisible(false)
 		self._tGemItemCellArry[k]:setItemInfo(nil)
-		self._tGemItemCellArry[k]:setVisible(false)
+		--self._tGemItemCellArry[k]:setVisible(false)
 	end
 	-- 初始化宝石属性信息并且隐藏显示
     for k,gemSlotInfo in pairs(self._tGemSlotInfoArry) do
 		gemSlotInfo:setString("点击镶嵌宝石")
 		gemSlotInfo:setTextColor(cc.c4b(255, 255, 255, 255))
-		gemSlotInfo:setVisible(false)
+		--gemSlotInfo:setVisible(false)
 	end
 	-- 初始化装备来源
 	self._kEquipSrcType = nil

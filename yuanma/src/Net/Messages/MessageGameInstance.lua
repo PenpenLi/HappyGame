@@ -165,4 +165,38 @@ function MessageGameInstance:sendMessageQueryBattleInfo21018(battleId)
     send(msg)
 end
 
+-- 获取排行榜的请求(服务器下标从零开始)
+function MessageGameInstance:QueryRankListReq21320(rankType,starPos,endPos)
+    local msg = {}
+    -------------------------------------
+    msg.header = {}
+    msg.header.cmdNum = 21320                               -- 消息协议号
+    msg.header.cmdSeq = nSeqNum                             -- 消息序列号（每次加1）
+    msg.header.reserve = 1                                  -- 保留字段
+    msg.header.srcId = 0                                    -- 角色ID字段
+    msg.header.sessionId = 0                                -- 会话Id字段
 
+    msg.body = {} 
+    msg.body.rankType = rankType                            -- 排行榜的类型
+    msg.body.beginIndex = starPos                           -- 开始位置（包含）
+    msg.body.endIndex = endPos                              -- 结束位置（不包含）
+    -------------------------------------
+    send(msg)
+end
+
+-- 请求组队数据
+function MessageGameInstance:sendMessageFormTeam21020(battleId)
+    local msg = {}
+    -------------------------------------
+    msg.header = {}
+    msg.header.cmdNum = 21020                               -- 消息协议号
+    msg.header.cmdSeq = nSeqNum                             -- 消息序列号（每次加1）
+    msg.header.reserve = 1                                  -- 保留字段
+    msg.header.srcId = 0                                    -- 角色ID字段
+    msg.header.sessionId = 0                                -- 会话Id字段
+
+    msg.body = {} 
+    msg.body.battleId = battleId                            -- 副本id
+    -------------------------------------
+    send(msg)
+end

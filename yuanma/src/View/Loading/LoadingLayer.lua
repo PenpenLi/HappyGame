@@ -75,7 +75,6 @@ function LoadingLayer:dispose(targetSessionKind, show, args)
             if show == false then
                 self._nUpdateLock = 0
             end
-            self:setPositionZ(5200)
         elseif event == "exit" then
             self:onExitLoadingLayer()
         end
@@ -117,19 +116,25 @@ function LoadingLayer:initUI()
         self:addChild(self._pBg)
 
         -- loading字样
-        self._pLoadingText = cc.Label:createWithTTF("", strCommonFontName, 20)
-        self._pLoadingText:setPosition(mmo.VisibleRect:width()-20*3, 20)
+        self._pLoadingText = cc.Label:createWithTTF("", strCommonFontName, 30)
+        self._pLoadingText:setTextColor(cFontWhite)
+        self._pLoadingText:enableOutline(cFontOutline,2)
+        self._pLoadingText:setPosition(mmo.VisibleRect:width()-30*3, 30)
         self._pLoadingText:setAnchorPoint(1.0,0.5)
         self:addChild(self._pLoadingText)
 
         -- loading百分比字样
-        self._pLoadingPercentText = cc.Label:createWithTTF("", strCommonFontName, 20)
-        self._pLoadingPercentText:setPosition(mmo.VisibleRect:width()-20*3, 20)
+        self._pLoadingPercentText = cc.Label:createWithTTF("", strCommonFontName, 30)
+        self._pLoadingPercentText:setTextColor(cFontWhite)
+        self._pLoadingPercentText:enableOutline(cFontOutline,2)
+        self._pLoadingPercentText:setPosition(mmo.VisibleRect:width()-30*3, 30)
         self._pLoadingPercentText:setAnchorPoint(0,0.5)
         self:addChild(self._pLoadingPercentText)
 
         -- 温馨提示
-        self._pTips = cc.Label:createWithTTF("温馨提示：经常洗澡有助于保持个人卫生！", strCommonFontName, 20)
+        self._pTips = cc.Label:createWithTTF("温馨提示：经常洗澡有助于保持个人卫生！", strCommonFontName, 30)
+        self._pTips:setTextColor(cFontWhite)
+        self._pTips:enableOutline(cFontOutline,2)
         self._pTips:setPosition(mmo.VisibleRect:width()/2,mmo.VisibleRect:height()/4)
         self:addChild(self._pTips)
         
@@ -137,6 +142,7 @@ function LoadingLayer:initUI()
         self:cloudIn()
         
     end
+    
 end
 
 -- 云（进入）
@@ -265,6 +271,18 @@ function LoadingLayer:procSessionArgs()
             if self._tArgs._nMainPetRoleCurHp then
                 PetsManager:getInstance()._nMainPetRoleCurHp =  self._tArgs._nMainPetRoleCurHp              -- 必要的时候这里会有数据（比如从战斗地图切换到另一张战斗地图，血值需要共享上一张战斗的值）
             end
+            RolesManager:getInstance()._tOtherPlayerRolesCurHp = {}
+            for k, v in pairs(self._tArgs._tOtherPlayerRolesCurHp) do 
+                RolesManager:getInstance()._tOtherPlayerRolesCurHp[k] = v
+            end
+            RolesManager:getInstance()._tOtherPlayerRolesCurAnger = {}
+            for k, v in pairs(self._tArgs._tOtherPlayerRolesCurAnger) do 
+                RolesManager:getInstance()._tOtherPlayerRolesCurAnger[k] = v
+            end
+            PetsManager:getInstance()._tOtherPetRolesCurHp = {}
+            for k, v in pairs(self._tArgs._tOtherPetRolesCurHp) do 
+                PetsManager:getInstance()._tOtherPetRolesCurHp[k] = v
+            end
             -- 设置当前副本类型
             StagesManager:getInstance()._nCurCopyType = self._tArgs._nCurCopyType
             -- 采用关卡表中的副本数据
@@ -285,10 +303,20 @@ function LoadingLayer:procSessionArgs()
             if self._tArgs._tPvpPetRoleInfosInQueue ~= nil then
                 PetsManager:getInstance()._tPvpPetRoleInfosInQueue = self._tArgs._tPvpPetRoleInfosInQueue
             end
+            -- 传递pvp宠物共鸣信息
+            RolesManager:getInstance()._tPvpPetCooperates = self._tArgs._tPvpPetCooperates
             --爬塔副本的战斗结算数据
             BattleManager:getInstance()._tTowerCopyStepResultInfos = self._tArgs._tTowerCopyStepResultInfos
-            
-            
+            -- 其他玩家信息传递
+            RolesManager:getInstance()._tOtherPlayerRolesInfosOnBattleMap = self._tArgs._tOtherPlayerRolesInfosOnBattleMap
+            SkillsManager:getInstance()._tOtherPlayerRolesMountAngerSkillsInfos = self._tArgs._tOtherPlayerRolesMountAngerSkillsInfos
+            SkillsManager:getInstance()._tOtherPlayerRolesMountActvSkillsInfos = self._tArgs._tOtherPlayerRolesMountActvSkillsInfos
+            SkillsManager:getInstance()._tOtherPlayerRolesPasvSkillsInfos = self._tArgs._tOtherPlayerRolesPasvSkillsInfos
+            -- 传递其他玩家宠物共鸣信息
+            RolesManager:getInstance()._tOtherPetCooperates = self._tArgs._tOtherPetCooperates
+            -- 是否为新手引导中第一场战斗
+            BattleManager:getInstance()._bIsFirstBattleOfNewbie = self._tArgs._bIsFirstBattleOfNewbie
+
             -------------------------- 记录当前stage的起始（第一关）的战斗数据（用于重玩功能） -------------------------------------
             
             if self._tArgs._nCurCopyType ~= kType.kCopy.kStory and self._tArgs._nCurCopyType ~= kType.kCopy.kGold and
@@ -361,7 +389,6 @@ function LoadingLayer:procUnLoadingRes()
         return
     end
     if self._bPreSessionReleaseOver == false then
-   
         -- 置标记位
         self._bPreSessionReleaseOver = true
         
@@ -460,14 +487,14 @@ function LoadingLayer:procLoadingWorld()
                     self:getTriggersManager():createTriggersOnMap(bShowDebugInfos)
                 elseif self._nStep == self._nTotalAsyncStep + 5 then -- 同步第6次
                     -- 创建所有NPC
-                    self:getRolesManager():createNpcRolesOnMap()
+                    self:getRolesManager():createNpcRolesOnWorldMap()
+                elseif self._nStep == self._nTotalAsyncStep + 6 then -- 同步第7次
+                    -- 创建主角，绑定主角到地图
+                    self:getRolesManager():createMainPlayerRoleOnMap(bShowDebugInfos)
                     -- 创建其他玩家
                     self:getRolesManager():createOtherPlayerRoleOnMap()
                     -- 创建其他玩家的宠物
                     self:getPetsManager():createOtherPetRolesOnMap()
-                elseif self._nStep == self._nTotalAsyncStep + 6 then -- 同步第7次
-                    -- 创建主角，绑定主角到地图
-                    self:getRolesManager():createMainPlayerRoleOnMap(bShowDebugInfos)
                 elseif self._nStep == self._nTotalAsyncStep + 7 then -- 同步第8次
                     -- 创建主角宠物，绑定宠物到地图
                     self:getPetsManager():createMainPetRoleOnMap(bShowDebugInfos)
@@ -524,7 +551,7 @@ function LoadingLayer:procLoadingBattle()
                     self:getTriggersManager():createTriggersOnMap(bShowDebugInfos)
                 elseif self._nStep == self._nTotalAsyncStep+5 then -- 同步第6次  创建NPC
                     -- 创建所有NPC
-                    self:getRolesManager():createNpcRolesOnMap()
+                    self:getRolesManager():createNpcRolesOnBattleMap()
                 elseif self._nStep == self._nTotalAsyncStep+6 then -- 同步第7次  创建主角和好友
                     -- 创建主角，绑定主角到地图
                     self:getRolesManager():createMainPlayerRoleOnMap(bShowDebugInfos)
@@ -539,6 +566,10 @@ function LoadingLayer:procLoadingBattle()
                 elseif self._nStep == self._nTotalAsyncStep+9 then -- 同步第10次  创建pvp对手宠物
                     -- 创建pvp对手宠物，绑定宠物到地图
                     self:getPetsManager():createPvpPetRoleOnMap(bShowDebugInfos)
+                    -- 创建其他玩家
+                    self:getRolesManager():createOtherPlayerRoleOnMap()
+                    -- 创建其他玩家的宠物
+                    self:getPetsManager():createOtherPetRolesOnMap()
                 elseif self._nStep == self._nTotalAsyncStep+10 then -- 同步第11次  创建野怪          
                     -- 创建野怪
                     self:getMonstersManager():createAllMonsterRoles(bShowDebugInfos)

@@ -37,7 +37,7 @@ strForceDownloadApkHyperlink = {
 -- 热更新version号的url地址
 strVersionUrl = "http://115.159.54.142:8000/version/checkversion"       -- 开发
 --strVersionUrl = "http://115.159.54.142:8800/version/checkversion"       -- 巨人
--- 热更新package包的url地址
+--热更新package包的url地址
 strPackageUrl = "http://115.159.54.142:8000/client/"                    -- 开发
 --strPackageUrl = "http://115.159.54.142:8800/client/"                    -- 巨人
 
@@ -48,10 +48,10 @@ bOpenDisplayStats = true
 bOpenScreenLog = true
 
 -- 是否开启家园地图矩形调试信息
-bOpenWorldMapDebugRect = false
+bOpenWorldMapDebugRect = true
 
 -- 是否开启战斗地图矩形调试信息
-bOpenBattleMapDebugRect = false
+bOpenBattleMapDebugRect = true
 
 -- 是否开启手机与电脑的相同登录方式
 bOpenMobileAndWinMacSameLoginWay = true
@@ -63,7 +63,7 @@ bSkipSplashMove = true
 bSkipGuideCGMove = true
 
 -- 是否开启剧情副本（章节调试全开功能按钮）
-bStoryCopyTestBtn = true
+bStoryCopyTestBtn = false
 
 -- for CCLuaEngine traceback
 function __G__TRACKBACK__(msg)
@@ -113,7 +113,7 @@ local function main()
     cc.AnimationCache:destroyInstance()
     cc.SpriteFrameCache:getInstance():removeSpriteFrames()
     director:getTextureCache():removeAllTextures()
-    
+
     -- 创建游戏场景
     local pScene = cc.Scene:create()
     

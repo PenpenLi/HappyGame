@@ -13,8 +13,6 @@ function ChangeNameDialogParams:ctor()
     self._pCancelButton = self._pBackGround:getChildByName("CancelButton")
     --输入的挂节点
     self._pEditBoxNode = self._pBackGround:getChildByName("editBoxNode")
-    --所需钻石数目数字
-    self._pPrice = self._pBackGround:getChildByName("Price")
 end
 
 function ChangeNameDialogParams:create()

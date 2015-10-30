@@ -29,11 +29,11 @@ function OptionManager:clearCache()
     -- 是否显示昵称     
     self._bPlayersNameShowOrNot = cc.UserDefault:getInstance():getBoolForKey("Option_PlayersNameShow",true)  
     -- 是否锁定摇杆     
-    self._bStickLock = cc.UserDefault:getInstance():getBoolForKey("Option_StickLock",false)   
+    self._bStickLock = cc.UserDefault:getInstance():getBoolForKey("Option_StickLock",true)   
     -- 是否开启手机震动               
     self._bShake = cc.UserDefault:getInstance():getBoolForKey("Option_Shake",false)  
     mmo.HelpFunc:setVibratorEnabled(self._bShake)
-    -- 同屏人数   1:高级   2:中级   3:低级                    
+    -- 同屏人数   1:高级   2:中级   3:低级
     self._nPlayersRoleShowLevel = cc.UserDefault:getInstance():getIntegerForKey("Option_ShowLevel",1)         
 end
 -- 设置音乐开启

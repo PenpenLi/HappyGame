@@ -171,12 +171,21 @@ kNetCmd =
     kQueryRankResp = "k10013",                  -- 获取选择分区数据更新回复
     kCancelRankResp = "k10015",                 -- 取消排队分区回复
     kResultByGradeResp = "kResultByGradeResp",  -- 积分评星的推送
-    kSameLoginNotice = "k29527",                -- 相同账号登陆通知
-    kStopServiceNotice = "k29529",              -- 强制退服通知（停服）
+    kStopServiceNotice = "k29527",              -- 强制退服通知（停服）
+    kChangeFamilyPosition = "k29533",           -- 家族职位变化的通知
     kQuerySturaLibraryResp = "k22401",          -- 查询藏经阁信息回复
     kSturaInsertPageResp = "k22403",            -- 藏经阁注入残页
     kBuyStrengthResp = "k21315",                -- 购买体力
     kBuyBattleResp = "k21317",                  -- 购买战斗次数
-    kQueryOnlineAwardResp = "k22507",           -- 获取在线礼包的回复 
-    kGainOnlineAwardResp = "k22509",            -- 领取在线礼包的回复
-}
+    kGainOnlineAwardResp = "k22505",            -- 领取在线礼包的回复
+    kGainLevelGiftResp = "k22507",              -- 领取等级礼包回复
+    kGainFCGiftResp = "k22509",                 -- 领取首充礼包回复
+    kAmassAwardResp = "k22502",                 -- 领取累积充值礼包回复
+    kMonthSign = "k22511",                      -- 月签到
+    kQueryRankListResp = "21321",               -- 获取排行榜请求回复
+    kStoryGuideEnd = "kStoryGuideEndCallBack",  -- 剧情引导某一个步骤结束
+    kGainPowerResp = "K22512",                  -- 获取体力礼包
+    kQueryGoldTreeInfo = "k21323",              -- 获取摇钱树信息回复
+    kDiamondBuyGold = "k21325",                 -- 玉璧购买铜钱回复
+    kFormTeamInfo = "k21021",                   -- 组队信息回复
+}   

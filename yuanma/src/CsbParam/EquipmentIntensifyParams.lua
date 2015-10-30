@@ -6,11 +6,11 @@ function EquipmentIntensifyParams:ctor()
     --底板
     self._pStrengthenEquipBg = self._pCCS:getChildByName("StrengthenEquipBg")
     --要强化装备的星光底板
-    self._pEqiupFrame01 = self._pStrengthenEquipBg:getChildByName("EqiupFrame01")
+    --self._pEqiupFrame01 = self._pStrengthenEquipBg:getChildByName("EqiupFrame01")
     --要强化装备的箭头底板
-    self._pEqiupFrame02 = self._pStrengthenEquipBg:getChildByName("EqiupFrame02")
+      self._pEqiupFrame02 = self._pStrengthenEquipBg:getChildByName("EqiupFrame02")
     --放入要强化的装备的栏位
-    self._pStrengthenEqiup = self._pEqiupFrame01:getChildByName("StrengthenEqiup")
+    --self._pStrengthenEqiup = self._pEqiupFrame01:getChildByName("StrengthenEqiup")
     --挂载的node
     self._pMountNode = self._pStrengthenEquipBg:getChildByName("MountNode")
     --强化材料栏位1
@@ -35,6 +35,8 @@ function EquipmentIntensifyParams:ctor()
     self._pMoneyNumText = self._pMountNode:getChildByName("MoneyNumText")
     --满级的显示图片
     self._pEquMaxIcon =  self._pStrengthenEquipBg:getChildByName("PictureText")
+    --装备名称 EquipText1
+    self._pEquNameText = self._pStrengthenEquipBg:getChildByName("EquipText1")
 end
 
 function EquipmentIntensifyParams:create()

@@ -74,6 +74,11 @@ function DialogManager:closeAllDialogs()
     self._pAppSence:closeAllDialogs()
 end
 
+-- 关闭所有Dialog（销毁+移除）（不带动画）
+function DialogManager:closeAllDialogsWithNoAni()
+    self._pAppSence:closeAllDialogsWithNoAni()
+end
+
 -- 获得已有的Dialog
 function DialogManager:getDialogByName(sDialogName)
     return self._pAppSence:getDialogByName(sDialogName)

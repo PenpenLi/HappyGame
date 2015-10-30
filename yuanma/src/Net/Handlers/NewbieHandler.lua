@@ -13,7 +13,7 @@ local NewbieHandler = class("NewbieHandler")
 function NewbieHandler:ctor()
     -- 使用免死符
     NetHandlersManager:registHandler(21309, self.handleSaveNewerPro21309)
-    -- 答题正确
+    -- 获取新手存档
     NetHandlersManager:registHandler(21311, self.handleQueryNewerPro21311)
 
 end
@@ -41,7 +41,9 @@ function NewbieHandler:handleQueryNewerPro21311(msg)
        cc.UserDefault:getInstance():setStringForKey("NewbieMainID_"..RolesManager:getInstance()._pMainRoleInfo.roleId, msg.body.progress)
        cc.UserDefault:getInstance():flush()
     else
-        print("返回错误码："..msg.header.result)
+        if msg.header.result ~= 0 then 
+            print("返回错误码："..msg.header.result)
+        end
     end
 end
 

@@ -43,7 +43,8 @@ function BuyStrengthDialog:ctor()
 	-- 购买的类型：
 	--	1 购买体力 
 	--	2 购买挑战次数 
-	self._kBuyType = 1
+	--  3 购买摇钱树次数
+	self._kBuyType = kBuyThingsType.kBuyStrength
 	-- 购买副本的类型
 	self._kCopyType = 0
 	-- 购买副本的Id
@@ -71,23 +72,11 @@ end
 function BuyStrengthDialog:dispose(args)
 	-- 添加合图资源
 	ResPlistManager:getInstance():addSpriteFrames("BuyPorT.plist")
-
-	local function onNodeEvent(event)
-		if event == "exit" then
-			self:onExitBuyStrengthDialog()
-		end
-	end
-	self:registerScriptHandler(onNodeEvent)
-
 	-------------- 【设置数据】-----------------------------
 	self._kBuyType = args[1]
-	if self._kBuyType == 2 then
-		-- 如果是购买副本次数 
-		self._kCopyType = args[2]
-		self._nCopyId = args[3]
-	end
-
+	self._tTempArgs = args
 	self:initUI()
+	self:initTouches()
 end
 
 function BuyStrengthDialog:initUI()
@@ -138,16 +127,16 @@ function BuyStrengthDialog:initUI()
 	-- 默认隐藏所有的节点
 	self:clearUI()
 
-	if self._kBuyType == 1 then 	-- 表示购买体力
+	if self._kBuyType == kBuyThingsType.kBuyStrength then 	-- 表示购买体力
 		-- 已经购买体力的次数
-		self._nCurBuyNum = self._pRoleInfo.vipInfo.addStrength + 1
+		self._nCurBuyNum = self._pRoleInfo.vipInfo.addStrength
 		
 		-- 允许购买体力的最大次数
 		self._nMaxBuyNum = TableVIP[self._pRoleInfo.vipInfo.vipLevel + 1].BuyPowerNum
 		-- 花费玉璧数量
-		self._nConstDiamondNum = TableConstants["BuyPowerNumCost" ..self._nCurBuyNum].Value
+		self._nConstDiamondNum = TableConstants["BuyPowerNumCost" ..self._nCurBuyNum + 1].Value
 		-- 购买次数
-		if self._nCurBuyNum > self._nMaxBuyNum then 
+		if self._nCurBuyNum >= self._nMaxBuyNum then 
 			self:showLackBuyNumInfo()
 			return
 		end
@@ -157,15 +146,18 @@ function BuyStrengthDialog:initUI()
 			return
 		end
 		self:showBuyStrengthInfo()
-	elseif self._kBuyType == 2 then		-- 表示购买战斗次数 
+	elseif self._kBuyType == kBuyThingsType.kBuyNumber then		-- 表示购买战斗次数 
+		-- 如果是购买副本次数 
+		self._kCopyType = self._tTempArgs[2]
+		self._nCopyId =  self._tTempArgs[3]
 		-- 已经购买的次数
 		self._nCurBuyNum = self:getBattleBuyNum()
 		-- 允许购买的最大次数
 		self._nMaxBuyNum = TableVIP[self._pRoleInfo.vipInfo.vipLevel + 1]["BuyCopyTimes" ..self._kCopyType]
 		-- 花费玉璧的数量
-		self._nConstDiamondNum = TableBuyCopyTimes[self._nCurBuyNum]["CopyType" ..self._kCopyType]
+		self._nConstDiamondNum = TableBuyCopyTimes[self._nCurBuyNum + 1]["CopyType" ..self._kCopyType]
 		-- 购买次数
-		if self._nCurBuyNum > self._nMaxBuyNum then 
+		if self._nCurBuyNum >= self._nMaxBuyNum then 
 			self:showLackBuyNumInfo()
 			return
 		end
@@ -175,7 +167,57 @@ function BuyStrengthDialog:initUI()
 			return
 		end
 		self:showBuyBattleInfo()
+	elseif self._kBuyType == kBuyThingsType.kBuyGoldNumber then --标示购买的是摇钱树次数
+		self._nCurBuyNum = self._tTempArgs[2]
+		self._nMaxBuyNum = self._tTempArgs[3]
+		self._nConstDiamondNum = self._tTempArgs[4]
+		if self._nCurBuyNum == self._nMaxBuyNum then --次数都一样说明是购买次数的
+			self:showLackBuyNumInfo()
+			return
+		end
+
+		if self._nConstDiamondNum > self._nDiamondNum then  --钱不够
+			self:showLackDiamondInfo()
+			return
+		end
+        self:showLackBuyNumInfo()
 	end
+end
+
+-- 初始化触摸相关
+function BuyStrengthDialog:initTouches()
+    -- 触摸注册
+    local function onTouchBegin(touch,event)
+        local location = touch:getLocation()
+        print("begin ".."x="..location.x.."  y="..location.y)
+        --self:deleteItem(1)
+        --self:deleteAllItems()
+        return true
+    end
+    local function onTouchMoved(touch,event)
+        local location = touch:getLocation()
+        print("move ".."x="..location.x.."  y="..location.y)
+    end
+    local function onTouchEnded(touch,event)
+        local location = touch:getLocation()
+        print("end ".."x="..location.x.."  y="..location.y)
+        -- self:close()     
+    end
+
+    -- 添加监听器
+    self._pTouchListener = cc.EventListenerTouchOneByOne:create()
+    self._pTouchListener:setSwallowTouches(true)
+    self._pTouchListener:registerScriptHandler(onTouchBegin,cc.Handler.EVENT_TOUCH_BEGAN )
+    self._pTouchListener:registerScriptHandler(onTouchMoved,cc.Handler.EVENT_TOUCH_MOVED )
+    self._pTouchListener:registerScriptHandler(onTouchEnded,cc.Handler.EVENT_TOUCH_ENDED )
+    self:getEventDispatcher():addEventListenerWithSceneGraphPriority(self._pTouchListener, self)
+	local function onNodeEvent(event)
+		if event == "exit" then
+			self:onExitBuyStrengthDialog()
+		end
+	end
+	self:registerScriptHandler(onNodeEvent)
+
 end
 
 -- 显示购买体力的信息
@@ -187,7 +229,7 @@ function BuyStrengthDialog:showBuyStrengthInfo(nConstDiamond)
 	-- 购买体力的描述信息
 	self._pBuyStrengthInfoText:setString(string.format("%d玉璧购买 %d体力？",self._nConstDiamondNum,TableConstants.BuyPowerNum.Value))
 	-- 已经购买体力的次数
-	self._pBuyStrengthNumText:setString(self._nCurBuyNum - 1  .."/" ..self._nMaxBuyNum)
+	self._pBuyStrengthNumText:setString((self._nMaxBuyNum - self._nCurBuyNum).."/" ..self._nMaxBuyNum)
 	self._pOkBtn:setName("buyStrength")
 	self._pBuyStrengthNode:setVisible(true)
 end
@@ -197,7 +239,7 @@ function BuyStrengthDialog:showBuyBattleInfo()
 	-- 消耗的玉璧
 	self._pBuyBattleConstDiamondNumText:setString(string.format("%d玉璧购买次数？",self._nConstDiamondNum))
 	-- 已经购买的次数
-	self._pBuyBatttleNumText:setString(self._nCurBuyNum - 1 .."/" .. self._nMaxBuyNum)
+	self._pBuyBatttleNumText:setString((self._nMaxBuyNum - self._nCurBuyNum) .."/" .. self._nMaxBuyNum)
 	self._pOkBtn:setName("buyBattle")
 	self._pBuyBattleNumNode:setVisible(true)
 end
@@ -206,7 +248,7 @@ end
 function BuyStrengthDialog:showLackBuyNumInfo()
 	self._pOkBtn:setName("lackBuyNum")
 	self._pOkBtn:setTitleText("查看特权")
-	self._pBuyNumText:setString(self._nCurBuyNum - 1 .."/" .. self._nMaxBuyNum)
+	self._pBuyNumText:setString(self._nCurBuyNum .."/" .. self._nMaxBuyNum)
 	self._pLackBuyNumNode:setVisible(true)
 end
 
@@ -231,10 +273,10 @@ function BuyStrengthDialog:getBattleBuyNum()
 	for i,pVipAddBattleInfo in ipairs(temp) do
 		if self._nCopyId == pVipAddBattleInfo.copyId 
 			and self._kCopyType == pVipAddBattleInfo.copyTp then
-			return pVipAddBattleInfo.buyCount + 1
+			return pVipAddBattleInfo.buyCount 
 		end
 	end
-    return 1 -- 表示本地没有记录 认为是第一次购买
+    return 0 -- 表示本地没有记录 认为是第一次购买
 end
 
 function BuyStrengthDialog:onExitBuyStrengthDialog()

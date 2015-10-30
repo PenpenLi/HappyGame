@@ -185,16 +185,28 @@ public:
 	//母包是否已经登录
 	static bool isLogined();
     
-    //-----------------------------    AdTracking     ---------------------------------------------//
+    //-----------------------------【AdTracking】 ---------------------------------------------//
     static void onLogin(std::string account);
     static void onRegister(std::string account);
 
-   //webView
+    //webView
 	static void createWebView(Node *pNode,std::string sUrl);
-
 
 	//分享
 	static void share(const char *title, const char *content, const char *imagePath,const char *description,const char *url);
+
+	//-----------------------------【水波荡漾】------------------------------------------------//
+	// 创建波纹
+	static Node* createRippleNode(std::string spriteFrameName);
+	// 产生波纹
+	static void doRippleNodeTouch(Node * rippleNode, Point pos, float depth, float r);
+
+	//-----------------------------【光照】--------------------------------------------------------//
+	// 创建光照节点
+	static Node* createLightNode(std::string spriteFileName);
+	// 创建受照节点 kbump区间为0到4
+	static Node* createNormalMappedNode(Node* lightNode, std::string spriteFileName1, std::string spriteFileName2, std::string spriteLightFileName, int KBump );
+
 
 };
 #endif  //__HELP_FUNC_H__

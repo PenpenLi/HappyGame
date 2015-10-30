@@ -78,6 +78,8 @@ function GameScene:dispose()
         self._pDebugInfoText:setDimensions(mmo.VisibleRect:width()*0.75, mmo.VisibleRect:height())
         self._pDebugInfoText:setAlignment(cc.TEXT_ALIGNMENT_LEFT, cc.VERTICAL_TEXT_ALIGNMENT_BOTTOM)
         self._pDebugInfoText:setTTFConfig(ttfConfig)
+        self._pDebugInfoText:setTextColor(cc.c4b(0,0,0,255))
+        self._pDebugInfoText:enableOutline(cFontOutline2,2)
         --self._pDebugInfoText:enableOutline(cc.c4b(0, 0, 0, 255), 1)
         self._pDebugInfoText:setString("")
         self._pDebugInfoText:setAnchorPoint(cc.p(0.0, 0.0))
@@ -384,12 +386,18 @@ end
 
 -- 关闭所有Dialog（销毁+移除）
 function GameScene:closeAllDialogs()
+    local tSystemDialogs = {}
     for k,var in pairs(self._tDialogs) do
-        var:closeWithAni()
+        if var._bIsSystemDialog == false then
+            var:closeWithAni()
+        else
+            table.insert(tSystemDialogs,var)
+        end
     end
     self._tDialogs = {};
     print("所有对话框移除成功！")
-    
+    self._tDialogs = tSystemDialogs
+
     if table.getn(self._tDialogs) == 0 then
         if self._pMaskBg ~= nil then
             self:closeLayer(self._pMaskBg)
@@ -399,37 +407,24 @@ function GameScene:closeAllDialogs()
             PetsManager:getInstance():setForceMinPositionZ(false)
         end
     end
-    
-    
     --collectMems()
     return
 end
 
 -- 关闭所有Dialog（销毁+移除）（不带动画）
 function GameScene:closeAllDialogsWithNoAni()
+    local tSystemDialogs = {}
     for k,var in pairs(self._tDialogs) do
-        var:closeWithNoAni()
-    end
-    self._tDialogs = {};
-    print("所有对话框移除成功！")
-
-    if table.getn(self._tDialogs) == 0 then
-        if self._pMaskBg ~= nil then
-            self:closeLayerWithNoAni(self._pMaskBg)
-            self._pMaskBg = nil
+        if var._bIsSystemDialog == false then
+            var:doWhenCloseOver()
+            var:removeFromParent(true)
+        else
+            table.insert(tSystemDialogs,var)
         end
     end
-
-    --collectMems()
-    return
-end
-
-function GameScene:closeAllDialogsWithNoAni()
-    for k,var in pairs(self._tDialogs) do
-        var:doWhenCloseOver()
-        var:removeFromParent(true)
-    end
     self._tDialogs = {}
+    print("所有对话框移除成功！")
+    self._tDialogs = tSystemDialogs
     
     if table.getn(self._tDialogs) == 0 then
         if self._pMaskBg ~= nil then
@@ -437,7 +432,6 @@ function GameScene:closeAllDialogsWithNoAni()
             self._pMaskBg = nil
         end
     end
-    
     --collectMems()
     return
 end

@@ -98,7 +98,6 @@ function BagItemCell:dispose(srcType,args)
     --图标按钮
     local  onTouchButton = function (sender, eventType)
         if eventType == ccui.TouchEventType.ended then
-            
             if self._bTouchAble == false then
             	return
             end
@@ -199,11 +198,17 @@ function BagItemCell:dispose(srcType,args)
     self._pNameLbllbl:setPositionX(0)
     self._pNameLbllbl:setPositionY(36)
     self._pNameLbllbl:setWidth(85)
-    self._pNameLbllbl:enableOutline(cc.c4b(0, 0, 0, 255), 2)
+   -- self._pNameLbllbl:enableOutline(cc.c4b(0, 0, 0, 255), 2)
     --self._pNameLbllbl:enableShadow(cc.c4b(0, 0, 0, 255),cc.size(1,-2))
     self._pNameLbllbl:setAnchorPoint(0,1)
     self:addChild(self._pNameLbllbl)
 
+
+    --选中效果
+    self._pClickImage = cc.Sprite:createWithSpriteFrameName("ccsComRes/xuanzhong.png")
+    self._pClickImage:setPosition(50,50)
+    self._pClickImage:setVisible(false)
+    self:addChild(self._pClickImage)
     -- 触摸注册
     local function onTouchBegin(touch,event)
         local location = touch:getLocation()    
@@ -257,7 +262,19 @@ function BagItemCell:loadBgWithFilename(filename ,textureType )
     self._pBg:loadTexture(filename,textureType)
 end
 
+function BagItemCell:setClickVisible(bBool)
+    if self._pClickImage then
+       self._pClickImage:setVisible(bBool)
+    end
+end
+
+--设置装备的信息
 function BagItemCell:setItemInfo(info)
+    --设置装备信息先把勾选去掉
+    if self._pClickImage then
+       self._pClickImage:setVisible(false)
+    end
+
     if not info then
         self._pItemInfo = nil
         self._pUpTipSpr:setVisible(false)
@@ -272,7 +289,6 @@ function BagItemCell:setItemInfo(info)
         end
         return
     end
-    
     --重置-------------------------
     self._pUpTipSpr:setVisible(false)
     self._pIconBtn:setVisible(false)
@@ -360,6 +376,10 @@ function BagItemCell:setItemInfo(info)
             self._pUpTipSpr:setVisible(true)
         end
     end
+
+
+
+
 end
 
 function BagItemCell:setUpTipShow()

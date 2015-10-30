@@ -15,7 +15,8 @@ end)
 function EquipCallOutDialog:ctor()
     self._strName = "EquipCallOutDialog"      -- 层名称
     self._pEquipInfoScrollView = nil          -- 物品的信息scrollview
-    self._pButtonListView = nil               -- 按钮的容器
+    --self._pButtonListView = nil               -- 按钮的容器
+    self._pButtonListBg = nil                 -- 按钮列表的背景图（九宫格）
     self._pTabButton = nil                    -- 标签按钮  
     self._pItemInfo = nil                     -- 显示物品的信息
     self._pDressItemInfo = nil                -- 装备栏物品的信息
@@ -27,9 +28,16 @@ function EquipCallOutDialog:ctor()
     self._pLeftParams = nil                   -- 左侧对比的配置文件
     self._tGemInlayPanelArry = nil            -- 镶嵌属性面板数组
     self._tScrollViewArry = {}                -- 属性滚动容器
-    self._pInlayAttributeNone = nil           
+    self._pInlayAttributeNone = nil    
+    -------------------------------------------------------------------------       
     -- 战斗力
     self._moveToPoint = cc.p(0,13)
+    -- 功能按钮的
+    self._tFuncBtnList = {}
+    -- 功能按钮的高度
+    self._nFuncBtnHeight = 55
+    -- 按钮的上边距
+    self._nMarginTop = 15
 end
 
 -- 创建函数
@@ -102,11 +110,15 @@ function EquipCallOutDialog:dispose(args)
     self._pBg = self._pMainParams._pEquipTipsBg
     self._pCloseButton = self._pMainParams._pCloseButton
     self._pEquipInfoScrollView = self._pMainParams._pEquipInfoScrollView
-    self._pButtonListView = self._pMainParams._pButtonListView
+    --self._pButtonListView = self._pMainParams._pButtonListView
+    self._pButtonListBg = self._pMainParams._pRightButtonBg
     -- 按钮容器默认不显示
-    self:setButtonListVisible(false)
-    self._pTabButton = self._pMainParams._pListButton
-    self._pButtonListView:setItemModel(self._pTabButton)
+    --self:setButtonListVisible(false)
+    self._pButtonListBg:setVisible(false)
+
+    self._pTabButton = self._pMainParams._pButton1
+    self._tFuncBtnList[1] = self._pTabButton
+    --self._pButtonListView:setItemModel(self._pTabButton)
     -- 右侧装备的状态默认不显示
     self._pMainParams._pEqiupStateText:setVisible(false)
     -- 初始化dialog的基础组件
@@ -117,7 +129,8 @@ function EquipCallOutDialog:dispose(args)
     self._pDressEquipDialog = self._pLeftParams._pCCS
     self._pDressEquipDialog:setPositionY(self._pCCS:getPositionY())
     -- 装备栏功能按钮默认不显示
-    self._pLeftParams._pButtonListView:setVisible(false)
+    --self._pLeftParams._pButtonListView:setVisible(false)
+    self._pLeftParams._pRightButtonBg:setVisible(false)
     -- 装备栏战斗力提升图标不显示
     self._pLeftParams._pChangeIcon:setVisible(false)
     self:addChild(self._pDressEquipDialog)    
@@ -188,11 +201,15 @@ end
 -- 初始化界面的数据展示 
 function EquipCallOutDialog:initUI()
     local sizeScrollview = self._pEquipInfoScrollView:getContentSize()
-    self._pButtonListView:removeAllItems()
+    --self._pButtonListView:removeAllItems()
     -- 显示点击物品的tips
     local itemInfo = self._kCalloutSrcType == kCalloutSrcType.kCalloutSrcBagCommon and self._pItemInfo or self._pDressItemInfo
     self:updateEquipInfo(itemInfo,self._pMainParams)
     local sScreen = mmo.VisibleRect:getVisibleSize()
+    -- 设置所有的功能按钮不可见
+    for i,v in ipairs(self._tFuncBtnList) do 
+        v:setVisible(false)
+    end
     -- 判断是否需要显示对比框
     if self._kCalloutSrcType ==  kCalloutSrcType.kCalloutSrcEquip 
         or ( not self._pDressItemInfo and self._kCalloutSrcType ==  kCalloutSrcType.kCalloutSrcBagCommon) 
@@ -226,29 +243,40 @@ function EquipCallOutDialog:initUI()
          end
     end
     if tempBtnArry ~= nil then 
+        local nBgContentHeight = #tempBtnArry * (self._nMarginTop + self._nFuncBtnHeight)
+        -- 再加一个底边距
+        self._pButtonListBg:setContentSize(cc.size(self._pButtonListBg:getContentSize().width,nBgContentHeight + self._nMarginTop))
+        local hasBtnNum = #self._tFuncBtnList
         for k,v in pairs(tempBtnArry) do
-           if k == 1 then
+           if k <= hasBtnNum then
             --self._pTabButton:setTitleText(v.name)
-            self._pTabButton:setTitleFontSize(16)
-            self._pTabButton:setTitleColor(cc.c3b(255,255,255))
-            self._pTabButton:addTouchEventListener(touchEvent)
-            self._pTabButton:setTag(v.key)
+            --self._pTabButton:setTitleFontSize(16)
+            --self._pTabButton:setTitleColor(cc.c3b(255,255,255))
+            --self._pTabButton:addTouchEventListener(touchEvent)
+            --self._pTabButton:setTag(v.key)
             --self._pTabButton:setZoomScale(nButtonZoomScale)
             --self._pTabButton:setPressedActionEnabled(true)
-            self:setButtonListVisible(true)
-            self._pTabButton:loadTextureNormal("ArrangeEqiupPanelRes/".. v.normalImg.. ".png",ccui.TextureResType.plistType)
-            self._pTabButton:loadTexturePressed("ArrangeEqiupPanelRes/".. v.selectedImg.. ".png",ccui.TextureResType.plistType)
-            self._pButtonListView:addChild(self._pTabButton)
+            --self:setButtonListVisible(true)
+            --self._pTabButton:loadTextureNormal("ArrangeEqiupPanelRes/".. v.normalImg.. ".png",ccui.TextureResType.plistType)
+            --self._pTabButton:loadTexturePressed("ArrangeEqiupPanelRes/".. v.selectedImg.. ".png",ccui.TextureResType.plistType)
+            self._pButtonListBg:setVisible(true)
+            self._tFuncBtnList[k]:setVisible(true)
+            self._tFuncBtnList[k]:setTitleText(v.name)
+            self._tFuncBtnList[k]:setTag(v.key)
+            self._tFuncBtnList[k]:setPositionY(nBgContentHeight - (k - 1) * (self._nFuncBtnHeight + self._nMarginTop))
+            self._tFuncBtnList[k]:addTouchEventListener(touchEvent)
+            --self._pButtonListView:addChild(self._pTabButton)
+            else
+                local pUseMultiItemBtn = self._pTabButton:clone()
+                pUseMultiItemBtn:setTag(v.key)
+                --pUseMultiItemBtn:loadTextureNormal("ArrangeEqiupPanelRes/".. v.normalImg.. ".png",ccui.TextureResType.plistType)
+                --pUseMultiItemBtn:loadTexturePressed("ArrangeEqiupPanelRes/".. v.selectedImg.. ".png",ccui.TextureResType.plistType)
+                --self._pButtonListView:addChild(pUseMultiItemBtn)
+                pUseMultiItemBtn:setTitleText(v.name)
+                pUseMultiItemBtn:setPositionY(nBgContentHeight - (k - 1) * (self._nFuncBtnHeight + self._nMarginTop))
+                self._pButtonListBg:addChild(pUseMultiItemBtn)
+                table.insert(self._tFuncBtnList,pUseMultiItemBtn)
           end
-           if k > 1 then
-             local pUseMultiItemBtn = self._pTabButton:clone()
-             pUseMultiItemBtn:setTag(v.key)
-             
-             pUseMultiItemBtn:loadTextureNormal("ArrangeEqiupPanelRes/".. v.normalImg.. ".png",ccui.TextureResType.plistType)
-             pUseMultiItemBtn:loadTexturePressed("ArrangeEqiupPanelRes/".. v.selectedImg.. ".png",ccui.TextureResType.plistType)
-             --pUseMultiItemBtn:setTitleText(v.name)
-             self._pButtonListView:addChild(pUseMultiItemBtn)
-           end
       end
     end
 end
@@ -394,28 +422,28 @@ function EquipCallOutDialog:updateEquipInfo(pItemInfo,params)
     -- 计算滚动框的总高度
     local innerWidth = pListView:getContentSize().width
     local innerHeight = 0
-    innerHeight = innerHeight + params._pTextFrameBg1:getContentSize().height
+    innerHeight = innerHeight + params._pEquipAddAttributeTab:getContentSize().height
                   + params._pAddAttributeLbl:getContentSize().height
-                  + params._pTextFrameBg2:getContentSize().height
+                  + params._pInlayAttributeTab:getContentSize().height
                   + nGemInlayPanelHeight +70
     --设置内部实际大小，必须大于等于size  
     --此处设置实际的滚动范围就是图片的大小                  
     innerHeight =  math.max(innerHeight,pListView:getContentSize().height)
     pListView:setInnerContainerSize(cc.size(innerWidth, innerHeight))   
     -- 更新各个标签的位置
-    params._pTextFrameBg1:setPositionY(innerHeight)
-    params._pAddAttributeLbl:setPositionY(params._pTextFrameBg1:getBottomBoundary() - 10)
-    params._pTextFrameBg2:setPositionY(params._pAddAttributeLbl:getPositionY() - params._pAddAttributeLbl:getContentSize().height - 10)
+    params._pEquipAddAttributeTab:setPositionY(innerHeight)
+    params._pAddAttributeLbl:setPositionY(params._pEquipAddAttributeTab:getBottomBoundary() - 10)
+    params._pInlayAttributeTab:setPositionY(params._pAddAttributeLbl:getPositionY() - params._pAddAttributeLbl:getContentSize().height - 10)
     -- 如果没有宝石空提示无
     if inlaidHoleNum <= 0 then 
         params._pInlayAttributeNone:setVisible(true)
-        params._pInlayAttributeNone:setPositionY(params._pTextFrameBg2:getBottomBoundary() - 20)
+        params._pInlayAttributeNone:setPositionY(params._pInlayAttributeTab:getBottomBoundary() - 20)
         params._pInlayAttributeNone:setColor(cRed)
     else
         params._pInlayAttributeNone:setVisible(false)
     end
     if params._tGemInlayPanelArry[1] then
-        params._tGemInlayPanelArry[1]:setPositionY(params._pTextFrameBg2:getBottomBoundary() - 10)
+        params._tGemInlayPanelArry[1]:setPositionY(params._pInlayAttributeTab:getBottomBoundary() - 10)
     end
     for k,v in pairs(params._tGemInlayPanelArry) do
         if k ~= 1 then
@@ -429,9 +457,11 @@ end
 -- 设置功能按钮是否可见 
 function EquipCallOutDialog:setButtonListVisible(isVisible)
     if self._isButtonListVisible == true then
-        self._pButtonListView:setVisible(isVisible)
+        --self._pButtonListView:setVisible(isVisible)
+        self._pButtonListBg:setVisible(isVisible)
     else
-        self._pButtonListView:setVisible(false)
+        --self._pButtonListView:setVisible(false)
+        self._pButtonListBg:setVisible(false)
     end
 end 
 
@@ -455,7 +485,7 @@ function EquipCallOutDialog:setDataSource(args)
         pScrollView:jumpToTop()   
     end
 
-    self._pButtonListView:refreshView()
+    --self._pButtonListView:refreshView()
 end
 
 -- 更新缓存数据

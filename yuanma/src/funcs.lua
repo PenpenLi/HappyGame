@@ -229,15 +229,17 @@ function sortBiggest(t)
     end
 end
 
--- 显示alert（只有确定按钮）
-function showAlertDialog(msg, okCallbackFunc)
+-- 显示alert（只有确定按钮）(只有系统警告级别的弹框才会调用此处)
+function showSystemAlertDialog(msg, okCallbackFunc)
     if okCallbackFunc then  -- 有回调处理
         local alert = require("AlertDialog"):create(msg, okCallbackFunc)
         alert:setNoCancelBtn()
+        alert._bIsSystemDialog = true
         cc.Director:getInstance():getRunningScene():showDialog(alert,kZorder.kMax)
     else  -- 没有回调处理
         local alert = require("AlertDialog"):create(msg)
         alert:setNoCancelBtn()
+        alert._bIsSystemDialog = true
         cc.Director:getInstance():getRunningScene():showDialog(alert,kZorder.kMax)
     end
 end
@@ -309,7 +311,7 @@ function setNetErrorShow(erroID,msg)
     
     if tErrorInfo then 
             if tErrorInfo["Type"] == 1 then --服务器错误码，只需要显示，不需要其他逻辑
-                showAlertDialog(tErrorInfo["Desc"])
+                showSystemAlertDialog(tErrorInfo["Desc"])
             elseif tErrorInfo["Type"] == 2 then --服务器错误码，需要弹框
             
             elseif tErrorInfo["Type"] == 3 then --只是文字提示
@@ -324,7 +326,7 @@ function setNetErrorShow(erroID,msg)
             
         NetRespManager:getInstance():dispatchEvent(kNetCmd.kNetErrorInfo, {errorInfo  = tErrorInfo ,erroId = erroID})
      else
-        showAlertDialog("服务器返回不知道的错误码")
+        showSystemAlertDialog("服务器返回不知道的错误码")
      end
 end
 
@@ -546,7 +548,6 @@ function getMarqueeNode(tDate)
         pLable:setColor(v.color)
         pNode:addChild(pLable)
         nStartX = nStartX +pLable:getContentSize().width+ndistance
-
     end
 
     return pNode,nStartX
@@ -643,7 +644,7 @@ function createEditBoxBySize(nViewSize,nMaxLength,nOpacity,sDefString)
 
   
     pEditBox = ccui.EditBox:create(nViewSize, "ccsComRes/sprite9.png",ccui.TextureResType.plistType)
-    pEditBox:setFontName("simhei.ttf")
+    pEditBox:setFontName(strCommonFontName)
     pEditBox:setOpacity(nOpacity)
     pEditBox:setFontSize(25)
     pEditBox:setFontColor(cc.c3b(255,255,255))

@@ -164,6 +164,7 @@ function MonsterRole:initAni()
     local fullAniName = self._strAniName..".c3b"
     local fullTextureName = self._pTempleteInfo.Texture..".pvr.ccz"
     self._strBodyTexturePvrName = self._pTempleteInfo.Texture
+    ResPlistManager:getInstance():addPvrNameToColllectorAndLoadPvr(self._pTempleteInfo.Texture)
     self._pAni = cc.Sprite3D:create(fullAniName)
     self._pAni:setTexture(fullTextureName)
     self:addChild(self._pAni)
@@ -547,10 +548,11 @@ end
 function MonsterRole:setBattleUILayerDelegate( delegate )
     self._pBattleUIDelegate = delegate
     
-    self._pBattleUIDelegate:setBossName(TableTempleteMonster[self._pRoleInfo.TempleteID].Name)
-    self._pBattleUIDelegate:setBossHpMax(self._nHpMax)
-    self._pBattleUIDelegate:setBossHpCur(self._nCurHp, true)
-
+    self._pBattleUIDelegate._pBossHpNode:setBossName(TableTempleteMonster[self._pRoleInfo.TempleteID].Name)
+    self._pBattleUIDelegate._pBossHpNode:setBossHpMax(self._nHpMax)
+    self._pBattleUIDelegate._pBossHpNode:setBossHpNum(self._pRoleInfo.HpBarNumber)
+    self._pBattleUIDelegate._pBossHpNode:setBossHpCur(self._nHpMax, true)
+   
 end
 
 -- 初始化人物血条
@@ -610,8 +612,9 @@ function MonsterRole:setHp(value,maxValue)
             self._pHpBarCache:setPercentage(self._nCurHp / self._nHpMax * 100)
         elseif self._nMonsterType == kType.kMonster.kBOSS or self._nMonsterType == kType.kMonster.kThiefBOSS then    -- BOSS
             if self._pBattleUIDelegate then
-                self._pBattleUIDelegate:setBossHpMax(self._nHpMax)
-                self._pBattleUIDelegate:setBossHpCur(self._nCurHp)
+                self._pBattleUIDelegate._pBossHpNode:setBossHpMax(self._nHpMax)
+                self._pBattleUIDelegate._pBossHpNode:setBossHpCur(self._nCurHp)
+                self._pBattleUIDelegate._pBossHpNode:setBossHpNum(self._pRoleInfo.HpBarNumber)
             end
         end
     end
@@ -641,7 +644,7 @@ function MonsterRole:addHp(value)
         self._pHpNode:runAction(cc.Sequence:create(cc.Show:create(), cc.DelayTime:create(2.0), cc.Hide:create()))
     elseif self._nMonsterType == kType.kMonster.kBOSS or self._nMonsterType == kType.kMonster.kThiefBOSS then    -- BOSS
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setBossHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pBossHpNode:setBossHpCur(self._nCurHp)
         end
     end
 
@@ -678,7 +681,7 @@ function MonsterRole:loseHp(value, isCritical)
         self._pHpNode:runAction(cc.Sequence:create(cc.Show:create(), cc.DelayTime:create(2.0), cc.Hide:create()))
     elseif self._nMonsterType == kType.kMonster.kBOSS or self._nMonsterType == kType.kMonster.kThiefBOSS then    -- BOSS
         if self._pBattleUIDelegate then
-            self._pBattleUIDelegate:setBossHpCur(self._nCurHp)
+            self._pBattleUIDelegate._pBossHpNode:setBossHpCur(self._nCurHp)
         end
     end
 
@@ -1190,7 +1193,7 @@ function MonsterRole:beHurtedBySkill(skill, intersection)
         if skill._pSkillInfo.ElementType then 
             -- 考虑属性积蓄值的累加
             if skill:getMaster()._kGameObjType == kType.kGameObj.kRole then 
-                if skill:getMaster()._kRoleType == kType.kRole.kMonster or skill:getMaster()._kRoleType == kType.kRole.kPet then    -- 攻击方为野怪或者宠物，则只考虑技能的积蓄值计算
+                if skill:getMaster()._kRoleType == kType.kRole.kMonster or skill:getMaster()._kRoleType == kType.kRole.kPet or skill:getMaster()._kRoleType == kType.kRole.kOtherPet then    -- 攻击方为野怪或者宠物，则只考虑技能的积蓄值计算
                     if skill._pSkillInfo.ElementType[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] == kType.kSkill.kElement.kFire then
                         local saving = skill._pSkillInfo.ElementalValue[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex]*(((skill:getMaster()._nFireAttackValue*TableConstants.SkillAttrMax.Value)/(skill:getMaster()._nFireAttackValue+TableConstants.SkillAttrReduce.Value))+1)*(((skill:getMaster()._nAbilityPowerValue*TableConstants.SkillAttrApMax.Value)/(skill:getMaster()._nAbilityPowerValue+TableConstants.SkillAttrApReduce.Value))+1)
                         self._nCurFireSaving = self._nCurFireSaving + saving
@@ -1202,7 +1205,7 @@ function MonsterRole:beHurtedBySkill(skill, intersection)
                         self._nCurThunderSaving = self._nCurThunderSaving + saving
                     end
                     self:playHurtedEffect(skill._pSkillInfo.ElementType[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex], intersection, isCritical, isBlock)
-                elseif skill:getMaster()._kRoleType == kType.kRole.kPlayer then  -- 攻击方为玩家或者宠物，则需要分为普通攻击和技能攻击的积蓄值分别计算
+                elseif skill:getMaster()._kRoleType == kType.kRole.kPlayer or skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then  -- 攻击方为玩家或者宠物，则需要分为普通攻击和技能攻击的积蓄值分别计算
                     if skill == skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] then
                         -- 普通攻击（先计算出现属性火冰雷物理的概率，然后判断是否触发）
                         local fireSavingRate = 1000*((skill:getMaster()._nFireAttackValue*TableConstants.GenAttrChanceMax.Value)/(skill:getMaster()._nFireAttackValue+TableLevel[self._nLevel].Flv*TableConstants.GenAttrChanceReduce.Value))*( ((skill:getMaster()._nAbilityPowerValue*TableConstants.GenAttrChanceApMax.Value)/(skill:getMaster()._nAbilityPowerValue+TableConstants.GenAttrChanceApReduce.Value))+1 )
@@ -1278,7 +1281,7 @@ function MonsterRole:beHurtedBySkill(skill, intersection)
             local b = defenderDefendPower*(1-((attackerPenetration*TableConstants.PenetrationMax.Value)/(attackerPenetration+defFlv*TableConstants.PenetrationReduce.Value)))
             local c = TableConstants.DefendRateMax.Value
             local d = attackFlv*TableConstants.DefendRateReduce.Value
-            local e = blockValue            
+            local e = blockValue 
             loseHpValue = a*(1-((b*c)/(b+d)))-e
         elseif skill:getMaster()._kGameObjType == kType.kGameObj.kEntity then 
             -- 本次技能固定伤害
@@ -1313,13 +1316,21 @@ function MonsterRole:beHurtedBySkill(skill, intersection)
             if skill:getMaster()._strCharTag == "main" then
                 self:getBattleManager():getBattleUILayer():showHitAni() -- 显示连击
             end
+        elseif skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
+            local angerValue = 0    -- 怒气值
+            if skill == skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kGenAttack] then -- 普通攻击
+                angerValue = TableConstants.GenAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+            elseif skill ~= skill:getMaster()._tSkills[kType.kSkill.kWayIndex.kPlayerRole.kAngerAttack] then  -- 技能攻击
+                angerValue = TableConstants.SkillAngerSpeed.Value * skill._pSkillInfo.HurtFactor[skill._nCurFrameRegionIndex][skill._nCurFrameEventIndex] * skill:getMaster():getAttriValueByType(kAttribute.kFuryRegeneration)
+            end
+            skill:getMaster():addAnger(angerValue)
         end
 
         if self._nCurHp == 0  then
             -- 切换到死亡状态
             self:getStateMachineByTypeID(kType.kStateMachine.kBattleMonster):setCurStateByTypeID(kType.kState.kBattleMonster.kDead, true, {true,skill})
             -- 如果技能释放者是玩家角色或者宠物，则激活其【每杀死一个敌方单位】被动技能
-            if skill:getMaster()._kRoleType == kType.kRole.kPlayer then
+            if skill:getMaster()._kRoleType == kType.kRole.kPlayer or skill:getMaster()._kRoleType == kType.kRole.kOtherPlayer then
                 skill:getMaster():addPassiveByTypeID(kType.kController.kPassive.kBattleDoWhenAnyEnemyDeadPassive)
             end
             -- 如果当前是金钱副本，则播放金币掉落动画及音效

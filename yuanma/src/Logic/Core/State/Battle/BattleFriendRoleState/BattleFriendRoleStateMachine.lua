@@ -16,6 +16,7 @@ end)
 function BattleFriendRoleStateMachine:ctor()
     self._strName = "BattleFriendRoleStateMachine"         -- 状态机名称
     self._kTypeID = kType.kStateMachine.kBattleFriendRole  -- 状态类机型ID
+    self._fFriendExistCount = 0                            -- 好友存在的计数器
     
 end
 
@@ -35,7 +36,9 @@ function BattleFriendRoleStateMachine:onEnter(master)
     self:addState(require("BattleFriendRoleSuspendState"):create())     -- 加入挂起状态到状态机
     self:addState(require("BattleFriendRoleAppearState"):create())      -- 加入出场状态到状态机
     self:addState(require("BattleFriendRoleStandState"):create())       -- 加入站立状态到状态机
-    self:addState(require("BattleFriendRoleSkillAttackState"):create()) -- 加入技能攻击状态到状态机
+    self:addState(require("BattleFriendRoleRunState"):create())         -- 加入奔跑状态到状态机
+    self:addState(require("BattleFriendRoleGenAttackState"):create())   -- 加入普通攻击状态到状态机
+    self:addState(require("BattleFriendRoleSkillAttackState"):create()) -- 加入出场技能攻击状态到状态机
     self:addState(require("BattleFriendRoleDisAppearState"):create())   -- 加入消失状态到状态机
     self:setCurStateByTypeID(kType.kState.kBattleFriendRole.kSuspend)   -- 设置当前状态为挂起状态
     
@@ -56,7 +59,21 @@ function BattleFriendRoleStateMachine:update(dt)
     if self._pCurState ~= nil then
         self._pCurState:update(dt)
     end
-        
+
+    -- 检测是否需要消失
+    if self._pCurState._kTypeID ~= kType.kState.kBattleFriendRole.kSuspend and 
+       self._pCurState._kTypeID ~= kType.kState.kBattleFriendRole.kAppear and 
+       self._pCurState._kTypeID ~= kType.kState.kBattleFriendRole.kDisAppear then
+        self._fFriendExistCount = self._fFriendExistCount + dt
+        if self._fFriendExistCount >= TableConstants.FriendExistTime.Value then
+            if self._pCurState._kTypeID == kType.kState.kBattleFriendRole.kStand or self._pCurState._kTypeID == kType.kState.kBattleFriendRole.kRun then  -- 消失掉
+                self:getMaster():getStateMachineByTypeID(kType.kStateMachine.kBattleFriendRole):setCurStateByTypeID(kType.kState.kBattleFriendRole.kDisAppear)
+                self._fFriendExistCount = 0
+            end
+        end
+    end
+
+
     return
 end
 

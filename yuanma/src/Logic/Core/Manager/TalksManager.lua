@@ -53,9 +53,12 @@ function TalksManager:setCurTalks(talkID)
     local pUILayer = nil
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
         pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("WorldUILayer")   
-        pUILayer:setAllUIVisible(false)
-        -- 摇杆禁用
-        pUILayer._pStick:setIsWorking(false)
+        if StoryGuideManager:getInstance()._bIsStory == false and StoryGuideManager:getInstance()._bActionHasStop == true then
+            pUILayer:setAllUIVisible(false)
+            -- 摇杆禁用
+            pUILayer._pStick:setIsWorking(false)
+        end
+   
         pUILayer._pStick:hide()
         -- 角色恢复到默认站立状态
         RolesManager:getInstance()._pMainPlayerRole:getStateMachineByTypeID(kType.kStateMachine.kWorldPlayerRole):setCurStateByTypeID(kType.kState.kWorldPlayerRole.kStand)
@@ -63,9 +66,11 @@ function TalksManager:setCurTalks(talkID)
     elseif cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
         pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
         BattleManager:getInstance():pauseTime() -- 战斗时间暂停
-        pUILayer:setAllUIVisible(false)
-        -- 摇杆禁用
-        pUILayer._pStick:setIsWorking(false)
+          if StoryGuideManager:getInstance()._bIsStory == false and StoryGuideManager:getInstance()._bActionHasStop == true then
+            pUILayer:setAllUIVisible(false)
+            -- 摇杆禁用
+            pUILayer._pStick:setIsWorking(false)
+        end
         pUILayer._pStick:hide()
         -- 角色恢复到默认站立状态
         if RolesManager:getInstance()._pMainPlayerRole:isUnusualState() == true then     -- 非正常状态
@@ -73,8 +78,8 @@ function TalksManager:setCurTalks(talkID)
         end
         
     end
-    pUILayer:removeCurTalkHeaders()
-    pUILayer:createTalkHeaders(talkID)
+    pUILayer:removeCurTalkHeadersAndNames()
+    pUILayer:createTalkHeadersAndNames(talkID)
     
     pUILayer:showCurTalks()
 
@@ -91,18 +96,28 @@ function TalksManager:setCurTalksFinished()
     RolesManager:getInstance():setForceMinPositionZ(false)
     PetsManager:getInstance():setForceMinPositionZ(false)
     
+    
     local pUILayer = nil
     if cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kWorld then
         pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("WorldUILayer")   
-        pUILayer:setAllUIVisible(true)     
-    elseif cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
-        pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
-        pUILayer:setAllUIVisible(true)
-        if pUILayer._pTimeNode:isVisible() == true then
-            BattleManager:getInstance():resumeTime()    -- 战斗时间继续
+          if StoryGuideManager:getInstance()._bIsStory == false and StoryGuideManager:getInstance()._bActionHasStop == true then
+           pUILayer:setAllUIVisible(true)     
         end
+    elseif cc.Director:getInstance():getRunningScene()._kCurSessionKind == kSession.kBattle then
+         pUILayer = cc.Director:getInstance():getRunningScene():getLayerByName("BattleUILayer")
+        if StoryGuideManager:getInstance()._bIsStory == false and StoryGuideManager:getInstance()._bActionHasStop == true then
+            pUILayer:setAllUIVisible(true)     
+            if pUILayer._pTimeUINode:isVisible() == true then
+                BattleManager:getInstance():resumeTime()    -- 战斗时间继续
+            end
+        end  
     end
-    pUILayer:removeCurTalkHeaders()
+    pUILayer:removeCurTalkHeadersAndNames()
+    --发送对话结束通知
+    if StoryGuideManager:getInstance()._bIsStory == true then --如果在剧情对话层
+       NetRespManager:getInstance():dispatchEvent(kNetCmd.kStoryGuideEnd)
+    end
+  
 
 end
 
